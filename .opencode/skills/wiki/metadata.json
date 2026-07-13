@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "organization": "SART3",
+  "date": "2026-06-15",
+  "abstract": "LLM Wiki knowledge base manager for the SART3 project. Maintains structured documentation in docs/wiki/ with conventions for frontmatter, wikilinks, source attribution, and append-only logging. Supports 4 operations: query, update, ingest, lint.",
+  "category": "meta"
+}

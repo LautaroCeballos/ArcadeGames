@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-bc6f8142-0918-4ad9-b359-555b04f7d93a"
+      }
+    },
+    "Figma": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "mercadopago": {
+      "url": "https://mcp.mercadopago.com/mcp",
+      "headers": {
+        "Authorization": "Bearer APP_USR-7315042596722802-052523-52a847870cb38a4d96e493a42ee9cced-3425674989"
+      }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "TestSprite": {
+      "command": "npx",
+      "args": ["@testsprite/testsprite-mcp@latest"],
+      "env": {
+        "API_KEY": "sk-user-E5asyvAPccgM-xx7hoZ73s0tdX5SnO22rZtaRbrnW7dAkU793VbVAiHmm15yK_xzBvIAF-t4cjkNDi8XaE8P1HeYxEZh0P_VYypVx_DhRGi8h0lBw_HiCq9XUUpVkymTtyg"
+      }
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=gbuayimtfyvbeqkcvfff&features=docs%2Cdatabase%2Caccount%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    }
+  }
+}
