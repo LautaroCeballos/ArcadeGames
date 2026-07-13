@@ -65,6 +65,7 @@ app/
 | `SignUpForm.tsx` | Client | `useActionState(signUp)` |
 | `GameCard.tsx` | Server | `game: GameWithDetails` |
 | `GameGrid.tsx` | Server | `games: GameWithDetails[]` + Skeleton |
+| `LoadMoreGames.tsx` | Client | Paginación "Cargar más" con server action |
 | `ArcadeEmbed.tsx` | Client | `url, title` — iframe con loading/fallback |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
@@ -78,12 +79,12 @@ app/
 |---------|-----------|
 | `supabase/client.ts` | Browser client (createBrowserClient) |
 | `supabase/server.ts` | Server client (cookies, RSC) |
-| `supabase/middleware.ts` | Session refresh middleware |
+| `supabase/middleware.ts` | Session refresh middleware (usado por proxy.ts) |
 | `actions/auth.ts` | signIn, signUp, signOut (useActionState signature) |
 | `actions/games.ts` | createGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames |
 | `actions/ratings.ts` | rateGame (upsert) |
 | `definitions.ts` | Tipos Database, Game, Profile, Category, Tag, Rating, GameWithDetails |
-| `game-utils.ts` | extractGameId, buildEmbedUrl, isValidMakeCodeUrl |
+| `game-utils.ts` | extractGameId, buildEmbedUrl, isValidMakeCodeUrl (3 formatos) |
 | `utils.ts` | cn() con clsx + tailwind-merge |
 
 ### `/hooks/`
@@ -99,16 +100,24 @@ app/
 
 ---
 
-## Base de datos (pendiente de ejecutar)
+## Base de datos (ejecutada ✅)
 
-El archivo `supabase/migrations/00001_initial_schema.sql` contiene:
-- 6 tablas: `profiles`, `categories`, `games`, `tags`, `game_tags`, `ratings`
-- RLS policies completas
+Migración `supabase/migrations/00001_initial_schema.sql` ejecutada vía MCP Supabase:
+
+| Tabla | Filas | RLS |
+|-------|-------|-----|
+| `profiles` | 0 (se crean al registrarse) | ✅ |
+| `categories` | 10 (seed: Acción, Aventura, Puzzle...) | ✅ |
+| `games` | 0 | ✅ |
+| `tags` | 0 | ✅ |
+| `game_tags` | 0 | ✅ |
+| `ratings` | 0 | ✅ |
+
+Contenido:
+- 6 tablas, RLS policies completas
 - Trigger `handle_new_user` para crear perfil automático
-- Seed de 10 categorías
+- 10 categorías seeded
 - Índices incluyendo pg_trgm para búsqueda
-
-**Estado**: ⏳ Pendiente de ejecutar en Supabase.
 
 ---
 
@@ -127,7 +136,7 @@ Archivo `.env.local`:
 - **Registro**: Formulario en `/signup` → `supabase.auth.signUp()` → trigger crea perfil
 - **Login**: Formulario en `/login` → `supabase.auth.signInWithPassword()` → redirect a `/dashboard`
 - **Logout**: Botón en Navbar → `supabase.auth.signOut()` → redirect a `/`
-- **Middleware**: `middleware.ts` refresca sesión via `@supabase/ssr`
+- **Proxy**: `proxy.ts` (renombrado de `middleware.ts`, Next.js 16) refresca sesión via `@supabase/ssr`
 
 > [!note] Las rutas protegidas (`/subir`, `/dashboard`) verifican sesión dentro de la page y redirigen a `/login` si no hay sesión. No hay middleware de protección de rutas (se hace en cada page).
 
@@ -137,9 +146,10 @@ Archivo `.env.local`:
 
 ### Publicación de juegos ✅
 - Formulario en `/subir` con URL de MakeCode
-- Validación: URL válida (regex), ID único, campos obligatorios
-- Status inicial: `pending`
-- Preview del embed no implementado aún
+- Validación: URL válida (3 formatos aceptados), ID único, campos obligatorios
+- Status inicial: `approved` (auto-approve)
+- Preview del embed en vivo mientras se escribe la URL
+- Accesibilidad: `fieldset`/`legend`, `aria-*`, `role="alert"`, validación inline
 
 ### Búsqueda ✅
 - SearchBar con debounce 300ms
@@ -176,16 +186,12 @@ Archivo `.env.local`:
 
 ## Pendiente (próximos pasos)
 
-1. **🔴 Ejecutar migración SQL en Supabase** — las tablas no existen aún
-2. ~~**🔴 Verificar build** — `pnpm build` puede tener errores~~ ✅ Build exitoso (Next.js 16.2.10, 7 rutas, 0 errores TS)
-3. 🟡 Confirmar que el trigger de perfil funciona (auto-create en signup)
-4. 🟡 Agregar preview del embed en formulario de subida
-5. 🟡 Paginación "Cargar más" en home (actualmente solo page 0)
-6. 🟢 Conectar repositorio GitHub
-7. 🟢 Deploy en Vercel
-8. 🔵 Aprobación automática de juegos (status → approved)
-9. 🔵 Tags en formulario de subida
-10. 🔵 Contador de vistas (increment en cada visita)
+1. 🟡 Confirmar que el trigger de perfil funciona (auto-create en signup)
+2. 🔵 Tags en formulario de subida
+3. 🔵 Contador de vistas (increment en cada visita)
+4. 🔵 Validar que el ID de MakeCode realmente existe (antes de aceptar la URL)
+5. 🔵 Modo oscuro
+6. 🔵 Página 404 personalizada con search
 
 > Leyenda: 🔴 Crítico · 🟡 Importante · 🟢 Nice-to-have · 🔵 Futuro
 

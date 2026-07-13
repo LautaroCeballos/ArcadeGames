@@ -12,30 +12,26 @@ sources:
 
 Los juegos no se suben al servidor. Se referencian mediante su URL de MakeCode Arcade.
 
-Ejemplo de URL:
-```
-https://arcade.makecode.com/---run?id=_HdY0sobLD4zd
-```
+## Formatos de URL aceptados
+
+| Formato | Ejemplo | ID extraído |
+|---------|---------|-------------|
+| `arcade.makecode.com/---run?id=...` | `https://arcade.makecode.com/---run?id=_HdY0sobLD4zd` | `_HdY0sobLD4zd` |
+| `makecode.com/_...` | `https://makecode.com/_ViYEarFuVgC8` | `_ViYEarFuVgC8` |
+| `arcade.makecode.com/...` (path) | `https://arcade.makecode.com/66795-36651-40272-92516` | `66795-36651-40272-92516` |
 
 ## Identificador
 
-El Game ID es el parámetro `id` de la URL de MakeCode. Se extrae con `extractGameId()`:
+El Game ID se extrae con `extractGameId()` en `lib/game-utils.ts`. Soporta los 3 formatos:
+
+1. Parámetro `?id=` en query string
+2. Path en `makecode.com/ID`
+3. Path en `arcade.makecode.com/ID` (excepto rutas `---`)
+
+La URL de embed siempre se construye como:
 
 ```
-// lib/game-utils.ts
-export function extractGameId(url: string): string | null {
-  const match = url.match(/id=([a-zA-Z0-9\-_]+)/)
-  return match ? match[1] : null
-}
-```
-
-La URL de embed se construye con `buildEmbedUrl()`:
-
-```
-// lib/game-utils.ts
-export function buildEmbedUrl(id: string) {
-  return `https://arcade.makecode.com/---run?id=${id}`
-}
+https://arcade.makecode.com/---run?id={ID}
 ```
 
 ## Flujo de publicación

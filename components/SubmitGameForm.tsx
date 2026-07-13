@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useState, useMemo } from "react"
+import { useActionState, useState, useMemo, useId } from "react"
 import { createGame } from "@/lib/actions/games"
 import { extractGameId, buildEmbedUrl } from "@/lib/game-utils"
 import { Button } from "@/components/ui/button"
@@ -16,65 +16,103 @@ interface SubmitGameFormProps {
 export function SubmitGameForm({ categories }: SubmitGameFormProps) {
   const [state, formAction, pending] = useActionState(createGame, { error: "" })
   const [urlValue, setUrlValue] = useState("")
+  const uid = useId()
 
   const previewEmbedUrl = useMemo(() => {
     const id = extractGameId(urlValue)
     return id ? buildEmbedUrl(id) : null
   }, [urlValue])
 
+  const urlHintId = `${uid}-url-hint`
+  const urlErrorId = `${uid}-url-error`
+  const formErrorId = `${uid}-form-error`
+
+  const urlError = urlValue && !isValidMakeCodeUrl(urlValue) ? "La URL no tiene un formato válido" : null
+
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="url">URL del juego (MakeCode Arcade)</Label>
-        <Input
-          id="url"
-          name="url"
-          type="url"
-          placeholder="https://arcade.makecode.com/---run?id=..."
-          required
-          value={urlValue}
-          onChange={(e) => setUrlValue(e.target.value)}
-        />
-        <p className="text-xs text-muted-foreground">
-          Pegá la URL de MakeCode Arcade. Ej: https://arcade.makecode.com/---run?id=_HdY0sobLD4zd
-        </p>
-      </div>
+    <form action={formAction} className="space-y-6" aria-labelledby={`${uid}-heading`}>
+      <h2 id={`${uid}-heading`} className="sr-only">Formulario para publicar un juego</h2>
 
-      {previewEmbedUrl && (
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="text-base font-semibold mb-2">Link del juego</legend>
+
         <div className="space-y-2">
-          <Label>Vista previa</Label>
-          <ArcadeEmbed url={previewEmbedUrl} title="Vista previa" />
+          <Label htmlFor="url">
+            URL de MakeCode Arcade
+            <span aria-hidden="true" className="text-destructive ml-0.5">*</span>
+          </Label>
+          <Input
+            id="url"
+            name="url"
+            type="url"
+            placeholder="https://arcade.makecode.com/---run?id=..."
+            required
+            aria-required="true"
+            aria-describedby={urlHintId}
+            aria-invalid={!!urlError || undefined}
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+          />
+          <p id={urlHintId} className="text-xs text-muted-foreground">
+            Formats aceptados:
+            <code className="block mt-0.5 text-[11px]">https://arcade.makecode.com/---run?id=_HdY0sobLD4zd</code>
+            <code className="block text-[11px]">https://makecode.com/_ViYEarFuVgC8</code>
+            <code className="block text-[11px]">https://arcade.makecode.com/66795-36651-40272-92516</code>
+          </p>
+          {urlError && (
+            <p id={urlErrorId} role="alert" className="text-xs text-destructive">
+              {urlError}
+            </p>
+          )}
         </div>
-      )}
 
-      <div className="space-y-2">
-        <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required />
-      </div>
+        {previewEmbedUrl && !urlError && (
+          <div className="space-y-2">
+            <Label>Vista previa</Label>
+            <ArcadeEmbed url={previewEmbedUrl} title="Vista previa del juego" />
+          </div>
+        )}
+      </fieldset>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descripción</Label>
-        <Input id="description" name="description" />
-      </div>
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="text-base font-semibold mb-2">Información del juego</legend>
 
-      <div className="space-y-2">
-        <Label htmlFor="category_id">Categoría</Label>
-        <Select name="category_id">
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="title">
+            Título
+            <span aria-hidden="true" className="text-destructive ml-0.5">*</span>
+          </Label>
+          <Input id="title" name="title" required aria-required="true" />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Input id="description" name="description" />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category_id">Categoría</Label>
+          <Select name="category_id">
+            <SelectTrigger id="category_id">
+              <SelectValue placeholder="Seleccionar categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </fieldset>
 
       {state.error && (
-        <p className="text-sm text-destructive">{state.error}</p>
+        <div role="alert" className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3">
+          <p id={formErrorId} className="text-sm text-destructive font-medium">
+            {state.error}
+          </p>
+        </div>
       )}
 
       <Button type="submit" disabled={pending}>
@@ -82,4 +120,25 @@ export function SubmitGameForm({ categories }: SubmitGameFormProps) {
       </Button>
     </form>
   )
+}
+
+function isValidMakeCodeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    const { hostname, pathname, search } = parsed
+
+    if (hostname === "arcade.makecode.com") {
+      if (/[?&]id=[a-zA-Z0-9\-_]+/.test(search)) return true
+      const segments = pathname.replace(/\/$/, "").split("/").filter(Boolean)
+      if (segments.length === 1 && !segments[0].startsWith("---")) return true
+    }
+
+    if (hostname === "makecode.com") {
+      const segments = pathname.replace(/\/$/, "").split("/").filter(Boolean)
+      if (segments.length === 1) return true
+    }
+  } catch {
+    return false
+  }
+  return false
 }

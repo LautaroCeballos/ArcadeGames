@@ -21,3 +21,27 @@ last_updated: "2026-07-13"
 - Fuente: `docs/raw/plans/makecode_arcade_platform_FULL.md`
 - Páginas creadas: [[overview]], [[stack]], [[architecture/routes]], [[database/schema]], [[auth/flow]], [[features/games]]
 - Cambios vs plan original: auth Microsoft OAuth → email/password
+
+## [2026-07-13] update | paginacion-preview-autoapprove
+- Paginación "Cargar más" en home (`components/LoadMoreGames.tsx`)
+- Preview del embed en formulario de subida (`SubmitGameForm.tsx`)
+- Auto-approve: status `pending` → `approved` al crear juego
+- Build verificado: 0 errores
+
+## [2026-07-13] update | migracion-sql-ejecutada
+- Migración `00001_initial_schema.sql` ejecutada vía MCP Supabase
+- 6 tablas creadas, 10 categorías seeded, RLS activo
+
+## [2026-07-13] update | github-vercel
+- Repo conectado: `github.com/LautaroCeballos/ArcadeGames`
+- Primer commit + push a master
+
+## [2026-07-13] update | url-formats-accesibilidad
+- Nuevos formatos de URL aceptados: `makecode.com/_...` y `arcade.makecode.com/...` (path)
+- `extractGameId` y `isValidMakeCodeUrl` refactorizados con `URL` parser
+- Formulario de subida: `fieldset`/`legend`, `aria-*`, `role="alert"`, validación inline
+- proxy.ts: export corregido de `middleware` a `proxy`
+
+## [2026-07-13] update | proxy-migration
+- `middleware.ts` → `proxy.ts` (Next.js 16 breaking change)
+- Export renombrado: `middleware` → `proxy`
