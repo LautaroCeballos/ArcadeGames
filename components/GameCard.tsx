@@ -1,7 +1,7 @@
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Star } from "lucide-react"
 import type { GameWithDetails } from "@/lib/definitions"
+import { Badge } from "@/components/ui/badge"
 
 interface GameCardProps {
   game: GameWithDetails
@@ -11,38 +11,52 @@ export function GameCard({ game }: GameCardProps) {
   const rating = game.avg_rating
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <Link href={`/juego/${game.id}`}>
-        <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-          {game.thumbnail_url ? (
-            <img
-              src={game.thumbnail_url}
-              alt={game.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="text-4xl text-muted-foreground/30">🎮</div>
+    <Link
+      href={`/juego/${game.id}`}
+      className="group relative block aspect-video overflow-hidden rounded-[10px] transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+    >
+      {/* Background image */}
+      {game.thumbnail_url ? (
+        <img
+          src={game.thumbnail_url}
+          alt={game.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-muted text-4xl text-muted-foreground/30">
+          🎮
+        </div>
+      )}
+
+      {/* Dark overlay — bottom ~30% */}
+      <div className="absolute bottom-0 left-0 right-0 bg-[rgba(52,54,53,0.96)] px-3 py-2">
+        <p className="truncate text-sm font-semibold text-arcade-beige">
+          {game.title}
+        </p>
+
+        <div className="mt-0.5 flex items-center justify-between">
+          <span className="text-xs text-arcade-beige/60">
+            {game.profiles?.username ?? "Anónimo"}
+          </span>
+
+          {rating !== null && (
+            <span className="flex items-center gap-1 text-xs text-arcade-beige/80">
+              <Star className="h-3 w-3 fill-current" />
+              {rating}
+            </span>
           )}
         </div>
-        <CardContent className="p-3 space-y-1">
-          <h3 className="font-semibold text-sm leading-tight line-clamp-1">
-            {game.title}
-          </h3>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{game.profiles?.username ?? "Anónimo"}</span>
-            {rating && (
-              <span className="flex items-center gap-0.5">
-                ★ {rating}
-              </span>
-            )}
-          </div>
-          {game.categories && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {game.categories.name}
-            </Badge>
-          )}
-        </CardContent>
-      </Link>
-    </Card>
+
+        {game.categories && (
+          <Badge
+            variant="secondary"
+            className="absolute right-2 top-2 bg-arcade-beige/20 text-[10px] text-arcade-beige"
+          >
+            {game.categories.name}
+          </Badge>
+        )}
+      </div>
+    </Link>
   )
 }

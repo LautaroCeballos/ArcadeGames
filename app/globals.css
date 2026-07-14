@@ -1,51 +1,74 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(240 10% 3.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
-  --radius: 0.5rem;
+  /* ── Arcade brand colors ── */
+  --arcade-red: #d90057;
+  --arcade-green: #77b8a6;
+  --arcade-beige: #ffe2ba;
+  --arcade-dark: #343635;
+
+  /* ── shadcn/ui light theme — arcade palette ── */
+  --background: #ffffff;
+  --foreground: #343635;
+  --card: #ffffff;
+  --card-foreground: #343635;
+  --popover: #ffffff;
+  --popover-foreground: #343635;
+  --primary: #d90057;
+  --primary-foreground: #ffe2ba;
+  --secondary: #77b8a6;
+  --secondary-foreground: #ffffff;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #77b8a6;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #d90057;
+  --radius: 0.625rem;
 }
 
 .dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(240 10% 3.9%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(240 10% 3.9%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --secondary: hsl(240 3.7% 15.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(240 4.9% 83.9%);
+  /* ── Arcade brand colors (kept consistent) ── */
+  --arcade-red: #d90057;
+  --arcade-green: #77b8a6;
+  --arcade-beige: #ffe2ba;
+  --arcade-dark: #343635;
+
+  /* ── shadcn/ui dark theme ── */
+  --background: #1a1a1a;
+  --foreground: #ffe2ba;
+  --card: #2a2a2a;
+  --card-foreground: #ffe2ba;
+  --popover: #2a2a2a;
+  --popover-foreground: #ffe2ba;
+  --primary: #d90057;
+  --primary-foreground: #ffe2ba;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #77b8a6;
+  --muted: #2a2a2a;
+  --muted-foreground: #a0a0a0;
+  --accent: #d90057;
+  --accent-foreground: #ffe2ba;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffe2ba;
+  --border: #333333;
+  --input: #333333;
+  --ring: #d90057;
 }
 
 @theme inline {
+  /* ── Arcade brand tokens (usable as text-arcade-red, bg-arcade-green, etc.) ── */
+  --color-arcade-red: var(--arcade-red);
+  --color-arcade-green: var(--arcade-green);
+  --color-arcade-beige: var(--arcade-beige);
+  --color-arcade-dark: var(--arcade-dark);
+
+  /* ── shadcn tokens ── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -77,5 +100,8 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans, Geist, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
