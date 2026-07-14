@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { getGameById } from "@/lib/actions/games"
 import { ArcadeEmbed } from "@/components/ArcadeEmbed"
@@ -43,63 +44,73 @@ export default async function GamePage({ params }: GamePageProps) {
     : { data: [] }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-      <ArcadeEmbed url={game.embed_url} title={game.title} />
-
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">{game.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Por {game.profiles?.username ?? "Anónimo"}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 items-center">
-          {game.categories && (
-            <Badge>{(game.categories as Category).name}</Badge>
-          )}
-          {game.tags.map((tag: { id: string; name: string }) => (
-            <Badge key={tag.id} variant="secondary">
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
-
-        {game.description && (
-          <p className="text-muted-foreground">{game.description}</p>
-        )}
-
-        <Separator />
-
-        <div>
-          <h3 className="text-sm font-medium mb-2">Calificar</h3>
-          <Rating
-            gameId={game.id}
-            avgRating={game.avg_rating}
-            userRating={game.user_rating}
-          />
-        </div>
-
-        {related && related.length > 0 && (
-          <>
-            <Separator />
-            <div>
-              <h3 className="text-sm font-medium mb-2">Juegos relacionados</h3>
-              <div className="flex flex-wrap gap-2">
-                {related.map((r: { id: string; title: string }) => (
-                  <a
-                    key={r.id}
-                    href={`/juego/${r.id}`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {r.title}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+      {/* Embed */}
+      <div className="overflow-hidden rounded-[10px] ring-1 ring-border">
+        <ArcadeEmbed url={game.embed_url} title={game.title} />
       </div>
+
+      {/* Title & author */}
+      <div>
+        <h1 className="text-2xl font-bold text-arcade-dark">{game.title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Por {game.profiles?.username ?? "Anónimo"}
+        </p>
+      </div>
+
+      {/* Badges (category + tags) */}
+      <div className="flex flex-wrap items-center gap-2">
+        {game.categories && (
+          <Badge className="bg-arcade-red text-arcade-beige hover:bg-arcade-red/90">
+            {(game.categories as Category).name}
+          </Badge>
+        )}
+        {game.tags.map((tag: { id: string; name: string }) => (
+          <Badge key={tag.id} variant="secondary">
+            {tag.name}
+          </Badge>
+        ))}
+      </div>
+
+      {/* Description */}
+      {game.description && (
+        <p className="text-muted-foreground">{game.description}</p>
+      )}
+
+      <Separator className="bg-border" />
+
+      {/* Rating */}
+      <div>
+        <h3 className="mb-2 text-sm font-medium text-arcade-dark">Calificar</h3>
+        <Rating
+          gameId={game.id}
+          avgRating={game.avg_rating}
+          userRating={game.user_rating}
+        />
+      </div>
+
+      {/* Related games */}
+      {related && related.length > 0 && (
+        <>
+          <Separator className="bg-border" />
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-arcade-dark">
+              Juegos relacionados
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {related.map((r: { id: string; title: string }) => (
+                <Link
+                  key={r.id}
+                  href={`/juego/${r.id}`}
+                  className="rounded-[10px] bg-arcade-green/20 px-3 py-2 text-sm text-arcade-dark transition-colors hover:bg-arcade-green/40"
+                >
+                  {r.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

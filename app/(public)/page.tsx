@@ -1,14 +1,29 @@
 import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
-import { getGames } from "@/lib/actions/games"
+import { getGames, getRecentGames, getMostPlayed, getTopRated } from "@/lib/actions/games"
 import { GameGridSkeleton } from "@/components/GameGrid"
 import { LoadMoreGames } from "@/components/LoadMoreGames"
 import { SearchBar } from "@/components/SearchBar"
 import { CategoryFilter } from "@/components/CategoryFilter"
+import { CuratedSection } from "@/components/CuratedSection"
+import { CuratedSectionSkeleton } from "@/components/CuratedSection"
+import { HeroSlider } from "@/components/HeroSlider"
+import { RankingSection } from "@/components/RankingSection"
 import type { Category } from "@/lib/definitions"
 
-interface HomeProps {
-  searchParams: Promise<{ q?: string; category?: string }>
+async function RecentGamesSection() {
+  const games = await getRecentGames(8)
+  return <CuratedSection title="Últimos Juegos" games={games} />
+}
+
+async function MostPlayedSection() {
+  const games = await getMostPlayed(8)
+  return <CuratedSection title="Más Jugados" games={games} />
+}
+
+async function TopRatedSection() {
+  const games = await getTopRated(8)
+  return <CuratedSection title="Mejor Valorados" games={games} />
 }
 
 async function GameList({ searchParams }: { searchParams: Awaited<HomeProps["searchParams"]> }) {
@@ -20,7 +35,7 @@ async function GameList({ searchParams }: { searchParams: Awaited<HomeProps["sea
 
   if (total === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground">
         <p className="text-lg">No hay juegos aún</p>
         <p className="text-sm">¡Sé el primero en publicar uno!</p>
       </div>
@@ -43,30 +58,60 @@ async function CategoryList() {
   return <CategoryFilter categories={(categories ?? []) as Category[]} />
 }
 
+/* ── Page ─────────────────────────────────────────────────── */
+
+interface HomeProps {
+  searchParams: Promise<{ q?: string; category?: string }>
+}
+
 export default async function HomePage({ searchParams }: HomeProps) {
   const params = await searchParams
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Juegos</h1>
-          <p className="text-sm text-muted-foreground">
-            Explorá juegos creados con MakeCode Arcade
-          </p>
+    <div className="mx-auto max-w-7xl space-y-10 px-4 py-6">
+      {/* Hero Slider */}
+      <HeroSlider />
+
+      {/* Curated sections */}
+      <Suspense fallback={<CuratedSectionSkeleton />}>
+        <RecentGamesSection />
+      </Suspense>
+
+      <Suspense fallback={<CuratedSectionSkeleton />}>
+        <MostPlayedSection />
+      </Suspense>
+
+      <Suspense fallback={<CuratedSectionSkeleton />}>
+        <TopRatedSection />
+      </Suspense>
+
+      {/* Ranking */}
+      <RankingSection />
+
+      {/* Full game listing with search */}
+      <section className="space-y-6 pt-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="text-[25px] font-semibold text-arcade-dark">
+              Todos los juegos
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Explorá todo nuestro catálogo
+            </p>
+          </div>
+          <Suspense fallback={null}>
+            <SearchBar />
+          </Suspense>
         </div>
-        <Suspense fallback={null}>
-          <SearchBar />
+
+        <Suspense fallback={<div className="h-8" />}>
+          <CategoryList />
         </Suspense>
-      </div>
 
-      <Suspense fallback={<div className="h-8" />}>
-        <CategoryList />
-      </Suspense>
-
-      <Suspense fallback={<GameGridSkeleton />}>
-        <GameList searchParams={params} />
-      </Suspense>
+        <Suspense fallback={<GameGridSkeleton />}>
+          <GameList searchParams={params} />
+        </Suspense>
+      </section>
     </div>
   )
 }

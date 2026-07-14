@@ -222,3 +222,83 @@ export async function getMyGames() {
 
   return (games ?? []) as unknown as GameWithDetails[]
 }
+
+/** Minimal game data used in GameThumbnail / CuratedSection */
+export type GameThumbnailData = Pick<GameWithDetails, "id" | "title" | "thumbnail_url" | "avg_rating">
+
+/** Get the most recently added games (for "Últimos Juegos") */
+export async function getRecentGames(limit = 8): Promise<GameThumbnailData[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url")
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  return (data ?? []).map((g) => ({ ...g, avg_rating: null }))
+}
+
+/** Get the most played games by view count (for "Más Jugados") */
+export async function getMostPlayed(limit = 8): Promise<GameThumbnailData[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url")
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .order("views", { ascending: false })
+    .limit(limit)
+
+  return (data ?? []).map((g) => ({ ...g, avg_rating: null }))
+}
+
+/** Get the highest-rated games (for "Mejor Valorados") */
+export async function getTopRated(limit = 8): Promise<GameThumbnailData[]> {
+  const supabase = await createClient()
+
+  // Fetch a larger pool to compute ratings from
+  const { data: games } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url")
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(50)
+
+  if (!games || games.length === 0) return []
+
+  const gameIds = games.map((g) => g.id)
+
+  const { data: ratings } = await supabase
+    .from("ratings")
+    .select("game_id, value")
+    .in("game_id", gameIds)
+
+  // group ratings by game
+  const ratingMap = new Map<string, number[]>()
+  for (const r of ratings ?? []) {
+    const bucket = ratingMap.get(r.game_id)
+    if (bucket) bucket.push(r.value)
+    else ratingMap.set(r.game_id, [r.value])
+  }
+
+  const gamesWithRating = games.map((g) => {
+    const vals = ratingMap.get(g.id)
+    return {
+      ...g,
+      avg_rating: vals
+        ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+        : null,
+    }
+  })
+
+  // Sort by avg_rating descending, then by title for deterministic order
+  return gamesWithRating
+    .filter((g) => g.avg_rating !== null)
+    .sort((a, b) => (b.avg_rating ?? 0) - (a.avg_rating ?? 0))
+    .slice(0, limit)
+}
