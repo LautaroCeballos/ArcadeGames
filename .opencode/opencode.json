@@ -11,7 +11,8 @@
         },
         "Figma": {
             "type": "remote",
-            "url": "https://mcp.figma.com/mcp"
+            "url": "https://mcp.figma.com/mcp",
+            "enabled": true
         },
         "mercadopago": {
             "type": "remote",
