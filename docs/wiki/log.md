@@ -45,3 +45,24 @@ last_updated: "2026-07-13"
 ## [2026-07-13] update | proxy-migration
 - `middleware.ts` → `proxy.ts` (Next.js 16 breaking change)
 - Export renombrado: `middleware` → `proxy`
+
+## [2026-07-13] ingest | figma-adaptation
+- Fuente: `docs/raw/plans/2026-07-13-figma-adaptation.md`
+- Páginas creadas: [[frontend/design-tokens]], [[frontend/components]]
+- Páginas actualizadas: [[stack]], [[overview]], [[project-state]], [[index]]
+- Cambios: documentación del diseño Figma (paleta rojo/verde/beige), inventario de componentes frontend, plan de adaptación visual
+
+## [2026-07-13] implement | figma-adaptation-10-fases
+- Implementación completa de las 10 fases del plan `docs/raw/plans/2026-07-13-figma-adaptation.md`
+- Build verificado: 0 errores TypeScript, todas las rutas generadas
+- **Fase 1** — `globals.css`: paleta arcade (red/green/beige), dark mode, @theme inline con tokens `arcade-*`
+- **Fase 2** — `components/Navbar.tsx` + `NavbarClient.tsx`: navbar roja con íconos lucide-react, scroll shadow, menú hamburguesa mobile
+- **Fase 3** — `components/Footer.tsx`: footer rojo con 2 columnas de links, reemplazado en `layout.tsx`
+- **Fase 4** — `lib/actions/games.ts`: `getRecentGames()`, `getMostPlayed()`, `getTopRated()` + tipo `GameThumbnailData`
+- **Fase 5** — `GameThumbnail.tsx`, `CuratedSection.tsx`, `GameCard.tsx`: thumbnails con overlay oscuro, scroll horizontal snap, skeletones
+- **Fase 6** — `app/(public)/page.tsx`: homepage rediseñada con HeroSlider + 3 secciones curadas + ranking + grilla completa
+- **Fase 7** — `components/HeroSlider.tsx`: auto-play 5s, dots, pausa en hover, mock data
+- **Fase 8** — `RankingSection.tsx` + `PodiumCard.tsx`: 4 cards de período + podio decorativo
+- **Fase 9** — `app/(public)/juego/[id]/page.tsx`: badges rojos, colores arcade, estilo consistente
+- **Fase 10** — Build verificado (compiled successfully, 0 errors)
+- Páginas actualizadas: [[project-state]], [[frontend/components]]

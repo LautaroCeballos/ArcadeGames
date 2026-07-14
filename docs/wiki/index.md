@@ -13,6 +13,7 @@ Portal web de juegos MakeCode Arcade. Inspirado en arcade portals como juegosdia
 ### Generales
 - [[overview]] — Visión general, audiencia, concepto
 - [[stack|stack]] — Tech stack y justificación
+- [[project-state|project-state]] — Estado actual del proyecto
 
 ### Arquitectura
 - [[architecture/routes]] — Estructura de rutas (públicas y protegidas)
@@ -22,6 +23,10 @@ Portal web de juegos MakeCode Arcade. Inspirado en arcade portals como juegosdia
 
 ### Autenticación
 - [[auth/flow]] — Flujo de autenticación (email/password)
+
+### Frontend / Diseño
+- [[frontend/design-tokens]] — Design tokens, paleta de colores, sistema visual (desde Figma)
+- [[frontend/components]] — Inventario de componentes UI, hooks y server actions
 
 ### Features
 - [[features/games]] — Sistema de juegos: creación, embed, búsqueda, ratings

@@ -59,19 +59,26 @@ app/
 ### `/components/` — Componentes
 | Archivo | Tipo | Props clave |
 |---------|------|-------------|
-| `Navbar.tsx` | Server | Lee sesión, muestra auth links |
-| `AuthButton.tsx` | Server | Form action `signOut` |
-| `LoginForm.tsx` | Client | `useActionState(signIn)` |
-| `SignUpForm.tsx` | Client | `useActionState(signUp)` |
-| `GameCard.tsx` | Server | `game: GameWithDetails` |
+| `Navbar.tsx` | Server | Fetches user, renders `<NavbarClient>` |
+| `NavbarClient.tsx` | Client | `{ user }` — menú hamburguesa, scroll shadow, íconos |
+| `Footer.tsx` | Server | Links estáticos, fondo arcade-red |
+| `HeroSlider.tsx` | Client | `slides[]` — auto-play 5s, dots, pausa en hover |
+| `CuratedSection.tsx` | Server | `{ title, games[] }` — scroll horizontal snap |
+| `GameThumbnail.tsx` | Server | `{ game }` — overlay oscuro + rating |
+| `GameCard.tsx` | Server | `game: GameWithDetails` — estilo thumbnail |
 | `GameGrid.tsx` | Server | `games: GameWithDetails[]` + Skeleton |
 | `LoadMoreGames.tsx` | Client | Paginación "Cargar más" con server action |
 | `ArcadeEmbed.tsx` | Client | `url, title` — iframe con loading/fallback |
+| `RankingSection.tsx` | Server | Rankings mock por período (Ayer, Semana, Mes, Año) |
+| `PodiumCard.tsx` | Server | Podio decorativo con trofeo |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
 | `CategoryFilter.tsx` | Client | Pills de categorías, URL params |
 | `SubmitGameForm.tsx` | Client | `categories`, action `createGame` |
 | `GameActions.tsx` | Client | `gameId, hidden` — ocultar/eliminar |
+| `AuthButton.tsx` | Server | Form action `signOut` |
+| `LoginForm.tsx` | Client | `useActionState(signIn)` |
+| `SignUpForm.tsx` | Client | `useActionState(signUp)` |
 | `ui/*.tsx` | — | button, card, input, toast, badge, etc. |
 
 ### `/lib/` — Lógica
@@ -81,7 +88,7 @@ app/
 | `supabase/server.ts` | Server client (cookies, RSC) |
 | `supabase/middleware.ts` | Session refresh middleware (usado por proxy.ts) |
 | `actions/auth.ts` | signIn, signUp, signOut (useActionState signature) |
-| `actions/games.ts` | createGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames |
+| `actions/games.ts` | createGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames, getRecentGames, getMostPlayed, getTopRated |
 | `actions/ratings.ts` | rateGame (upsert) |
 | `definitions.ts` | Tipos Database, Game, Profile, Category, Tag, Rating, GameWithDetails |
 | `game-utils.ts` | extractGameId, buildEmbedUrl, isValidMakeCodeUrl (3 formatos) |
@@ -184,14 +191,34 @@ Archivo `.env.local`:
 
 ---
 
+## Diseño Figma
+
+El diseño visual completo está definido en el archivo de Figma `ArcadePlay` (file key: `PaIO3mFRsd5QQ2NA2GsxtT`).
+
+| Aspecto | Estado |
+|---------|--------|
+| Design tokens | ✅ Aplicados en `globals.css` |
+| Navbar roja | ✅ Implementada con íconos lucide-react + menú mobile |
+| Hero Slider | ✅ Auto-play 5s, dots, mock data |
+| Secciones curadas | ✅ Últimos Juegos, Más Jugados, Mejor Valorados |
+| Game Thumbnails con overlay | ✅ Overlay oscuro + rating + hover scale |
+| Ranking + Podio | ✅ Mock data para Ayer, Semana, Mes, Año |
+| Footer rojo | ✅ 2 columnas de links en beige |
+| Página de juego adaptada | ✅ Badges rojos, colores arcade |
+
+Ver [[frontend/design-tokens]] para paleta y sistema visual.
+Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
+
 ## Pendiente (próximos pasos)
 
 1. 🟡 Confirmar que el trigger de perfil funciona (auto-create en signup)
-2. 🔵 Tags en formulario de subida
-3. 🔵 Contador de vistas (increment en cada visita)
-4. 🔵 Validar que el ID de MakeCode realmente existe (antes de aceptar la URL)
-5. 🔵 Modo oscuro
-6. 🔵 Página 404 personalizada con search
+2. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
+3. 🔵 Conectar HeroSlider a CMS o datos dinámicos
+4. 🔵 Tags en formulario de subida
+5. 🔵 Contador de vistas (increment en cada visita)
+6. 🔵 Validar que el ID de MakeCode realmente existe (antes de aceptar la URL)
+7. 🔵 Modo oscuro
+8. 🔵 Página 404 personalizada con search
 
 > Leyenda: 🔴 Crítico · 🟡 Importante · 🟢 Nice-to-have · 🔵 Futuro
 
@@ -203,3 +230,5 @@ Ver [[architecture/routes]] para estructura de rutas.
 Ver [[database/schema]] para esquema de tablas.
 Ver [[auth/flow]] para flujo de autenticación.
 Ver [[features/games]] para sistema de juegos.
+Ver [[frontend/components]] para inventario de componentes.
+Ver [[frontend/design-tokens]] para sistema visual.
