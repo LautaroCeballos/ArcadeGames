@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# obsidian
+docs/.obsidian/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

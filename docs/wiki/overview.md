@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Visión General"
 tags: [concept]
-last_updated: "2026-07-13"
+last_updated: "2026-07-20"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-13-figma-adaptation.md
@@ -21,7 +21,7 @@ Plataforma web estilo arcade portal (ej. juegosdiarios.com) enfocada en juegos d
 
 ## Diferenciación
 
-- No se suben archivos — los juegos se referencian por URL de MakeCode
+- No se suben archivos — los juegos se referencian por URL de MakeCode o Scratch
 - Curado: solo juegos aprobados son públicos
 - Liviano: sin leaderboards, analytics, ni challenges (postergado a futura versión)
 
@@ -50,5 +50,5 @@ Ver [[stack]] para detalle completo.
 
 ## Estado actual
 
-Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer). Actualmente se está expandiendo el soporte para incluir juegos de **Scratch** además de MakeCode Arcade.
+Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer). El formulario de subida soporta **MakeCode Arcade** y **Scratch** con toggle de plataforma, preview condicional y validación dual.
 Ver los planes en `docs/raw/plans/2026-07-13-figma-adaptation.md` y `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`.

@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Estado del Proyecto"
 tags: [state, checkpoint]
-last_updated: "2026-07-14"
+last_updated: "2026-07-20"
 sources:
   - package.json
   - next.config.ts
@@ -9,7 +9,7 @@ sources:
 
 # ArcadePlay — Estado del Proyecto
 
-Checkpoint de implementación al 14/07/2026. Este documento captura el estado completo del proyecto para evitar pérdida de contexto.
+Checkpoint de implementación al 20/07/2026. Este documento captura el estado completo del proyecto para evitar pérdida de contexto.
 
 ---
 
@@ -70,17 +70,18 @@ app/
 | `GameGrid.tsx` | Server | `games: GameWithDetails[]` + Skeleton |
 | `LoadMoreGames.tsx` | Client | Paginación "Cargar más" con server action |
 | `ArcadeEmbed.tsx` | Client | `url, title, sandbox?` — iframe 4:3 con loading/fallback |
-| `GameTabs.tsx` | Client | `gameId, title` — tabs Juego (default) + Editor debajo del embed |
+| `ScratchEmbed.tsx` | Client | `url, title` — iframe con `allowtransparency`, aspect 485/402, loading/fallback |
+| `GameTabs.tsx` | Client | `gameId, title, platform?, embedUrl?` — tabs adaptativos: MakeCode → Juego + Editor; Scratch → solo Juego |
 | `GameActions.tsx` | Client | `gameId, hidden` — ocultar/eliminar |
 | `RankingSection.tsx` | Server | Rankings mock — 2 layouts: simple (3 entries) y doble (6 entries en 2 columnas) |
 | `PodiumCard.tsx` | Server | Top 3 global con trofeos oro/plata/bronce, mismo formato visual que RankingCard |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
 | `CategoryFilter.tsx` | Client | Pills de categorías, URL params |
-| `SubmitGameForm.tsx` | Client | `categories`, action `createGame` |
-| `ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange` — auto MakeCode + upload |
+| `SubmitGameForm.tsx` | Client | `categories[]` — toggle plataforma MakeCode/Scratch, validación dual, preview condicional |
+| `ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?` — auto MakeCode + upload; Scratch solo upload |
 | `DashboardCard.tsx` | Client | `{ game }` — card horizontal con thumbnail, status, stats, acciones |
-| `EditGameForm.tsx` | Client | `{ game, categories }` — formulario pre-cargado para editar |
+| `EditGameForm.tsx` | Client | `{ game, categories, username }` — formulario pre-cargado con preview según platform, ThumbnailPicker |
 | `ProfileHeader.tsx` | Server | `{ profile, isOwnProfile, isFollowing }` — avatar, username, bio, website, stats bar (estrellas, juegos, seguidores, siguiendo), follow button |
 | `ProfileBadges.tsx` | Server | `{ badges[] }` — grid de emblemas ganados con tooltip hover |
 | `ProfileGameCard.tsx` | Server | `{ game, isOwner }` — card de juego con thumbnail, status badge, stats, acciones (editar, ocultar, eliminar si es dueño) |
@@ -116,9 +117,12 @@ app/
 | `use-toast.ts` | Estado global de toasts |
 
 ### `/supabase/migrations/`
-| Archivo | Propósito |
-|---------|-----------|
-| `00001_initial_schema.sql` | Creación de tablas + RLS + seed |
+| Archivo | Propósito | Estado |
+|---------|-----------|--------|
+| `00001_initial_schema.sql` | Creación de tablas + RLS + seed | ✅ Ejecutada |
+| `00002_profiles_badges_follows.sql` | Badges, follows, bio/website en profiles | ✅ Ejecutada |
+| `00003_add_platform.sql` | Columna `platform` en games + índice | ✅ Ejecutada |
+| `00004_revoke_public_execute.sql` | Revocar EXECUTE público en funciones SECURITY DEFINER | ✅ Ejecutada |
 
 ---
 
@@ -224,14 +228,16 @@ Archivo `.env.local`:
 
 ### Edición de juegos ✅
 - Ruta `/editar/[id]` con formulario pre-cargado
+- Preview condicional según platform (`ArcadeEmbed` o `ScratchEmbed`)
 - Campos editables: título, descripción, categoría, miniatura
 - Server action `updateGame` con verificación de ownership
-- ThumbnailPicker integrado
+- ThumbnailPicker integrado con platform-aware
 
 ### Miniatura de juegos ✅
 - Auto-thumbnail desde API de MakeCode (vía `fetchProjectThumbnailUrl`)
 - Subida manual de imagen a Supabase Storage (bucket `game-thumbnails`)
 - Grid de thumbnails seleccionables
+- Para Scratch: solo subida manual (no hay API pública de thumbnails)
 - Sin `getDisplayMedia` (rechazado por restricción cross-origin)
 
 ### Embebido de juegos ✅
@@ -262,14 +268,12 @@ Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
 
 ## Pendiente (próximos pasos)
 
-1. 🟡 Confirmar que el trigger de perfil funciona (auto-create en signup)
-2. 🔵 Implementar formulario dual (MakeCode + Scratch) — plan en `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`
-3. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
-4. 🔵 Conectar HeroSlider a CMS o datos dinámicos
-5. 🔵 Tags en formulario de subida
-6. 🔵 Contador de vistas (increment en cada visita)
-7. 🔵 Modo oscuro
-8. 🔵 Página 404 personalizada con search
+1. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
+2. 🔵 Conectar HeroSlider a CMS o datos dinámicos
+3. 🔵 Tags en formulario de subida
+4. 🔵 Contador de vistas (increment en cada visita)
+5. 🔵 Modo oscuro
+6. 🔵 Página 404 personalizada con search
 
 > Leyenda: 🔴 Crítico · 🟡 Importante · 🟢 Nice-to-have · 🔵 Futuro
 

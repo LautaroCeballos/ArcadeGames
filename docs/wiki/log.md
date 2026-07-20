@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-14"
+last_updated: "2026-07-20"
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
@@ -121,6 +121,21 @@ last_updated: "2026-07-14"
 - Fuente: `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`
 - Páginas actualizadas: [[features/games]], [[database/schema]], [[frontend/components]], [[overview]], [[project-state]]
 - Cambios: documentación del soporte dual MakeCode + Scratch, nueva columna `platform` en `games`, nuevo componente `ScratchEmbed`, actualización de `SubmitGameForm`, `GameTabs`, `EditGameForm`, funciones en `game-utils.ts`
+
+## [2026-07-20] implement | submit-form-dual-platform
+- Implementación completa del formulario dual (MakeCode + Scratch) según plan `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`
+- **Fase 1** — `lib/game-utils.ts`: `extractScratchId`, `buildScratchEmbedUrl`, `isValidScratchUrl`, `extractGamePlatform`. `lib/definitions.ts`: `platform` en interface `Game`
+- **Fase 2** — `components/ScratchEmbed.tsx`: nuevo embed con `allowtransparency`, aspect 485/402. `components/GameTabs.tsx`: adaptativo por plataforma
+- **Fase 3** — `components/SubmitGameForm.tsx`: rediseño completo con toggle MakeCode/Scratch, validación dual, preview condicional, campos compartidos. `components/ThumbnailPicker.tsx`: prop `platform` para saltar auto-fetch en Scratch
+- **Fase 4** — `lib/actions/games.ts`: `createGame` con validación dual. Páginas: `subir/page.tsx` (copy), `juego/[id]/page.tsx` (badge plataforma + platform a GameTabs), `editar/[id]/page.tsx` (platform a EditGameForm). `components/EditGameForm.tsx`: preview según platform
+- Build verificado: 0 errores TS, 8 rutas
+- Páginas actualizadas: [[project-state]], [[overview]], [[frontend/components]], [[log]]
+
+## [2026-07-20] db | migraciones-supabase
+- Ejecutada migración `00003_add_platform` en Supabase: columna `platform` en `games` con CHECK constraint e índice. 7 juegos existentes migrados con `'makecode'`
+- Ejecutada migración `00004_revoke_public_execute`: revocado EXECUTE de `PUBLIC` en funciones `handle_new_user`, `award_badge`, `recalc_owner_stars` (seguridad)
+- Verificado: trigger `on_auth_user_created` existe y funciona (1 perfil creado automáticamente)
+- Páginas actualizadas: [[project-state]]
 
 ## [2026-07-14] update | ranking-section-rediseno
 
