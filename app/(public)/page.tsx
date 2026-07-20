@@ -4,12 +4,12 @@ import { getGames, getRecentGames, getMostPlayed, getTopRated } from "@/lib/acti
 import { GameGridSkeleton } from "@/components/GameGrid"
 import { LoadMoreGames } from "@/components/LoadMoreGames"
 import { SearchBar } from "@/components/SearchBar"
-import { CategoryFilter } from "@/components/CategoryFilter"
+import { TagFilter } from "@/components/CategoryFilter"
 import { CuratedSection } from "@/components/CuratedSection"
 import { CuratedSectionSkeleton } from "@/components/CuratedSection"
 import { HeroSlider } from "@/components/HeroSlider"
 import { RankingSection } from "@/components/RankingSection"
-import type { Category } from "@/lib/definitions"
+import type { Tag } from "@/lib/definitions"
 
 async function RecentGamesSection() {
   const games = await getRecentGames(8)
@@ -27,9 +27,10 @@ async function TopRatedSection() {
 }
 
 async function GameList({ searchParams }: { searchParams: Awaited<HomeProps["searchParams"]> }) {
+  const tagIds = searchParams.tag ? [searchParams.tag] : undefined
   const { games, total } = await getGames({
     search: searchParams.q,
-    categoryId: searchParams.category,
+    tagIds,
     page: 0,
   })
 
@@ -47,21 +48,23 @@ async function GameList({ searchParams }: { searchParams: Awaited<HomeProps["sea
       initialGames={games}
       total={total}
       search={searchParams.q}
-      categoryId={searchParams.category}
+      tagIds={tagIds}
     />
   )
 }
 
 async function CategoryList() {
   const supabase = await createClient()
-  const { data: categories } = await supabase.from("categories").select("*")
-  return <CategoryFilter categories={(categories ?? []) as Category[]} />
+  const { data: tags } = await supabase.from("tags").select("*")
+  // Exclude platform tags from filter (they show as badges on game cards)
+  const displayTags = (tags ?? []).filter((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch')
+  return <TagFilter tags={displayTags as Tag[]} />
 }
 
 /* ── Page ─────────────────────────────────────────────────── */
 
 interface HomeProps {
-  searchParams: Promise<{ q?: string; category?: string }>
+  searchParams: Promise<{ q?: string; tag?: string }>
 }
 
 export default async function HomePage({ searchParams }: HomeProps) {

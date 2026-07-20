@@ -5,6 +5,7 @@ last_updated: "2026-07-20"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
+  - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
 ---
 
 # ArcadePlay — Esquema de Base de Datos
@@ -21,11 +22,13 @@ sources:
 | website | text | Opcional, enlace externo |
 | created_at | timestamp | Default `now()` |
 
-### `categories`
+### `categories` (deprecada → reemplazada por tags)
 | Columna | Tipo | Notas |
 |---------|------|-------|
 | id | uuid PK | Default `gen_random_uuid()` |
 | name | text UNIQUE NOT NULL | |
+
+> [!note] A partir de la migración `00005_tags_migration.sql`, `categories` ya no se usa. Las categorías se migraron a la tabla `tags`. La columna `games.category_id` fue eliminada.
 
 ### `games`
 | Columna | Tipo | Notas |
@@ -37,7 +40,6 @@ sources:
 | description | text | |
 | embed_url | text NOT NULL | Construido según plataforma (`buildEmbedUrl` o `buildScratchEmbedUrl`) |
 | thumbnail_url | text | |
-| category_id | uuid FK → categories(id) | |
 | status | text | Default `'pending'`. Valores: `pending`, `approved`, `rejected` |
 | hidden | boolean | Default `false` |
 | created_at | timestamp | Default `now()` |
@@ -47,7 +49,9 @@ sources:
 | Columna | Tipo | Notas |
 |---------|------|-------|
 | id | uuid PK | Default `gen_random_uuid()` |
-| name | text UNIQUE | |
+| name | text UNIQUE | Seeded con 12 tags: MakeCode Arcade, Scratch + 10 categorías |
+
+> [!note] Las tags reemplazan a `categories` como sistema de clasificación. Cada juego puede tener múltiples tags. La primera tag es siempre la plataforma (auto-asignada).
 
 ### `game_tags`
 | Columna | Tipo | Notas |

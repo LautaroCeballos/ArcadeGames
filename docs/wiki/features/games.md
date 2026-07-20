@@ -5,6 +5,7 @@ last_updated: "2026-07-20"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
+  - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
 ---
 
 # ArcadePlay — Sistema de Juegos
@@ -45,17 +46,41 @@ La URL de embed se construye como `https://scratch.mit.edu/projects/{ID}/embed`.
 - **Scratch**: El ID se extrae con `extractScratchId()` de la URL. El formato es `scratch.mit.edu/projects/{numeric_id}`.
 - **Detección automática**: `extractGamePlatform()` detecta la plataforma según el hostname de la URL.
 
+## Tags (sistema de categorías múltiples)
+
+> [!done] Implementado. Las categorías únicas fueron reemplazadas por **tags** (sistema many-to-many). Se eliminaron `categories` y `games.category_id` en favor de `tags` y `game_tags`.
+
+Las tags se seedearon desde las categorías originales (10) más las tags de plataforma "MakeCode Arcade" y "Scratch":
+
+| Tag | Tipo | Color |
+|-----|------|-------|
+| MakeCode Arcade | Plataforma | Rojo (locked automático) |
+| Scratch | Plataforma | Verde (locked automático) |
+| Acción, Aventura, Puzzle, Plataformas, Carreras, Deportes, Estrategia, Arcade, Disparos, Multijugador | Categoría | Rotación de colores |
+
+- Cada juego tiene **múltiples tags** vía `game_tags`
+- La primera tag es **siempre la plataforma** (auto-asignada, no removible)
+- Los juegos existentes migraron su `category_id` a tags + platform tag
+
+Ver `lib/actions/games.ts` — `createGame` acepta `tag_ids[]` y auto-inserta platform tag.
+Ver `components/TagPicker.tsx` — componente visual de selección múltiple.
+
 ## Flujo de publicación
 
 1. Usuario autenticado va a `/subir`
-2. **Selecciona plataforma**: MakeCode Arcade o Scratch (toggle visual)
-3. Pega la URL correspondiente a la plataforma seleccionada
+2. **Step 1** — Pantalla de bienvenida: "¿Qué tipo de juego querés publicar?"
+   - Dos cards visuales grandes: MakeCode Arcade (rojo, ícono Gamepad2) y Scratch (verde, ícono Puzzle)
+   - Sin opciones extras, solo elegir plataforma
+3. **Step 2** — Formulario 2 columnas (como la página de juego):
+   - **Izquierda** (sticky): Preview embed. Inicialmente placeholder "Pegá la URL del juego", luego embed real + tag cloud
+   - **Derecha**: URL input, título, descripción, TagPicker (visual multi-select), ThumbnailPicker
 4. El sistema extrae el ID, verifica que no exista duplicado y construye el embed URL
-5. Se muestra preview del embed (usando `ArcadeEmbed` o `ScratchEmbed` según plataforma)
-6. Thumbnail: MakeCode → auto (vía API) + upload; Scratch → solo upload
-7. Usuario completa título, descripción, categoría
-8. Submit → `createGame` action → inserta con `platform`, `status: 'approved'`
-9. Redirige al perfil del usuario
+5. Thumbnail: MakeCode → auto (vía API) + upload; Scratch → solo upload
+6. Usuario selecciona tags adicionales (plataforma ya está como locked tag en TagPicker)
+7. Submit → `createGame` action → inserta con `platform` + `game_tags`, `status: 'approved'`
+8. Redirige al perfil del usuario
+
+> [!done] Implementado como parte del plan `docs/raw/plans/2026-07-20-submit-form-tags-redesign.md`.
 
 ## Página de detalle (`/juego/[id]`)
 
@@ -98,8 +123,9 @@ Formulario pre-cargado con los datos actuales del juego:
 
 - Preview del embed (solo lectura)
 - ThumbnailPicker para cambiar miniatura
-- Campos editables: título, descripción, categoría
-- Server action `updateGame` en `lib/actions/games.ts:93`
+- Campos editables: título, descripción
+- TagPicker con tags actuales del juego precargadas (platform tag locked)
+- Server action `updateGame` en `lib/actions/games.ts` — reemplaza `game_tags` (delete all + insert)
 - Solo el dueño del juego puede editarlo (verificado server-side)
 - Redirige a `/perfil/{username}` al guardar exitosamente
 
@@ -113,9 +139,10 @@ Formulario pre-cargado con los datos actuales del juego:
 
 ## Búsqueda
 
-Implementada con ILIKE sobre `title` + join con `tags` + filtro por categoría:
+Implementada con ILIKE sobre `title` + filtro por tags:
 
-- `lib/actions/games.ts` — `getGames({ search, categoryId, tagIds, page, limit })`
+- `lib/actions/games.ts` — `getGames({ search, tagIds?, page, limit })`
+- Filtro por tags: acepta array de tag IDs (incluye platform tags)
 - Paginación via LIMIT/OFFSET
 - Orden por `created_at DESC` por defecto
 

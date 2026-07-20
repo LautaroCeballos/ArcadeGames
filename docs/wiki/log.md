@@ -137,6 +137,28 @@ last_updated: "2026-07-20"
 - Verificado: trigger `on_auth_user_created` existe y funciona (1 perfil creado automáticamente)
 - Páginas actualizadas: [[project-state]]
 
+## [2026-07-20] implement | submit-form-tags-redesign
+- Implementación completa del rediseño del formulario de subida con tags + layout 2 columnas
+- DB: migración 00005 ejecutada — 12 tags seeded, 16 game_tags migrados, category_id dropeada
+- Definitions: removido `category_id` de Game, removido `categories` de GameWithDetails
+- Actions: createGame/updateGame aceptan tag_ids, insert/reemplazan game_tags; getGames filtra por tagIds; todas las queries sin categories(*)
+- TagPicker: nuevo componente visual, 8 colores rotativos, locked tag, multiselect
+- SubmitGameForm: Step 1 (selector plataforma con cards visuales) + Step 2 (2 columnas, TagPicker, ThumbnailPicker condicional)
+- EditGameForm: TagPicker reemplaza Select categoría, tags precargadas, platform tag locked
+- Páginas: subir (fetch tags), editar (fetch tags + game_tags), juego/[id] (tags como badges, related por tag), perfil (tags adjuntos)
+- Homepage: TagFilter reemplaza CategoryFilter, URL param `?tag=`, filtro funcional
+- Build 0 errores TS, validación chrome-devtools exitosa (homepage, juego/[id], filtro tags, mobile responsive)
+- Páginas actualizadas en wiki: [[project-state]], [[frontend/components]], [[database/schema]], [[log]]
+
+## [2026-07-20] ingest | submit-form-tags-redesign-plan
+- Fuente: `docs/raw/plans/2026-07-20-submit-form-tags-redesign.md`
+- Nuevo plan: rediseño completo del formulario de subida
+  - Step 1: selector visual de plataforma (MakeCode/Scratch)
+  - Step 2: formulario 2 columnas (preview izquierda, inputs derecha)
+  - Tags reemplazan categorías (migración DB + TagPicker visual)
+  - Interfaz child-friendly con burbujas coloridas
+- Páginas actualizadas: [[features/games]], [[frontend/components]], [[database/schema]], [[overview]], [[project-state]], [[log]]
+
 ## [2026-07-14] update | ranking-section-rediseno
 
 - Rediseño completo de `RankingSection.tsx` y `PodiumCard.tsx` para alinearse al diseño Figma

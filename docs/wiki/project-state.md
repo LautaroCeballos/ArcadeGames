@@ -3,8 +3,9 @@ title: "ArcadePlay — Estado del Proyecto"
 tags: [state, checkpoint]
 last_updated: "2026-07-20"
 sources:
-  - package.json
+  - docs/raw/plans/makecode_arcade_platform_FULL.md
   - next.config.ts
+  - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
 ---
 
 # ArcadePlay — Estado del Proyecto
@@ -77,9 +78,9 @@ app/
 | `PodiumCard.tsx` | Server | Top 3 global con trofeos oro/plata/bronce, mismo formato visual que RankingCard |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
-| `CategoryFilter.tsx` | Client | Pills de categorías, URL params |
-| `SubmitGameForm.tsx` | Client | `categories[]` — toggle plataforma MakeCode/Scratch, validación dual, preview condicional |
-| `ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?` — auto MakeCode + upload; Scratch solo upload |
+| `CategoryFilter.tsx` (→ `TagFilter`) | Client | Pills de tags, URL param `?tag=` |
+| `SubmitGameForm.tsx` | Client | `tags[]` — Step 1 selector plataforma visual + Step 2 2 columnas (preview+tags izq, inputs der), TagPicker |
+| `TagPicker.tsx` | Client | `tags, selectedIds, onChange, lockedIds?, max?` — visual multi-select, 8 colores, locked tag |
 | `DashboardCard.tsx` | Client | `{ game }` — card horizontal con thumbnail, status, stats, acciones |
 | `EditGameForm.tsx` | Client | `{ game, categories, username }` — formulario pre-cargado con preview según platform, ThumbnailPicker |
 | `ProfileHeader.tsx` | Server | `{ profile, isOwnProfile, isFollowing }` — avatar, username, bio, website, stats bar (estrellas, juegos, seguidores, siguiendo), follow button |
@@ -123,6 +124,7 @@ app/
 | `00002_profiles_badges_follows.sql` | Badges, follows, bio/website en profiles | ✅ Ejecutada |
 | `00003_add_platform.sql` | Columna `platform` en games + índice | ✅ Ejecutada |
 | `00004_revoke_public_execute.sql` | Revocar EXECUTE público en funciones SECURITY DEFINER | ✅ Ejecutada |
+| `00005_tags_migration.sql` | Seed tags + migrar category_id + drop columna | ✅ Ejecutada |
 
 ---
 
@@ -190,10 +192,18 @@ Archivo `.env.local`:
 - Filtro por URL params (`?q=`)
 - ILIKE en `games.title`
 
-### Filtro por categorías ✅
-- CategoryFilter con pills
-- URL params (`?category=`)
-- Botón "Todas" para reset
+### Filtro por tags ✅
+- TagFilter (antes CategoryFilter) con pills + URL params `?tag=`
+- Tags incluyen platform tags + 10 categorías migradas
+- Filtro por tag ID funciona tanto en server (getGames) como client (LoadMoreGames)
+
+### Sistema de tags implementado ✅
+- Tags reemplazan completamente a category_id
+- TagPicker visual: burbujas coloridas, multiselección, locked tag, 8 colores rotativos
+- SubmitGameForm rediseñado: Step 1 (selector plataforma visual) → Step 2 (2 columnas, preview izquierda, inputs derecha, TagPicker, ThumbnailPicker)
+- EditGameForm actualizado: TagPicker en vez de Select categoría
+- Migración DB: 12 tags seeded, 16 game_tags creados (8 juegos × 2 tags), category_id dropeada
+- Juego/[id] muestra tags como badges (platform tag con color distintivo)
 
 ### Rating ✅
 - 5 estrellas interactivas
@@ -270,10 +280,9 @@ Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
 
 1. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
 2. 🔵 Conectar HeroSlider a CMS o datos dinámicos
-3. 🔵 Tags en formulario de subida
-4. 🔵 Contador de vistas (increment en cada visita)
-5. 🔵 Modo oscuro
-6. 🔵 Página 404 personalizada con search
+3. 🔵 Contador de vistas (increment en cada visita)
+4. 🔵 Modo oscuro
+5. 🔵 Página 404 personalizada con search
 
 > Leyenda: 🔴 Crítico · 🟡 Importante · 🟢 Nice-to-have · 🔵 Futuro
 

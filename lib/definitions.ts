@@ -94,7 +94,6 @@ export interface Game {
   description: string | null
   embed_url: string
   thumbnail_url: string | null
-  category_id: string | null
   status: string
   hidden: boolean
   created_at: string
@@ -120,7 +119,6 @@ export interface Rating {
 }
 
 export type GameWithDetails = Game & {
-  categories: Category | null
   profiles: Pick<Profile, "username" | "avatar_url"> | null
   tags: Tag[]
   avg_rating: number | null

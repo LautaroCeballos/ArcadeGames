@@ -1,46 +1,55 @@
 "use client"
 
-import { useActionState, useState, useId, useCallback } from "react"
+import { useActionState, useState, useId, useMemo, useCallback } from "react"
 import { updateGame } from "@/lib/actions/games"
 import { extractGameId, extractScratchId } from "@/lib/game-utils"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { ArcadeEmbed } from "@/components/ArcadeEmbed"
 import { ScratchEmbed } from "@/components/ScratchEmbed"
 import { ThumbnailPicker } from "@/components/ThumbnailPicker"
+import { TagPicker } from "@/components/TagPicker"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import type { Tag } from "@/lib/definitions"
 
 interface EditGameFormProps {
   game: {
     id: string
     title: string
     description: string
-    category_id: string
     thumbnail_url: string
     embed_url: string
     platform?: 'makecode' | 'scratch'
+    tagIds: string[]
   }
-  categories: { id: string; name: string }[]
+  tags: Tag[]
   username: string
 }
 
-export function EditGameForm({ game, categories, username }: EditGameFormProps) {
+export function EditGameForm({ game, tags, username }: EditGameFormProps) {
   const [state, formAction, pending] = useActionState(updateGame, null)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(game.thumbnail_url || null)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    game.tagIds.filter((id) => {
+      const tag = tags.find((t) => t.id === id)
+      return tag && tag.name !== 'MakeCode Arcade' && tag.name !== 'Scratch'
+    })
+  )
   const router = useRouter()
   const uid = useId()
   const isScratch = game.platform === 'scratch'
   const shortId = isScratch ? extractScratchId(game.embed_url) : extractGameId(game.embed_url)
+
+  // Find platform tag
+  const platformTag = useMemo(
+    () => tags.find((t) =>
+      game.platform === 'scratch' ? t.name === 'Scratch' : t.name === 'MakeCode Arcade'
+    ),
+    [tags, game.platform]
+  )
 
   const profileUrl = `/perfil/${username}`
 
@@ -50,9 +59,14 @@ export function EditGameForm({ game, categories, username }: EditGameFormProps) 
       if (thumbnailUrl) {
         formData.append("thumbnail_url", thumbnailUrl)
       }
+      // Include platform tag + user-selected tags
+      const allTagIds = platformTag
+        ? [platformTag.id, ...selectedTagIds.filter((id) => id !== platformTag.id)]
+        : selectedTagIds
+      formData.set("tag_ids", JSON.stringify(allTagIds))
       formAction(formData)
     },
-    [game.id, thumbnailUrl, formAction]
+    [game.id, thumbnailUrl, platformTag, selectedTagIds, formAction]
   )
 
   // Redirect on success
@@ -123,21 +137,24 @@ export function EditGameForm({ game, categories, username }: EditGameFormProps) 
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="category_id">Categoría</Label>
-          <Select name="category_id" defaultValue={game.category_id || undefined}>
-            <SelectTrigger id="category_id">
-              <SelectValue placeholder="Seleccionar categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Tags */}
+        <fieldset className="space-y-3 border-0 p-0 m-0">
+          <legend className="text-sm font-medium">Etiquetas</legend>
+          <TagPicker
+            tags={tags}
+            selectedIds={[
+              ...(platformTag ? [platformTag.id] : []),
+              ...selectedTagIds,
+            ]}
+            onChange={(ids) => {
+              const withoutPlatform = platformTag
+                ? ids.filter((id) => id !== platformTag.id)
+                : ids
+              setSelectedTagIds(withoutPlatform)
+            }}
+            lockedIds={platformTag ? [platformTag.id] : []}
+          />
+        </fieldset>
       </fieldset>
 
       {state?.error && (

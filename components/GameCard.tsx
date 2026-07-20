@@ -48,12 +48,12 @@ export function GameCard({ game }: GameCardProps) {
           )}
         </div>
 
-        {game.categories && (
+        {game.tags && game.tags.length > 0 && (
           <Badge
             variant="secondary"
             className="absolute right-2 top-2 bg-arcade-beige/20 text-[10px] text-arcade-beige"
           >
-            {game.categories.name}
+            {game.tags[0].name}
           </Badge>
         )}
       </div>

@@ -134,9 +134,9 @@ export function DashboardCard({ game }: DashboardCardProps) {
 
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {game.categories && (
+          {game.tags && game.tags.length > 0 && (
             <span className="rounded-md bg-muted px-2 py-0.5 font-medium">
-              {game.categories.name}
+              {game.tags[0].name}
             </span>
           )}
           <span className="flex items-center gap-1">

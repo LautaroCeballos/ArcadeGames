@@ -5,6 +5,7 @@ last_updated: "2026-07-20"
 sources:
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
+  - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
   - components/
   - app/(public)/page.tsx
 ---
@@ -61,16 +62,17 @@ sources:
 | GameTabs | `components/GameTabs.tsx` | Client | `gameId, title, platform, embedUrl?` — tabs adaptativos. MakeCode: Juego + Editor. Scratch: solo Juego (embed directo) |
 | RankingSection | `components/RankingSection.tsx` | Server | 4 períodos (Ayer, Semana, Mes, Año) — 2 layouts: simple (3 entries) y doble (6 entries en 2 columnas). Mock data reemplazable |
 | PodiumCard | `components/PodiumCard.tsx` | Server | Top 3 global con trofeos oro/plata/bronce, mismo formato visual que RankingCard |
-| SubmitGameForm | `components/SubmitGameForm.tsx` | Client | `categories[]` — formulario con toggle de plataforma (MakeCode/Scratch). URL input con validación según plataforma, preview embed, ThumbnailPicker, campos compartidos (título, descripción, categoría). Server action `createGame` con `platform` |
+| TagPicker | `components/TagPicker.tsx` | Client | `tags[], selectedIds, onChange, lockedIds?, max?` — visual multi-select de tags. Burbujas coloridas seleccionables, locked tags con candado, check icon en seleccionados. Rotación de 8 colores |
+| SubmitGameForm | `components/SubmitGameForm.tsx` | Client | `tags[]` — **rediseñado**. Step 1: selector visual de plataforma (MakeCode/Scratch). Step 2: formulario 2 columnas (preview izquierda sticky, inputs derecha). TagPicker integrado (platform tag locked). ThumbnailPicker condicional. Server action `createGame` con `tag_ids` |
 | ThumbnailPicker | `components/ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?` — 2 fuentes: auto MakeCode (vía API), subida manual. Para Scratch solo subida manual |
 | DashboardCard | `components/DashboardCard.tsx` | Client | `{ game: GameWithDetails }` — card horizontal con thumbnail, status badge, stats (vistas, rating, fecha), acciones (jugar, editar, ocultar, eliminar). Colores según estado: verde=publicado, ámbar=pendiente, gris=oculto, rojo=rechazado |
-| EditGameForm | `components/EditGameForm.tsx` | Client | `{ game, categories[] }` — formulario pre-cargado con preview (ArcadeEmbed o ScratchEmbed según platform), ThumbnailPicker, campos editables. Server action `updateGame` |
+| EditGameForm | `components/EditGameForm.tsx` | Client | `{ game, tags[] }` — formulario pre-cargado con preview (ArcadeEmbed o ScratchEmbed según platform), ThumbnailPicker, TagPicker con tags actuales precargadas. Server action `updateGame` con tags |
 
 ### Server Actions (games / thumbnails)
 
 | Acción | Archivo | Propósito |
 |--------|---------|-----------|
-| `createGame` | `lib/actions/games.ts` | Crea juego (MakeCode o Scratch según URL). Acepta `thumbnail_url`, guarda `platform` |
+| `createGame` | `lib/actions/games.ts` | Crea juego (MakeCode o Scratch según URL). Acepta `thumbnail_url`, `tag_ids[]`, guarda `platform`, inserta `game_tags` |
 | `toggleVisibility` | `lib/actions/games.ts` | Oculta/muestra juego |
 | `deleteGame` | `lib/actions/games.ts` | Elimina juego |
 | `uploadThumbnail` | `lib/actions/thumbnails.ts` | Sube imagen a Supabase Storage → URL pública |
@@ -122,11 +124,11 @@ sources:
 
 | Action | Archivo | Propósito |
 |--------|---------|-----------|
-| createGame | `lib/actions/games.ts` | Publicar juego (award badges automáticos) |
-| updateGame | `lib/actions/games.ts` | Editar juego (solo dueño) |
+| createGame | `lib/actions/games.ts` | Publicar juego con tags (award badges automáticos) |
+| updateGame | `lib/actions/games.ts` | Editar juego + tags (solo dueño) |
 | toggleVisibility | `lib/actions/games.ts` | Ocultar/mostrar juego |
 | deleteGame | `lib/actions/games.ts` | Eliminar juego |
-| getGames | `lib/actions/games.ts` | Listar juegos (búsqueda, filtro, paginación) |
+| getGames | `lib/actions/games.ts` | Listar juegos (búsqueda, filtro por tags, paginación) |
 | getGameById | `lib/actions/games.ts` | Detalle de juego + tags + ratings |
 | getUserGames | `lib/actions/games.ts` | Juegos públicos de un usuario |
 | getMyGames | `lib/actions/games.ts` | Juegos del usuario actual |

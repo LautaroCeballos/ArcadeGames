@@ -7,7 +7,6 @@ import { GameTabs } from "@/components/GameTabs"
 import { Rating } from "@/components/Rating"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import type { Category } from "@/lib/definitions"
 
 interface GamePageProps {
   params: Promise<{ id: string }>
@@ -33,17 +32,21 @@ export default async function GamePage({ params }: GamePageProps) {
 
   if (!game) notFound()
 
+  // Related games: match first non-platform tag
   const supabase = await createClient()
-  const { data: related } = game.categories
+  const primaryTag = game.tags?.find((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch')
+  const { data: related } = primaryTag
     ? await supabase
-        .from("games")
-        .select("id, title")
-        .eq("category_id", (game.categories as Category).id)
-        .neq("id", game.id)
-        .eq("status", "approved")
-        .eq("hidden", false)
+        .from("game_tags")
+        .select("games(id, title)")
+        .eq("tag_id", primaryTag.id)
+        .neq("game_id", game.id)
         .limit(4)
     : { data: [] }
+
+  const relatedGames = (related ?? [])
+    .map((r: { games: unknown }) => (r as { games: { id: string; title: string } }).games)
+    .filter(Boolean) as { id: string; title: string }[]
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -68,26 +71,25 @@ export default async function GamePage({ params }: GamePageProps) {
             </p>
           </div>
 
-          {/* Badges (platform + category + tags) */}
+          {/* Badges (platform + tags) */}
           <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              className={game.platform === 'scratch'
-                ? 'bg-arcade-green text-white hover:bg-arcade-green/90'
-                : 'bg-arcade-red text-arcade-beige hover:bg-arcade-red/90'
-              }
-            >
-              {game.platform === 'scratch' ? 'Scratch' : 'MakeCode'}
-            </Badge>
-            {game.categories && (
-              <Badge variant="secondary">
-                {(game.categories as Category).name}
-              </Badge>
-            )}
-            {game.tags.map((tag: { id: string; name: string }) => (
-              <Badge key={tag.id} variant="secondary">
-                {tag.name}
-              </Badge>
-            ))}
+            {game.tags.map((tag: { id: string; name: string }) => {
+              const isPlatform = tag.name === 'MakeCode Arcade' || tag.name === 'Scratch'
+              return (
+                <Badge
+                  key={tag.id}
+                  className={isPlatform
+                    ? (tag.name === 'Scratch'
+                      ? 'bg-arcade-green text-white hover:bg-arcade-green/90'
+                      : 'bg-arcade-red text-arcade-beige hover:bg-arcade-red/90')
+                    : ''
+                  }
+                  variant={isPlatform ? 'default' : 'secondary'}
+                >
+                  {tag.name}
+                </Badge>
+              )
+            })}
           </div>
 
           {/* Description */}
@@ -108,7 +110,7 @@ export default async function GamePage({ params }: GamePageProps) {
           </div>
 
           {/* Related games */}
-          {related && related.length > 0 && (
+          {relatedGames.length > 0 && (
             <>
               <Separator className="bg-border" />
               <div>
@@ -116,7 +118,7 @@ export default async function GamePage({ params }: GamePageProps) {
                   Juegos relacionados
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {related.map((r: { id: string; title: string }) => (
+                  {relatedGames.map((r: { id: string; title: string }) => (
                     <Link
                       key={r.id}
                       href={`/juego/${r.id}`}

@@ -2,23 +2,23 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import type { Category } from "@/lib/definitions"
+import type { Tag } from "@/lib/definitions"
 
-interface CategoryFilterProps {
-  categories: Category[]
+interface TagFilterProps {
+  tags: Tag[]
 }
 
-export function CategoryFilter({ categories }: CategoryFilterProps) {
+export function TagFilter({ tags }: TagFilterProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const active = searchParams.get("category") ?? ""
+  const activeTag = searchParams.get("tag") ?? ""
 
-  function handleClick(slug: string) {
+  function handleClick(tagId: string) {
     const params = new URLSearchParams(searchParams.toString())
-    if (slug === active) {
-      params.delete("category")
+    if (tagId === activeTag) {
+      params.delete("tag")
     } else {
-      params.set("category", slug)
+      params.set("tag", tagId)
     }
     params.delete("page")
     router.push(`/?${params.toString()}`)
@@ -30,32 +30,32 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
         type="button"
         className={cn(
           "px-3 py-1 text-sm rounded-full border transition-colors",
-          !active
+          !activeTag
             ? "bg-primary text-primary-foreground border-primary"
             : "bg-background hover:bg-accent"
         )}
         onClick={() => {
           const params = new URLSearchParams(searchParams.toString())
-          params.delete("category")
+          params.delete("tag")
           params.delete("page")
           router.push(`/?${params.toString()}`)
         }}
       >
         Todas
       </button>
-      {categories.map((cat) => (
+      {tags.map((tag) => (
         <button
-          key={cat.id}
+          key={tag.id}
           type="button"
           className={cn(
             "px-3 py-1 text-sm rounded-full border transition-colors",
-            active === cat.id
+            activeTag === tag.id
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-background hover:bg-accent"
           )}
-          onClick={() => handleClick(cat.id)}
+          onClick={() => handleClick(tag.id)}
         >
-          {cat.name}
+          {tag.name}
         </button>
       ))}
     </div>

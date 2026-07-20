@@ -5,7 +5,11 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { extractGameId, buildEmbedUrl, isValidMakeCodeUrl, extractScratchId, buildScratchEmbedUrl, isValidScratchUrl, extractGamePlatform } from "@/lib/game-utils"
 import { checkAndAwardBadges } from "@/lib/actions/badges"
-import type { Game, GameWithDetails } from "@/lib/definitions"
+import type { Game, GameWithDetails, Profile, Tag } from "@/lib/definitions"
+
+function getPlatformTagName(platform: string): string {
+  return platform === 'scratch' ? 'Scratch' : 'MakeCode Arcade'
+}
 
 export async function createGame(_prevState: { error: string }, formData: FormData) {
   const supabase = await createClient()
@@ -18,9 +22,10 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
   const url = formData.get("url") as string
   const title = formData.get("title") as string
   const description = formData.get("description") as string
-  const categoryId = formData.get("category_id") as string
   const thumbnailUrl = formData.get("thumbnail_url") as string
   const platform = (formData.get("platform") as string) || extractGamePlatform(url) || 'makecode'
+  const tagIdsRaw = formData.get("tag_ids") as string
+  const tagIds: string[] = tagIdsRaw ? JSON.parse(tagIdsRaw) : []
 
   if (!url || !title) {
     return { error: "URL y título son obligatorios" }
@@ -74,13 +79,39 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
     description: description || null,
     embed_url: embedUrl,
     thumbnail_url: thumbnailUrl || null,
-    category_id: categoryId || null,
     status: "approved",
     platform,
   })
 
   if (error) {
     return { error: error.message }
+  }
+
+  // Insert tags: platform tag + user-selected tags
+  const platformTagName = getPlatformTagName(platform)
+  const { data: platformTag } = await supabase
+    .from("tags")
+    .select("id")
+    .eq("name", platformTagName)
+    .single()
+
+  const allTagIds: string[] = []
+  if (platformTag) allTagIds.push(platformTag.id)
+
+  // Only add user-selected tags that are not the platform tag
+  for (const tagId of tagIds) {
+    if (tagId !== platformTag?.id && !allTagIds.includes(tagId)) {
+      allTagIds.push(tagId)
+    }
+  }
+
+  if (allTagIds.length > 0) {
+    const { error: tagError } = await supabase.from("game_tags").insert(
+      allTagIds.map((tag_id) => ({ game_id: gameId, tag_id }))
+    )
+    if (tagError) {
+      return { error: tagError.message }
+    }
   }
 
   await checkAndAwardBadges(user.id)
@@ -130,8 +161,9 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
   const gameId = formData.get("id") as string
   const title = formData.get("title") as string
   const description = formData.get("description") as string
-  const categoryId = formData.get("category_id") as string
   const thumbnailUrl = formData.get("thumbnail_url") as string
+  const tagIdsRaw = formData.get("tag_ids") as string
+  const tagIds: string[] = tagIdsRaw ? JSON.parse(tagIdsRaw) : []
 
   if (!gameId || !title) {
     return { error: "ID y título son obligatorios" }
@@ -140,7 +172,7 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
   // Verify ownership
   const { data: game } = await supabase
     .from("games")
-    .select("id")
+    .select("id, platform")
     .eq("id", gameId)
     .eq("user_id", user.id)
     .single()
@@ -152,12 +184,43 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
     .update({
       title,
       description: description || null,
-      category_id: categoryId || null,
       thumbnail_url: thumbnailUrl || null,
     })
     .eq("id", gameId)
 
   if (error) return { error: error.message }
+
+  // Replace game_tags: ensure platform tag + selected tags
+  const platformTagName = getPlatformTagName(game.platform)
+  const { data: platformTag } = await supabase
+    .from("tags")
+    .select("id")
+    .eq("name", platformTagName)
+    .single()
+
+  const allTagIds: string[] = []
+  if (platformTag) allTagIds.push(platformTag.id)
+
+  for (const tagId of tagIds) {
+    if (tagId !== platformTag?.id && !allTagIds.includes(tagId)) {
+      allTagIds.push(tagId)
+    }
+  }
+
+  // Delete existing game_tags, then insert new ones
+  const { error: deleteError } = await supabase
+    .from("game_tags")
+    .delete()
+    .eq("game_id", gameId)
+
+  if (deleteError) return { error: deleteError.message }
+
+  if (allTagIds.length > 0) {
+    const { error: insertError } = await supabase.from("game_tags").insert(
+      allTagIds.map((tag_id) => ({ game_id: gameId, tag_id }))
+    )
+    if (insertError) return { error: insertError.message }
+  }
 
   revalidatePath("/perfil/[username]", "page")
   revalidatePath(`/juego/${gameId}`)
@@ -185,16 +248,16 @@ export async function deleteGame(gameId: string) {
 
 export async function getGames(options: {
   search?: string
-  categoryId?: string
+  tagIds?: string[]
   page?: number
   limit?: number
 } = {}) {
   const supabase = await createClient()
-  const { search, categoryId, page = 0, limit = 12 } = options
+  const { search, tagIds, page = 0, limit = 12 } = options
 
   let query = supabase
     .from("games")
-    .select("*, categories(*), profiles(username, avatar_url)", { count: "exact" })
+    .select("*, profiles(username, avatar_url)", { count: "exact" })
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
@@ -204,15 +267,61 @@ export async function getGames(options: {
     query = query.ilike("title", `%${search}%`)
   }
 
-  if (categoryId) {
-    query = query.eq("category_id", categoryId)
+  if (tagIds && tagIds.length > 0) {
+    // Get game IDs that have ALL specified tags
+    const { data: tagFilterData } = await supabase
+      .from("game_tags")
+      .select("game_id, tag_id")
+      .in("tag_id", tagIds)
+
+    if (tagFilterData && tagFilterData.length > 0) {
+      const gameCounts = new Map<string, number>()
+      for (const gt of tagFilterData) {
+        gameCounts.set(gt.game_id, (gameCounts.get(gt.game_id) || 0) + 1)
+      }
+      const matchingIds = Array.from(gameCounts.entries())
+        .filter(([, count]) => count === tagIds.length)
+        .map(([id]) => id)
+
+      if (matchingIds.length === 0) {
+        return { games: [], total: 0 }
+      }
+      query = query.in("id", matchingIds)
+    } else {
+      return { games: [], total: 0 }
+    }
   }
 
   const { data, count, error } = await query
 
   if (error) throw new Error(error.message)
 
-  return { games: data as unknown as GameWithDetails[], total: count ?? 0 }
+  // Fetch tags for each game
+  const games = data as unknown as (Game & { profiles: Pick<Profile, "username" | "avatar_url"> | null })[]
+  const gameIds = games.map((g) => g.id)
+
+  let tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  const gamesWithTags = games.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  }))
+
+  return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }
 }
 
 export async function getGameById(id: string) {
@@ -220,7 +329,7 @@ export async function getGameById(id: string) {
 
   const { data: game, error } = await supabase
     .from("games")
-    .select("*, categories(*), profiles(username, avatar_url)")
+    .select("*, profiles(username, avatar_url)")
     .eq("id", id)
     .single()
 
@@ -275,13 +384,36 @@ export async function getUserGames(username: string) {
 
   const { data: games } = await supabase
     .from("games")
-    .select("*, categories(*), profiles(username, avatar_url)")
+    .select("*, profiles(username, avatar_url)")
     .eq("user_id", profile.id)
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
 
-  return (games ?? []) as unknown as GameWithDetails[]
+  // Fetch tags for each game
+  const gameList = (games ?? []) as unknown as (Game & { profiles: Pick<Profile, "username" | "avatar_url"> | null })[]
+  const gameIds = gameList.map((g) => g.id)
+
+  let tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  return gameList.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  })) as unknown as GameWithDetails[]
 }
 
 export async function getMyGames() {
@@ -292,11 +424,35 @@ export async function getMyGames() {
 
   const { data: games } = await supabase
     .from("games")
-    .select("*, categories(*)")
+    .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  return (games ?? []) as unknown as GameWithDetails[]
+  // Fetch tags for each game
+  const gameList = (games ?? []) as Game[]
+  const gameIds = gameList.map((g) => g.id)
+
+  let tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  return gameList.map((g) => ({
+    ...g,
+    profiles: null,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  })) as unknown as GameWithDetails[]
 }
 
 /** Minimal game data used in GameThumbnail / CuratedSection */

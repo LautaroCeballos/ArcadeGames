@@ -5,7 +5,8 @@ import { getProfileByUsername } from "@/lib/actions/profile"
 import { isFollowing } from "@/lib/actions/social"
 import { ProfileHeader } from "@/components/ProfileHeader"
 import { ProfileTabs } from "@/components/ProfileTabs"
-import type { GameWithDetails } from "@/lib/definitions"
+import type { GameWithDetails, Game, Tag } from "@/lib/definitions"
+import type { Profile } from "@/lib/definitions"
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>
@@ -42,17 +43,39 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const [gamesResult, following] = await Promise.all([
     supabase
       .from("games")
-      .select("*, categories(*), profiles(username, avatar_url)")
+      .select("*, profiles(username, avatar_url)")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false }),
     isFollowing(profile.id),
   ])
 
-  let games = (gamesResult.data ?? []) as unknown as GameWithDetails[]
+  let gamesData = (gamesResult.data ?? []) as Game[]
 
   if (!isOwner) {
-    games = games.filter((g) => g.status === "approved" && !g.hidden)
+    gamesData = gamesData.filter((g) => g.status === "approved" && !g.hidden)
   }
+
+  // Attach tags
+  const gameIds = gamesData.map((g) => g.id)
+  const tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  let games = gamesData.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  })) as unknown as GameWithDetails[]
 
   if (games.length > 0) {
     const { data: ratings } = await supabase

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { EditGameForm } from "@/components/EditGameForm"
+import type { Tag } from "@/lib/definitions"
 
 interface EditPageProps {
   params: Promise<{ id: string }>
@@ -17,7 +18,7 @@ export default async function EditPage({ params }: EditPageProps) {
   // Fetch the game
   const { data: game } = await supabase
     .from("games")
-    .select("*, categories(*)")
+    .select("*")
     .eq("id", id)
     .single()
 
@@ -34,7 +35,14 @@ export default async function EditPage({ params }: EditPageProps) {
     redirect(profile?.username ? `/perfil/${profile.username}` : "/")
   }
 
-  const { data: categories } = await supabase.from("categories").select("*")
+  // Fetch all tags + current game tags
+  const [tagsResult, gameTagsResult] = await Promise.all([
+    supabase.from("tags").select("*"),
+    supabase.from("game_tags").select("tag_id").eq("game_id", id),
+  ])
+
+  const tags = (tagsResult.data ?? []) as Tag[]
+  const gameTagIds = gameTagsResult.data?.map((gt: { tag_id: string }) => gt.tag_id) ?? []
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
@@ -47,12 +55,12 @@ export default async function EditPage({ params }: EditPageProps) {
           id: game.id,
           title: game.title,
           description: game.description ?? "",
-          category_id: game.category_id ?? "",
           thumbnail_url: game.thumbnail_url ?? "",
           embed_url: game.embed_url,
           platform: game.platform ?? 'makecode',
+          tagIds: gameTagIds,
         }}
-        categories={(categories ?? []) as { id: string; name: string }[]}
+        tags={tags}
         username={profile?.username ?? ""}
       />
     </div>

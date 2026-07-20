@@ -10,10 +10,10 @@ interface LoadMoreGamesProps {
   initialGames: GameWithDetails[]
   total: number
   search?: string
-  categoryId?: string
+  tagIds?: string[]
 }
 
-export function LoadMoreGames({ initialGames, total, search, categoryId }: LoadMoreGamesProps) {
+export function LoadMoreGames({ initialGames, total, search, tagIds }: LoadMoreGamesProps) {
   const [games, setGames] = useState<GameWithDetails[]>(initialGames)
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -26,7 +26,7 @@ export function LoadMoreGames({ initialGames, total, search, categoryId }: LoadM
     setError(null)
     try {
       const nextPage = page + 1
-      const result = await getGames({ search, categoryId, page: nextPage })
+      const result = await getGames({ search, tagIds, page: nextPage })
       setGames((prev) => [...prev, ...result.games])
       setPage(nextPage)
     } catch {
