@@ -85,11 +85,14 @@ Implementado en `app/globals.css` mediante CSS variables con `@theme inline` de 
 - Secciones: "Ultimos Juegos", "Mas Jugados", "Mejor Valorados"
 
 ### Ranking
-- Cards verdes (`#77b8a6`) con header rojo (`#d90057`)
-- Altura: 327px
-- 3 entries por columna con avatar circular (63×63px), nombre, puntuación
-- Períodos: Ayer, Semana, Mes, Año
-- Podio central con imagen decorativa
+- Cards verdes sólidos (`bg-arcade-green`, `#77b8a6`) con header rojo (`#d90057`)
+- Layout:
+  - Fila 1: Ayer (1/3) | Podio (1/3) | Semana (1/3)
+  - Fila 2: Mes (doble, 2 columnas de 3 entries) | Año (doble)
+- Entries: avatar/trofeo circular (size-11 sm:size-12), nombre en beige, score en rojo + estrella amarilla
+- Períodos: Ayer, Semana (3 entries), Mes, Año (6 entries en 2 columnas)
+- Podio: top 3 global con trofeos oro/plata/bronce, mismo formato visual que las ranking cards
+- Sombras suaves en cards: `shadow-[0_2px_8px_rgba(0,0,0,0.07)]`
 
 ### Footer
 - Fondo: `#d90057` (rojo neón), altura 241px

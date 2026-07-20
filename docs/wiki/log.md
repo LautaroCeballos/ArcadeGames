@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-13"
+last_updated: "2026-07-14"
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
@@ -66,3 +66,70 @@ last_updated: "2026-07-13"
 - **Fase 9** — `app/(public)/juego/[id]/page.tsx`: badges rojos, colores arcade, estilo consistente
 - **Fase 10** — Build verificado (compiled successfully, 0 errors)
 - Páginas actualizadas: [[project-state]], [[frontend/components]]
+
+## [2026-07-14] update | thumbnail-picker-capura-en-vivo
+
+- Nuevo `components/ThumbnailPicker.tsx`: selector de miniatura con 3 fuentes:
+  1. **Captura en vivo** — usa `navigator.mediaDevices.getDisplayMedia({ preferCurrentTab: true })` para capturar el frame exacto que el usuario ve en la preview. Sube a Supabase Storage automáticamente.
+  2. **MakeCode oficial** — fetch a `api/{shortId}` + `cdn.makecode.com/api/{longId}/thumb`
+  3. **Subida manual** — file input → upload a Supabase Storage
+- Grid de thumbnails seleccionables con check "Usar esta", botón X para quitar
+- Nuevo bucket Supabase Storage `game-thumbnails` (público, RLS por user_id)
+- Nuevo server action `lib/actions/thumbnails.ts:uploadThumbnail()` — valida tipo/tamaño, sube a storage
+- `lib/game-utils.ts:fetchProjectThumbnailUrl()` — fetch a API pública de MakeCode
+- `createGame` actualizado para guardar `thumbnail_url` desde el form
+- Build verificado: 0 errores
+- Páginas actualizadas: [[frontend/components]], [[database/schema]]
+
+## [2026-07-14] implement | perfil-rediseno-badges-follows
+
+- **Migración**: `00002_profiles_badges_follows.sql` — tablas `badges`, `user_badges`, `follows`; columnas `bio`, `website` en profiles; 8 badges seedeados; RLS completa
+- **Server actions**: `profile.ts` (getProfileByUsername con stats computadas, updateMyProfile), `social.ts` (followUser, unfollowUser, isFollowing, getFollowers, getFollowing), `badges.ts` (checkAndAwardBadges, getAllBadges)
+- **Componentes**: ProfileHeader (avatar, username, bio, website, stats bar, follow button), ProfileBadges (grid con hover tooltip), ProfileGameCard (card con thumbnail + status + acciones si es dueño), ProfileTabs (tabs Juegos/Logros), FollowButton, GameActionsInline
+- **Perfil**: página `/perfil/[username]` rediseñada con header + stats + tabs + gestión de juegos (editar, ocultar, eliminar si es dueño)
+- **Dashboard**: `/dashboard` redirige a `/perfil/{username}`
+- **Badges**: se asignan automáticamente al crear juego (`createGame`) y al votar (`rateGame`)
+- `lib/utils.ts`: nuevo helper `formatCount()`
+- Build verificado: 0 errores TS, 9 rutas (dashboard redirige dinámicamente)
+
+## [2026-07-14] fix | button-anidado-thumbnailpicker
+- Fix: `<button>` anidado dentro de `<button>` en ThumbnailPicker → el contenedor pasa a `<div role="button">`
+- Causa: hydration error por HTML inválido (button descendant of button)
+- Build verificado: 0 errores
+
+## [2026-07-14] update | dashboard-rediseno-editar-juegos
+
+- Dashboard (`/dashboard`) rediseñado: stats bar (total, publicados, pendientes, vistas) + grid de `DashboardCard` con thumbnail, estado, acciones
+- Nuevo `components/DashboardCard.tsx`: card horizontal con status badges (Publicado/Oculto/En moderación/Rechazado), métricas, acciones (jugar, editar, ocultar, eliminar)
+- Nuevo server action `updateGame` en `lib/actions/games.ts:93` — edita título, descripción, categoría, miniatura
+- Nueva ruta `/editar/[id]` con `EditGameForm`: formulario pre-cargado con preview + ThumbnailPicker
+- Estado vacío mejorado con icono, mensaje y CTA
+- Build verificado: 0 errores
+- Páginas creadas: —
+- Páginas actualizadas: [[frontend/components]], [[architecture/routes]], [[features/games]]
+
+## [2026-07-14] update | game-tabs-juego-editor
+
+- Nuevo `components/GameTabs.tsx`: tabs Juego (default) + Editor debajo del embed
+- `components/ArcadeEmbed.tsx`: nuevo prop `sandbox?` para el iframe
+- `app/(public)/juego/[id]/page.tsx`: reemplazado ArcadeEmbed por GameTabs
+- ThumbnailPicker simplificado: eliminado `getDisplayMedia` (rechazado por el usuario), solo auto MakeCode + subida manual
+- Build verificado: 0 errores
+- Páginas actualizadas: [[frontend/components]], [[features/games]]
+
+## [2026-07-20] ingest | submit-form-dual-platform
+- Fuente: `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`
+- Páginas actualizadas: [[features/games]], [[database/schema]], [[frontend/components]], [[overview]], [[project-state]]
+- Cambios: documentación del soporte dual MakeCode + Scratch, nueva columna `platform` en `games`, nuevo componente `ScratchEmbed`, actualización de `SubmitGameForm`, `GameTabs`, `EditGameForm`, funciones en `game-utils.ts`
+
+## [2026-07-14] update | ranking-section-rediseno
+
+- Rediseño completo de `RankingSection.tsx` y `PodiumCard.tsx` para alinearse al diseño Figma
+- Layout: Fila 1 (Ayer | Podio | Semana), Fila 2 (Mes doble | Año doble)
+- Cards con `bg-arcade-green` sólido (corregido de `/80`), `shadow` suave
+- Player rows: avatar `size-11 sm:size-12`, nombre `text-arcade-beige`, score `text-arcade-red` + `Star` amarilla
+- PodiumCard: top 3 global con trofeos color oro/plata/bronce, mismo formato visual que ranking cards
+- Podio SVG fallido → reemplazado por variante CSS unificada con las ranking cards
+- Contraste mejorado: fondos sólidos, tipografía `text-base sm:text-lg`
+- Build verificado: 0 errores
+- Páginas actualizadas: [[frontend/components]], [[frontend/design-tokens]], [[project-state]]

@@ -44,7 +44,42 @@ export interface Profile {
   id: string
   username: string | null
   avatar_url: string | null
+  bio: string | null
+  website: string | null
   created_at: string
+}
+
+export interface Badge {
+  id: string
+  name: string
+  description: string
+  icon_url: string | null
+  criteria: string
+  created_at: string
+}
+
+export interface UserBadge {
+  user_id: string
+  badge_id: string
+  earned_at: string
+  badges?: Badge
+}
+
+export interface Follow {
+  follower_id: string
+  following_id: string
+  created_at: string
+  follower?: Pick<Profile, "id" | "username" | "avatar_url">
+  following?: Pick<Profile, "id" | "username" | "avatar_url">
+}
+
+export interface ProfileWithStats extends Profile {
+  total_games: number
+  total_stars: number
+  avg_rating: number | null
+  followers_count: number
+  following_count: number
+  badges: (UserBadge & { badges: Badge })[]
 }
 
 export interface Category {
@@ -64,6 +99,7 @@ export interface Game {
   hidden: boolean
   created_at: string
   views: number
+  platform: 'makecode' | 'scratch'
 }
 
 export interface Tag {

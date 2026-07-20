@@ -1,12 +1,12 @@
 ---
 title: "ArcadePlay — Índice del Wiki"
 tags: [index]
-last_updated: "2026-07-13"
+last_updated: "2026-07-20"
 ---
 
 # ArcadePlay — Índice del Wiki
 
-Portal web de juegos MakeCode Arcade. Inspirado en arcade portals como juegosdiarios.com.
+Portal web de juegos MakeCode Arcade y Scratch. Inspirado en arcade portals como juegosdiarios.com.
 
 ## Páginas
 
@@ -29,4 +29,4 @@ Portal web de juegos MakeCode Arcade. Inspirado en arcade portals como juegosdia
 - [[frontend/components]] — Inventario de componentes UI, hooks y server actions
 
 ### Features
-- [[features/games]] — Sistema de juegos: creación, embed, búsqueda, ratings
+- [[features/games]] — Sistema de juegos: creación (MakeCode + Scratch), embed, búsqueda, ratings

@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Estado del Proyecto"
 tags: [state, checkpoint]
-last_updated: "2026-07-13"
+last_updated: "2026-07-14"
 sources:
   - package.json
   - next.config.ts
@@ -9,7 +9,7 @@ sources:
 
 # ArcadePlay — Estado del Proyecto
 
-Checkpoint de implementación al 13/07/2026. Este documento captura el estado completo del proyecto para evitar pérdida de contexto.
+Checkpoint de implementación al 14/07/2026. Este documento captura el estado completo del proyecto para evitar pérdida de contexto.
 
 ---
 
@@ -45,15 +45,16 @@ app/
   (public)/
     layout.tsx            ← Navbar + footer
     page.tsx              ← Home (búsqueda + categorías + grid)
-    juego/[id]/page.tsx   ← Detalle del juego (embed + rating)
-    perfil/[username]/    ← Perfil público del usuario
+    juego/[id]/page.tsx   ← Detalle del juego (GameTabs con Juego/Editor + rating)
+    perfil/[username]/    ← Perfil de usuario (header + stats + tabs juegos/logros + gestión)
     login/page.tsx        ← Login form
     signup/page.tsx       ← Signup form
 
   (protected)/
     layout.tsx            ← Navbar + footer (igual que public)
     subir/page.tsx        ← Formulario de publicación
-    dashboard/page.tsx    ← Panel de control
+    dashboard/page.tsx    ← Redirige a `/perfil/{username}`
+    editar/[id]/page.tsx  ← Editar juego
 ```
 
 ### `/components/` — Componentes
@@ -68,14 +69,24 @@ app/
 | `GameCard.tsx` | Server | `game: GameWithDetails` — estilo thumbnail |
 | `GameGrid.tsx` | Server | `games: GameWithDetails[]` + Skeleton |
 | `LoadMoreGames.tsx` | Client | Paginación "Cargar más" con server action |
-| `ArcadeEmbed.tsx` | Client | `url, title` — iframe con loading/fallback |
-| `RankingSection.tsx` | Server | Rankings mock por período (Ayer, Semana, Mes, Año) |
-| `PodiumCard.tsx` | Server | Podio decorativo con trofeo |
+| `ArcadeEmbed.tsx` | Client | `url, title, sandbox?` — iframe 4:3 con loading/fallback |
+| `GameTabs.tsx` | Client | `gameId, title` — tabs Juego (default) + Editor debajo del embed |
+| `GameActions.tsx` | Client | `gameId, hidden` — ocultar/eliminar |
+| `RankingSection.tsx` | Server | Rankings mock — 2 layouts: simple (3 entries) y doble (6 entries en 2 columnas) |
+| `PodiumCard.tsx` | Server | Top 3 global con trofeos oro/plata/bronce, mismo formato visual que RankingCard |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
 | `CategoryFilter.tsx` | Client | Pills de categorías, URL params |
 | `SubmitGameForm.tsx` | Client | `categories`, action `createGame` |
-| `GameActions.tsx` | Client | `gameId, hidden` — ocultar/eliminar |
+| `ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange` — auto MakeCode + upload |
+| `DashboardCard.tsx` | Client | `{ game }` — card horizontal con thumbnail, status, stats, acciones |
+| `EditGameForm.tsx` | Client | `{ game, categories }` — formulario pre-cargado para editar |
+| `ProfileHeader.tsx` | Server | `{ profile, isOwnProfile, isFollowing }` — avatar, username, bio, website, stats bar (estrellas, juegos, seguidores, siguiendo), follow button |
+| `ProfileBadges.tsx` | Server | `{ badges[] }` — grid de emblemas ganados con tooltip hover |
+| `ProfileGameCard.tsx` | Server | `{ game, isOwner }` — card de juego con thumbnail, status badge, stats, acciones (editar, ocultar, eliminar si es dueño) |
+| `ProfileTabs.tsx` | Client | `{ games[], badges[], isOwner }` — tabs Juegos + Logros (si tiene badges) |
+| `FollowButton.tsx` | Client | `{ targetUserId, isFollowing }` — botón seguir/dejar de seguir con useActionState |
+| `GameActionsInline.tsx` | Client | `ToggleVisibilityButton`, `DeleteGameButton` — wrappers useActionState para acciones inline |
 | `AuthButton.tsx` | Server | Form action `signOut` |
 | `LoginForm.tsx` | Client | `useActionState(signIn)` |
 | `SignUpForm.tsx` | Client | `useActionState(signUp)` |
@@ -88,10 +99,14 @@ app/
 | `supabase/server.ts` | Server client (cookies, RSC) |
 | `supabase/middleware.ts` | Session refresh middleware (usado por proxy.ts) |
 | `actions/auth.ts` | signIn, signUp, signOut (useActionState signature) |
-| `actions/games.ts` | createGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames, getRecentGames, getMostPlayed, getTopRated |
-| `actions/ratings.ts` | rateGame (upsert) |
+| `actions/games.ts` | createGame, updateGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames, getRecentGames, getMostPlayed, getTopRated |
+| `actions/ratings.ts` | rateGame (upsert — awards badges to rater + game owner) |
+| `actions/thumbnails.ts` | uploadThumbnail |
+| `actions/profile.ts` | getProfileByUsername, updateMyProfile |
+| `actions/social.ts` | followUser, unfollowUser, isFollowing, getFollowers, getFollowing |
+| `actions/badges.ts` | checkAndAwardBadges, getAllBadges |
 | `definitions.ts` | Tipos Database, Game, Profile, Category, Tag, Rating, GameWithDetails |
-| `game-utils.ts` | extractGameId, buildEmbedUrl, isValidMakeCodeUrl (3 formatos) |
+| `game-utils.ts` | extractGameId, extractScratchId, buildEmbedUrl, buildScratchEmbedUrl, isValidMakeCodeUrl, isValidScratchUrl, extractGamePlatform, fetchProjectThumbnailUrl |
 | `utils.ts` | cn() con clsx + tailwind-merge |
 
 ### `/hooks/`
@@ -119,11 +134,16 @@ Migración `supabase/migrations/00001_initial_schema.sql` ejecutada vía MCP Sup
 | `tags` | 0 | ✅ |
 | `game_tags` | 0 | ✅ |
 | `ratings` | 0 | ✅ |
+| `badges` | 8 (seed) | ✅ |
+| `user_badges` | 0 | ✅ |
+| `follows` | 0 | ✅ |
 
 Contenido:
-- 6 tablas, RLS policies completas
+- 9 tablas, RLS policies completas
 - Trigger `handle_new_user` para crear perfil automático
 - 10 categorías seeded
+- 8 badges automáticos seeded (Primer Juego, Cinco Juegos, Diez Juegos, Primera Estrella, 50 Estrellas, 100 Estrellas, 1000 Vistas, Explorador)
+- Funciones `award_badge()` y `recalc_owner_stars()`
 - Índices incluyendo pg_trgm para búsqueda
 
 ---
@@ -152,10 +172,13 @@ Archivo `.env.local`:
 ## Features implementadas
 
 ### Publicación de juegos ✅
-- Formulario en `/subir` con URL de MakeCode
-- Validación: URL válida (3 formatos aceptados), ID único, campos obligatorios
+- Formulario en `/subir` con toggle de plataforma (MakeCode Arcade o Scratch)
+- MakeCode: 3 formatos de URL aceptados, preview con `ArcadeEmbed`
+- Scratch: URL `scratch.mit.edu/projects/{id}`, preview con `ScratchEmbed`
+- Validación según plataforma, IDs únicos con prefijo `scratch_` para Scratch
+- Thumbnail: MakeCode → auto (API) + upload; Scratch → solo upload
+- Campos: título, descripción, categoría (compartidos)
 - Status inicial: `approved` (auto-approve)
-- Preview del embed en vivo mientras se escribe la URL
 - Accesibilidad: `fieldset`/`legend`, `aria-*`, `role="alert"`, validación inline
 
 ### Búsqueda ✅
@@ -175,19 +198,47 @@ Archivo `.env.local`:
 - Requiere autenticación
 
 ### Dashboard ✅
-- Listado de juegos del usuario
-- Badge de estado (pending/approved/rejected)
-- Acciones: ocultar/mostrar, eliminar
-- Empty state
+- Stats bar: total, publicados, pendientes, vistas acumuladas
+- DashboardCards: thumbnail, status badge (color-coded), métricas, acciones
+- Acciones por juego: Jugar, Editar, Ocultar/Mostrar, Eliminar
+- Empty state con ilustración y CTA
 
 ### Perfil público ✅
-- Vista de juegos por username
-- Avatar inicial
+- Header con avatar, username, bio, website
+- Stats bar: estrellas totales, cantidad de juegos, seguidores, siguiendo
+- Tabs: Juegos (grid con management si es dueño) y Logros (badges)
+- Botón Seguir/Siguiendo si no es tu perfil
+- Dashboard (`/dashboard`) redirige a `/perfil/{username}`
+
+### Badges/Logros ✅
+- 8 badges automáticos seedeados (Primer Juego, Cinco Juegos, Diez Juegos, Primera Estrella, 50 Estrellas, 100 Estrellas, 1000 Vistas, Explorador)
+- Asignación automática al crear juego o votar
+- Grid de badges en tab Logros del perfil
+- Función `award_badge()` en PostgreSQL
+
+### Social (Follows) ✅
+- Tabla `follows` con PK (follower_id, following_id) y CHECK no self-follow
+- Server actions: followUser, unfollowUser, isFollowing, getFollowers, getFollowing
+- Botón Seguir/Siguiendo en perfil con toggle
+- RLS: solo el propio follower puede insertar/eliminar
+
+### Edición de juegos ✅
+- Ruta `/editar/[id]` con formulario pre-cargado
+- Campos editables: título, descripción, categoría, miniatura
+- Server action `updateGame` con verificación de ownership
+- ThumbnailPicker integrado
+
+### Miniatura de juegos ✅
+- Auto-thumbnail desde API de MakeCode (vía `fetchProjectThumbnailUrl`)
+- Subida manual de imagen a Supabase Storage (bucket `game-thumbnails`)
+- Grid de thumbnails seleccionables
+- Sin `getDisplayMedia` (rechazado por restricción cross-origin)
 
 ### Embebido de juegos ✅
-- ArcadeEmbed con loading spinner
+- ArcadeEmbed: iframe 4:3 con loading spinner + sandbox opcional (para MakeCode)
+- ScratchEmbed: iframe con `allowtransparency`, aspect ratio 6:5 (para Scratch)
+- GameTabs adaptativos: MakeCode → tabs Juego + Editor; Scratch → solo Juego
 - Fallback si el iframe falla
-- Aspect ratio 4:3
 
 ---
 
@@ -212,11 +263,11 @@ Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
 ## Pendiente (próximos pasos)
 
 1. 🟡 Confirmar que el trigger de perfil funciona (auto-create en signup)
-2. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
-3. 🔵 Conectar HeroSlider a CMS o datos dinámicos
-4. 🔵 Tags en formulario de subida
-5. 🔵 Contador de vistas (increment en cada visita)
-6. 🔵 Validar que el ID de MakeCode realmente existe (antes de aceptar la URL)
+2. 🔵 Implementar formulario dual (MakeCode + Scratch) — plan en `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`
+3. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
+4. 🔵 Conectar HeroSlider a CMS o datos dinámicos
+5. 🔵 Tags en formulario de subida
+6. 🔵 Contador de vistas (increment en cada visita)
 7. 🔵 Modo oscuro
 8. 🔵 Página 404 personalizada con search
 

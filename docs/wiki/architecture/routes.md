@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Estructura de Rutas"
 tags: [architecture, routes]
-last_updated: "2026-07-13"
+last_updated: "2026-07-14"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
 ---
@@ -20,7 +20,7 @@ sources:
 |------|--------|-------------|
 | `/` | `page.tsx` | Home: grid de juegos con búsqueda y filtro de categorías |
 | `/juego/[id]` | `juego/[id]/page.tsx` | Detalle del juego: embed, info, rating |
-| `/perfil/[username]` | `perfil/[username]/page.tsx` | Perfil público del usuario con sus juegos |
+| `/perfil/[username]` | `perfil/[username]/page.tsx` | Perfil del usuario: header con stats (estrellas, juegos, seguidores/siguiendo), tabs Juegos (con gestión si es dueño) y Logros |
 | `/login` | `login/page.tsx` | Formulario de inicio de sesión |
 | `/signup` | `signup/page.tsx` | Formulario de registro |
 
@@ -31,7 +31,8 @@ Requieren sesión activa. Redirigen a `/login` si no hay sesión.
 | Ruta | Página | Descripción |
 |------|--------|-------------|
 | `/subir` | `subir/page.tsx` | Formulario para publicar un juego (URL de MakeCode) |
-| `/dashboard` | `dashboard/page.tsx` | Panel de gestión: listado y control de juegos propios |
+| `/dashboard` | `dashboard/page.tsx` | Redirige a `/perfil/{username}` (el perfil propio ahora reemplaza al dashboard) |
+| `/editar/[id]` | `editar/[id]/page.tsx` | Editar juego: modificar título, descripción, categoría y miniatura |
 
 ## Middleware
 

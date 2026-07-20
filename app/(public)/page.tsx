@@ -89,16 +89,11 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <RankingSection />
 
       {/* Full game listing with search */}
-      <section className="space-y-6 pt-4">
+      <section className="space-y-4">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-[25px] font-semibold text-arcade-dark">
-              Todos los juegos
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Explorá todo nuestro catálogo
-            </p>
-          </div>
+          <h2 className="text-[25px] font-semibold text-arcade-dark">
+            Todos los juegos
+          </h2>
           <Suspense fallback={null}>
             <SearchBar />
           </Suspense>

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { extractGameId, buildEmbedUrl, isValidMakeCodeUrl } from "@/lib/game-utils"
+import { extractGameId, buildEmbedUrl, isValidMakeCodeUrl, extractScratchId, buildScratchEmbedUrl, isValidScratchUrl, extractGamePlatform } from "@/lib/game-utils"
+import { checkAndAwardBadges } from "@/lib/actions/badges"
 import type { Game, GameWithDetails } from "@/lib/definitions"
 
 export async function createGame(_prevState: { error: string }, formData: FormData) {
@@ -18,18 +19,42 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
   const title = formData.get("title") as string
   const description = formData.get("description") as string
   const categoryId = formData.get("category_id") as string
+  const thumbnailUrl = formData.get("thumbnail_url") as string
+  const platform = (formData.get("platform") as string) || extractGamePlatform(url) || 'makecode'
 
   if (!url || !title) {
     return { error: "URL y título son obligatorios" }
   }
 
-  if (!isValidMakeCodeUrl(url)) {
-    return { error: "La URL no es válida. Debe ser de arcade.makecode.com" }
+  if (platform !== 'makecode' && platform !== 'scratch') {
+    return { error: "Plataforma no válida" }
   }
 
-  const gameId = extractGameId(url)
-  if (!gameId) {
-    return { error: "No se pudo extraer el ID del juego de la URL" }
+  let gameId: string | null
+  let embedUrl: string
+
+  if (platform === 'makecode') {
+    if (!isValidMakeCodeUrl(url)) {
+      return { error: "La URL no es válida. Debe ser de arcade.makecode.com" }
+    }
+
+    gameId = extractGameId(url)
+    if (!gameId) {
+      return { error: "No se pudo extraer el ID del juego de la URL" }
+    }
+
+    embedUrl = buildEmbedUrl(gameId)
+  } else {
+    if (!isValidScratchUrl(url)) {
+      return { error: "La URL no es válida. Debe ser de scratch.mit.edu/projects/{id}" }
+    }
+
+    gameId = extractScratchId(url)
+    if (!gameId) {
+      return { error: "No se pudo extraer el ID del proyecto de Scratch" }
+    }
+
+    embedUrl = buildScratchEmbedUrl(gameId)
   }
 
   const { data: existing } = await supabase
@@ -42,24 +67,32 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
     return { error: "Este juego ya fue publicado" }
   }
 
-  const embedUrl = buildEmbedUrl(gameId)
-
   const { error } = await supabase.from("games").insert({
     id: gameId,
     user_id: user.id,
     title,
     description: description || null,
     embed_url: embedUrl,
+    thumbnail_url: thumbnailUrl || null,
     category_id: categoryId || null,
     status: "approved",
+    platform,
   })
 
   if (error) {
     return { error: error.message }
   }
 
+  await checkAndAwardBadges(user.id)
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .single()
+
   revalidatePath("/", "layout")
-  redirect("/dashboard")
+  redirect(`/perfil/${profile?.username ?? user.id}`)
 }
 
 export async function toggleVisibility(gameId: string) {
@@ -84,7 +117,50 @@ export async function toggleVisibility(gameId: string) {
 
   if (error) return { error: error.message }
 
-  revalidatePath("/dashboard")
+  revalidatePath("/perfil/[username]", "page")
+  return { success: true }
+}
+
+export async function updateGame(_prevState: { error?: string; success?: boolean } | null, formData: FormData) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Debes iniciar sesión" }
+
+  const gameId = formData.get("id") as string
+  const title = formData.get("title") as string
+  const description = formData.get("description") as string
+  const categoryId = formData.get("category_id") as string
+  const thumbnailUrl = formData.get("thumbnail_url") as string
+
+  if (!gameId || !title) {
+    return { error: "ID y título son obligatorios" }
+  }
+
+  // Verify ownership
+  const { data: game } = await supabase
+    .from("games")
+    .select("id")
+    .eq("id", gameId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (!game) return { error: "Juego no encontrado o no autorizado" }
+
+  const { error } = await supabase
+    .from("games")
+    .update({
+      title,
+      description: description || null,
+      category_id: categoryId || null,
+      thumbnail_url: thumbnailUrl || null,
+    })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/perfil/[username]", "page")
+  revalidatePath(`/juego/${gameId}`)
   return { success: true }
 }
 
@@ -102,7 +178,7 @@ export async function deleteGame(gameId: string) {
 
   if (error) return { error: error.message }
 
-  revalidatePath("/dashboard")
+  revalidatePath("/perfil/[username]", "page")
   revalidatePath("/", "layout")
   return { success: true }
 }

@@ -5,17 +5,18 @@ last_updated: "2026-07-13"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-13-figma-adaptation.md
+  - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
 ---
 
 # ArcadePlay — Visión General
 
 ## Concepto
 
-Plataforma web estilo arcade portal (ej. juegosdiarios.com) enfocada exclusivamente en juegos de **MakeCode Arcade**. Los usuarios pueden publicar y jugar juegos mediante iframes embebidos.
+Plataforma web estilo arcade portal (ej. juegosdiarios.com) enfocada en juegos de **MakeCode Arcade** y **Scratch**. Los usuarios pueden publicar y jugar juegos de ambas plataformas mediante iframes embebidos.
 
 ## Audiencia
 
-- Creadores de juegos MakeCode Arcade (estudiantes, docentes, entusiastas)
+- Creadores de juegos MakeCode Arcade y Scratch (estudiantes, docentes, entusiastas)
 - Jugadores que buscan juegos retro livianos desde el navegador
 
 ## Diferenciación
@@ -49,5 +50,5 @@ Ver [[stack]] para detalle completo.
 
 ## Estado actual
 
-Proyecto en etapa de desarrollo activo. La homepage se está rediseñando para adaptarse al diseño Figma, con nuevas secciones: Hero Slider, secciones curadas (Últimos, Más Jugados, Mejor Valorados), Ranking de jugadores y Footer rediseñado.
-Ver el plan en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
+Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer). Actualmente se está expandiendo el soporte para incluir juegos de **Scratch** además de MakeCode Arcade.
+Ver los planes en `docs/raw/plans/2026-07-13-figma-adaptation.md` y `docs/raw/plans/2026-07-20-submit-form-dual-platform.md`.
