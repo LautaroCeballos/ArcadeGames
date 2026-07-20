@@ -268,7 +268,7 @@ function GameForm({
           </div>
 
           {/* TagPicker: content tags + platform tag locked */}
-          <fieldset className="space-y-3 border-0 p-0 m-0">
+          <fieldset className="space-y-2 border-0 p-0 m-0">
             <legend className="text-sm font-medium">
               Selecciona etiquetas para tu juego
               <span className="ml-2 text-xs text-muted-foreground font-normal">
@@ -295,7 +295,7 @@ function GameForm({
 
           {/* Thumbnail */}
           {shortId && !urlError && (
-            <fieldset className="space-y-4 border-0 p-0 m-0">
+            <fieldset className="space-y-2 border-0 p-0 m-0">
               <legend className="text-sm font-medium">Miniatura</legend>
               <ThumbnailPicker
                 shortId={shortId}
