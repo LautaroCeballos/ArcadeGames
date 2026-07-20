@@ -287,6 +287,7 @@ function GameForm({
                 setSelectedTagIds(withoutPlatform)
               }}
               lockedIds={platformTag ? [platformTag.id] : []}
+              max={5}
             />
           </fieldset>
 

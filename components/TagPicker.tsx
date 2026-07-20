@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useId, useMemo } from "react"
+import { useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Lock, X, Search } from "lucide-react"
+import { Lock, X } from "lucide-react"
 
 const TAG_COLORS = [
   "bg-red-500/15 text-red-600 border-red-300 data-[selected=true]:bg-red-500 data-[selected=true]:text-white data-[selected=true]:border-red-500",
@@ -24,8 +24,6 @@ interface TagPickerProps {
 }
 
 export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: TagPickerProps) {
-  const uid = useId()
-  const [search, setSearch] = useState("")
   const hasReachedMax = max !== undefined && selectedIds.length >= max
 
   const lockedTags = useMemo(
@@ -41,11 +39,6 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
   const availableTags = useMemo(
     () => tags.filter((t) => !selectedIds.includes(t.id) && !lockedIds.includes(t.id)),
     [tags, selectedIds, lockedIds]
-  )
-
-  const filteredAvailable = useMemo(
-    () => availableTags.filter((t) => t.name.toLowerCase().includes(search.toLowerCase())),
-    [availableTags, search]
   )
 
   function getColor(tagId: string) {
@@ -66,19 +59,6 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
 
   return (
     <div className="space-y-3">
-      {/* Search */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <input
-          id={`${uid}-search`}
-          type="text"
-          placeholder="Buscar etiquetas..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-border bg-background pl-8 pr-3 py-2 text-sm placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
       {/* Selected tags at top */}
       {(lockedTags.length > 0 || selectedTags.length > 0) && (
         <div className="flex flex-wrap gap-1.5" role="list" aria-label="Etiquetas seleccionadas">
@@ -113,12 +93,7 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
 
       {/* Available tags */}
       <div className="flex flex-wrap gap-2" role="listbox" aria-label="Seleccionar etiquetas" aria-multiselectable="true">
-        {filteredAvailable.length === 0 && search && (
-          <p className="w-full text-xs text-muted-foreground py-2 text-center">
-            No se encontraron etiquetas
-          </p>
-        )}
-        {filteredAvailable.map((tag) => {
+        {availableTags.map((tag) => {
           const isDisabled = hasReachedMax
 
           return (
@@ -143,6 +118,13 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
           )
         })}
       </div>
+
+      {/* Counter */}
+      {max !== undefined && (
+        <p className="text-xs text-muted-foreground">
+          {selectedIds.length}/{max} etiquetas seleccionadas
+        </p>
+      )}
     </div>
   )
 }
