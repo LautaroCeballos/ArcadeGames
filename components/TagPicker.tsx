@@ -92,7 +92,7 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
       )}
 
       {/* Available tags */}
-      <div className="flex flex-wrap gap-2" role="listbox" aria-label="Seleccionar etiquetas" aria-multiselectable="true">
+      <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Seleccionar etiquetas" aria-multiselectable="true">
         {availableTags.map((tag) => {
           const isDisabled = hasReachedMax
 
@@ -105,9 +105,8 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
               disabled={isDisabled}
               onClick={() => handleToggle(tag.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-150",
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                "min-h-[36px]",
                 isDisabled && "cursor-not-allowed opacity-40",
                 "bg-background text-muted-foreground border-border hover:border-muted-foreground/30 hover:text-foreground hover:shadow-sm",
                 !isDisabled && "hover:scale-105 active:scale-95 cursor-pointer"
@@ -118,13 +117,6 @@ export function TagPicker({ tags, selectedIds, onChange, lockedIds = [], max }: 
           )
         })}
       </div>
-
-      {/* Counter */}
-      {max !== undefined && (
-        <p className="text-xs text-muted-foreground">
-          {selectedIds.length}/{max} etiquetas seleccionadas
-        </p>
-      )}
     </div>
   )
 }

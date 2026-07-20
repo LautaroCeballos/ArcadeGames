@@ -269,10 +269,12 @@ function GameForm({
 
           {/* TagPicker: content tags + platform tag locked */}
           <fieldset className="space-y-3 border-0 p-0 m-0">
-            <legend className="text-sm font-medium">Etiquetas</legend>
-            <p className="text-xs text-muted-foreground">
-              Elegí las etiquetas que describan tu juego
-            </p>
+            <legend className="text-sm font-medium">
+              Selecciona etiquetas para tu juego
+              <span className="ml-2 text-xs text-muted-foreground font-normal">
+                ({selectedTagIds.length + (platformTag ? 1 : 0)}/5)
+              </span>
+            </legend>
             <TagPicker
               tags={availableTags}
               selectedIds={[
