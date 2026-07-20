@@ -103,10 +103,12 @@ function GameForm({
     [tags, platform]
   )
 
-  // Non-platform tags (for display in TagPicker)
-  const contentTags = useMemo(
-    () => tags.filter((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch'),
-    [tags]
+  // Filter out the opposite platform tag so it doesn't appear as an option
+  const availableTags = useMemo(
+    () => tags.filter((t) =>
+      platform === 'makecode' ? t.name !== 'Scratch' : t.name !== 'MakeCode Arcade'
+    ),
+    [tags, platform]
   )
 
   // Derive embed URL, game ID, and error based on platform
@@ -136,7 +138,6 @@ function GameForm({
     }
   }, [urlValue, platform])
 
-  const urlHintId = `${uid}-url-hint`
   const urlErrorId = `${uid}-url-error`
   const formErrorId = `${uid}-form-error`
 
@@ -202,23 +203,6 @@ function GameForm({
             </div>
           )}
 
-          {/* Tags display (read-only cloud under preview) */}
-          {selectedTagIds.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {selectedTagIds.map((tid) => {
-                const tag = contentTags.find((t) => t.id === tid)
-                if (!tag) return null
-                return (
-                  <span
-                    key={tid}
-                    className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
-                  >
-                    {tag.name}
-                  </span>
-                )
-              })}
-            </div>
-          )}
         </div>
 
         {/* ── RIGHT COLUMN: Inputs ── */}
@@ -239,29 +223,32 @@ function GameForm({
               }
               required
               aria-required="true"
-              aria-describedby={urlHintId}
               aria-invalid={!!urlError || undefined}
               value={urlValue}
               onChange={(e) => setUrlValue(e.target.value)}
               autoFocus
             />
-            {platform === 'makecode' ? (
-              <p id={urlHintId} className="text-xs text-muted-foreground">
-                Formatos aceptados:
-                <code className="block mt-0.5 text-[11px]">https://arcade.makecode.com/---run?id=_HdY0sobLD4zd</code>
-                <code className="block text-[11px]">https://makecode.com/_ViYEarFuVgC8</code>
-                <code className="block text-[11px]">https://arcade.makecode.com/66795-36651-40272-92516</code>
-              </p>
-            ) : (
-              <p id={urlHintId} className="text-xs text-muted-foreground">
-                Pegá la URL de tu proyecto de Scratch
-                <code className="block mt-0.5 text-[11px]">https://scratch.mit.edu/projects/617923907</code>
-              </p>
-            )}
             {urlError && (
-              <p id={urlErrorId} role="alert" className="text-xs text-destructive">
-                {urlError}
-              </p>
+              <div className="space-y-2">
+                <p id={urlErrorId} role="alert" className="text-xs text-destructive font-medium">
+                  {urlError}
+                </p>
+                <div className="relative">
+                  <div className="absolute -top-1.5 left-4 size-3 rotate-45 border-l border-t border-border bg-card" />
+                  <div className="rounded-lg border bg-card p-3 shadow-sm text-xs space-y-1.5">
+                    <p className="font-semibold text-foreground">Formatos aceptados:</p>
+                    {platform === 'makecode' ? (
+                      <>
+                        <code className="block text-[11px] text-muted-foreground">https://arcade.makecode.com/---run?id=_HdY0sobLD4zd</code>
+                        <code className="block text-[11px] text-muted-foreground">https://makecode.com/_ViYEarFuVgC8</code>
+                        <code className="block text-[11px] text-muted-foreground">https://arcade.makecode.com/66795-36651-40272-92516</code>
+                      </>
+                    ) : (
+                      <code className="block text-[11px] text-muted-foreground">https://scratch.mit.edu/projects/617923907</code>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </fieldset>
 
@@ -287,7 +274,7 @@ function GameForm({
               Elegí las etiquetas que describan tu juego
             </p>
             <TagPicker
-              tags={tags}
+              tags={availableTags}
               selectedIds={[
                 ...(platformTag ? [platformTag.id] : []),
                 ...selectedTagIds,

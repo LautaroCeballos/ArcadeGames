@@ -54,4 +54,4 @@ Ver [[stack]] para detalle completo.
 Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer). El formulario de subida soporta **MakeCode Arcade** y **Scratch** con toggle de plataforma, preview condicional y validación dual.
 Ver los planes en `docs/raw/plans/` (especialmente `2026-07-13-figma-adaptation.md`, `2026-07-20-submit-form-dual-platform.md` y `2026-07-20-submit-form-tags-redesign.md`).
 
-> [!todo] Próximo redesign: Step 1 selector de plataforma, layout 2 columnas, sistema de tags (plan `2026-07-20-submit-form-tags-redesign.md`).
+> [!done] Rediseño implementado: Step 1 selector de plataforma, layout 2 columnas, sistema de tags (plan `2026-07-20-submit-form-tags-redesign.md`).
