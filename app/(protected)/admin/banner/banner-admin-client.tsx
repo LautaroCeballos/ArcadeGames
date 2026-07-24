@@ -546,79 +546,6 @@ export function BannerAdminClient() {
                     </div>
                   </div>
 
-                  {/* ── Panel options ── */}
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <p className="text-sm font-medium">Opciones del panel</p>
-
-                    {/* Show panel toggle */}
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={form.showPanel}
-                        onClick={() => setForm({ ...form, showPanel: !form.showPanel })}
-                        className={cn(
-                          "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors",
-                          form.showPanel ? "bg-arcade-red" : "bg-muted"
-                        )}
-                      >
-                        <span className={cn(
-                          "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
-                          form.showPanel ? "translate-x-4" : "translate-x-0"
-                        )} />
-                      </button>
-                      <span className="text-sm">Mostrar panel flotante</span>
-                    </label>
-
-                    {/* Alignment */}
-                    {form.showPanel && (
-                      <>
-                        <div>
-                          <label className="mb-1.5 block text-sm text-muted-foreground">Alineación horizontal</label>
-                          <div className="flex gap-1 rounded-lg border p-1">
-                            {(["left", "center", "right"] as const).map((align) => (
-                              <button
-                                key={align}
-                                type="button"
-                                onClick={() => setForm({ ...form, panelAlign: align })}
-                                className={cn(
-                                  "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                                  form.panelAlign === align
-                                    ? "bg-arcade-red text-white shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
-                              >
-                                {align === "left" ? "Izquierda" : align === "center" ? "Centro" : "Derecha"}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Button mode */}
-                        <div>
-                          <label className="mb-1.5 block text-sm text-muted-foreground">Modo del botón</label>
-                          <div className="flex gap-1 rounded-lg border p-1">
-                            {([["full", "Completo"], ["only", "Solo botón"], ["none", "Sin botón"]] as const).map(([mode, label]) => (
-                              <button
-                                key={mode}
-                                type="button"
-                                onClick={() => setForm({ ...form, buttonMode: mode })}
-                                className={cn(
-                                  "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                                  form.buttonMode === mode
-                                    ? "bg-arcade-red text-white shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
                   {/* Actions */}
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <button
@@ -670,8 +597,8 @@ export function BannerAdminClient() {
                     </div>
                   )}
 
-                  {/* Mini floating panel in the preview (conditionally rendered) */}
-                  {form.showPanel && (
+                  {/* Mini floating panel in the preview (full or none mode) */}
+                  {form.showPanel && form.buttonMode !== "only" && (
                     <div
                       className={cn(
                         "absolute z-10 rounded-lg backdrop-blur-sm flex items-center justify-center top-2 bottom-2",
@@ -683,30 +610,25 @@ export function BannerAdminClient() {
                       style={{ backgroundColor: hexToRgba(form.overlayColor || "#000000") }}
                     >
                       <div className="flex flex-col items-center gap-1 px-3 py-2 sm:px-4 sm:py-3">
-                        {form.buttonMode !== "only" && (
-                          <>
-                            <p
-                              className="text-center text-xs font-bold leading-tight sm:text-sm"
-                              style={{ color: form.textColor || "#ffffff" }}
-                            >
-                              {form.title || "Título del slide"}
-                            </p>
-                            {form.description && (
-                              <p
-                                className="max-w-[180px] text-center text-[10px] leading-tight sm:max-w-[240px] sm:text-xs"
-                                style={{ color: form.textColor ? `${form.textColor}cc` : "rgba(255,255,255,0.8)" }}
-                              >
-                                {form.description}
-                              </p>
-                            )}
-                          </>
+                        {/* Title + description (always shown here since buttonMode !== 'only') */}
+                        <p
+                          className="text-center text-xs font-bold leading-tight sm:text-sm"
+                          style={{ color: form.textColor || "#ffffff" }}
+                        >
+                          {form.title || "Título del slide"}
+                        </p>
+                        {form.description && (
+                          <p
+                            className="max-w-[180px] text-center text-[10px] leading-tight sm:max-w-[240px] sm:text-xs"
+                            style={{ color: form.textColor ? `${form.textColor}cc` : "rgba(255,255,255,0.8)" }}
+                          >
+                            {form.description}
+                          </p>
                         )}
-                        {form.buttonMode !== "none" && (
+                        {/* Button shown only if not 'none' */}
+                        {form.buttonMode === "full" && (
                           <span
-                            className={cn(
-                              "inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs",
-                              form.buttonMode === "only" && "mt-0"
-                            )}
+                            className="inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs"
                             style={{
                               backgroundColor: form.buttonColor || "#d90057",
                               color: form.textColor || "#ffffff",
@@ -715,6 +637,101 @@ export function BannerAdminClient() {
                             {form.ctaText || "BOTÓN"}
                           </span>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* buttonMode === 'only': render just the button, no backdrop */}
+                  {form.showPanel && form.buttonMode === "only" && (
+                    <div
+                      className={cn(
+                        "absolute z-10 flex items-center justify-center top-2 bottom-2",
+                        "left-2 right-2",
+                        form.panelAlign === "left" && "sm:left-2 sm:right-auto",
+                        form.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",
+                        form.panelAlign === "right" && "sm:left-auto sm:right-2",
+                      )}
+                    >
+                      <span
+                        className="inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold shadow-lg sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs"
+                        style={{
+                          backgroundColor: form.buttonColor || "#d90057",
+                          color: form.textColor || "#ffffff",
+                        }}
+                      >
+                        {form.ctaText || "BOTÓN"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Panel options ── */}
+                <div className="mt-4 space-y-3 rounded-lg border p-3">
+                  <p className="text-xs font-medium text-muted-foreground">Opciones del panel</p>
+
+                  {/* Show panel toggle */}
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={form.showPanel}
+                      onClick={() => setForm({ ...form, showPanel: !form.showPanel })}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors",
+                        form.showPanel ? "bg-arcade-red" : "bg-muted"
+                      )}
+                    >
+                      <span className={cn(
+                        "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
+                        form.showPanel ? "translate-x-4" : "translate-x-0"
+                      )} />
+                    </button>
+                    <span className="text-sm">Mostrar panel flotante</span>
+                  </label>
+
+                  {/* Alignment + Button mode (only if panel is shown) */}
+                  {form.showPanel && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación</label>
+                        <div className="flex gap-1 rounded-lg border p-1">
+                          {(["left", "center", "right"] as const).map((align) => (
+                            <button
+                              key={align}
+                              type="button"
+                              onClick={() => setForm({ ...form, panelAlign: align })}
+                              className={cn(
+                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                                form.panelAlign === align
+                                  ? "bg-arcade-red text-white shadow-sm"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {align === "left" ? "Izquierda" : align === "center" ? "Centro" : "Derecha"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Botón</label>
+                        <div className="flex gap-1 rounded-lg border p-1">
+                          {([["full", "Completo"], ["only", "Solo botón"], ["none", "Sin botón"]] as const).map(([mode, label]) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => setForm({ ...form, buttonMode: mode })}
+                              className={cn(
+                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                                form.buttonMode === mode
+                                  ? "bg-arcade-red text-white shadow-sm"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

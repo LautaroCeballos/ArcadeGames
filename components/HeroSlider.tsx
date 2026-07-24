@@ -114,8 +114,8 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
           </div>
         )}
 
-        {/* Floating panel with backdrop (conditionally rendered) */}
-        {slide.showPanel !== false && (
+        {/* Floating panel with backdrop (only when panel shown AND not button-only mode) */}
+        {slide.showPanel !== false && slide.buttonMode !== "only" && (
           <div
             className={cn(
               "absolute z-10 backdrop-blur-sm rounded-xl flex items-center justify-center top-4 bottom-4",
@@ -129,32 +129,28 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
             style={{ backgroundColor: hexToRgba(slide.overlayColor || "#000000") }}
           >
             <div className="flex flex-col items-center gap-2 px-6 py-4 sm:px-8 sm:py-5">
-              {/* Show title + description unless buttonMode is 'only' */}
-              {slide.buttonMode !== "only" && (
-                <>
-                  <h2
-                    className="text-center text-xl font-bold sm:text-2xl"
-                    style={{ color: slide.textColor || "#ffffff" }}
-                  >
-                    {slide.title}
-                  </h2>
-                  {slide.description && (
-                    <p
-                      className="max-w-xs text-center text-sm sm:max-w-sm"
-                      style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
-                    >
-                      {slide.description}
-                    </p>
-                  )}
-                </>
+              {/* Title + description (always shown since buttonMode !== 'only') */}
+              <h2
+                className="text-center text-xl font-bold sm:text-2xl"
+                style={{ color: slide.textColor || "#ffffff" }}
+              >
+                {slide.title}
+              </h2>
+              {slide.description && (
+                <p
+                  className="max-w-xs text-center text-sm sm:max-w-sm"
+                  style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
+                >
+                  {slide.description}
+                </p>
               )}
-              {/* Show button unless buttonMode is 'none' */}
-              {slide.buttonMode !== "none" && (
+              {/* Show button only when buttonMode is 'full' */}
+              {slide.buttonMode === "full" && (
                 <Link
                   href={slide.ctaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
+                  className="mt-1 inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
                   style={{
                     backgroundColor: slide.buttonColor || "#d90057",
                     color: slide.textColor || "#ffffff",
@@ -164,6 +160,32 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
                 </Link>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Button-only mode: render just the floating button, no backdrop */}
+        {slide.showPanel !== false && slide.buttonMode === "only" && (
+          <div
+            className={cn(
+              "absolute z-10 flex items-center justify-center top-4 bottom-4",
+              "left-4 right-4",
+              slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
+              slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",
+              (!slide.panelAlign || slide.panelAlign === "right") && "sm:left-auto sm:right-4",
+            )}
+          >
+            <Link
+              href={slide.ctaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
+              style={{
+                backgroundColor: slide.buttonColor || "#d90057",
+                color: slide.textColor || "#ffffff",
+              }}
+            >
+              {slide.ctaText}
+            </Link>
           </div>
         )}
       </div>
