@@ -5,6 +5,16 @@ import { ImagePlus, Pencil, Trash2, GripVertical, AlertTriangle, Loader2, EyeOff
 import { getBannerSlides, createBannerSlide, updateBannerSlide, deleteBannerSlide, reorderBannerSlides, uploadBannerImage } from "@/lib/actions/banner"
 import type { BannerSlide } from "@/lib/definitions"
 
+/** Converts a hex color like #ff0000 to rgba(r,g,b,opacity) */
+function hexToRgba(hex: string, opacity = 0.4): string {
+  const clean = hex.replace("#", "")
+  if (clean.length !== 6) return `rgba(0,0,0,${opacity})`
+  const r = Number.parseInt(clean.slice(0, 2), 16)
+  const g = Number.parseInt(clean.slice(2, 4), 16)
+  const b = Number.parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${opacity})`
+}
+
 interface SlideFormData {
   title: string
   description: string
@@ -371,234 +381,279 @@ export function BannerAdminClient() {
       {/* Create/Edit Dialog */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg">
-            <h2 className="text-lg font-semibold">
-              {editingId ? "Editar Slide" : "Nuevo Slide"}
-            </h2>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {editingId
-                ? "Modificá el contenido del slide existente."
-                : "Agregá un nuevo slide al banner del home."}
-            </p>
+          <div className="flex w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-xl border bg-card shadow-lg sm:flex-row">
+            {/* ── Form side ── */}
+            <div className="flex max-h-[90vh] w-full flex-col overflow-y-auto sm:w-1/2">
+              <div className="p-6">
+                <h2 className="text-lg font-semibold">
+                  {editingId ? "Editar Slide" : "Nuevo Slide"}
+                </h2>
+                <p className="mb-6 text-sm text-muted-foreground">
+                  {editingId
+                    ? "Modificá el contenido del slide."
+                    : "Agregá un nuevo slide al banner del home."}
+                </p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Image upload */}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Imagen de fondo</label>
-                {imagePreview ? (
-                  <div className="relative mb-2 overflow-hidden rounded-lg border">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Image upload */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Imagen de fondo</label>
+                    {imagePreview ? (
+                      <div className="relative mb-2 overflow-hidden rounded-lg border">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="h-32 w-full object-cover sm:h-28"
+                        />
+                        <div className="absolute right-2 top-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="rounded-md bg-black/60 p-1.5 text-white backdrop-blur transition-colors hover:bg-black/80"
+                            aria-label="Reemplazar imagen"
+                          >
+                            <ImagePlus className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="rounded-md bg-black/60 p-1.5 text-white backdrop-blur transition-colors hover:bg-black/80"
+                            aria-label="Eliminar imagen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        {editingId && (
+                          <p className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white backdrop-blur">
+                            {imageFile ? "Nueva imagen" : "Imagen actual"}
+                          </p>
+                        )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </div>
+                    ) : (
+                      <label className="mb-2 flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-6 text-center text-sm text-muted-foreground transition-colors hover:border-arcade-red/50 hover:text-arcade-red">
+                        <ImagePlus className="h-6 w-6" />
+                        <span>Seleccionar imagen</span>
+                        <span className="text-xs">PNG, JPG o WEBP — Máx 2 MB</span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="title" className="mb-1.5 block text-sm font-medium">
+                      Título <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      required
+                      maxLength={100}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                      placeholder="Ej: Bienvenido a ArcadePlay"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+                      Subtítulo
+                    </label>
+                    <input
+                      id="description"
+                      type="text"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      maxLength={200}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                      placeholder="Ej: Descubrí juegos creados con MakeCode Arcade"
+                    />
+                  </div>
+
+                  {/* CTA row */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="ctaText" className="mb-1.5 block text-sm font-medium">
+                        Texto del botón <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="ctaText"
+                        type="text"
+                        value={form.ctaText}
+                        onChange={(e) => setForm({ ...form, ctaText: e.target.value })}
+                        required
+                        maxLength={30}
+                        className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                        placeholder="Ej: SABER MÁS"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="ctaLink" className="mb-1.5 block text-sm font-medium">
+                        Link <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="ctaLink"
+                        type="text"
+                        value={form.ctaLink}
+                        onChange={(e) => setForm({ ...form, ctaLink: e.target.value })}
+                        required
+                        className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                        placeholder="Ej: /juego/123"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={closeDialog}
+                      className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving || !form.title.trim() || !form.ctaText.trim() || !form.ctaLink.trim()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-arcade-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-arcade-red/90 disabled:opacity-50"
+                    >
+                      {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {editingId ? "Guardar cambios" : "Crear slide"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* ── Preview side ── */}
+            <div className="hidden border-l bg-muted/30 sm:flex sm:w-1/2 sm:flex-col">
+              <div className="p-6">
+                <p className="mb-3 text-sm font-medium">Vista previa</p>
+                <div className="relative overflow-hidden rounded-[8px] bg-gradient-to-br from-arcade-dark to-arcade-red/80"
+                     style={{ aspectRatio: "1164/308" }}>
+                  {/* Image or placeholder */}
+                  {imagePreview ? (
                     <img
                       src={imagePreview}
-                      alt="Preview"
-                      className="h-40 w-full object-cover"
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
                     />
-                    <div className="absolute right-2 top-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="rounded-md bg-black/60 p-1.5 text-white backdrop-blur transition-colors hover:bg-black/80"
-                        aria-label="Reemplazar imagen"
-                      >
-                        <ImagePlus className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="rounded-md bg-black/60 p-1.5 text-white backdrop-blur transition-colors hover:bg-black/80"
-                        aria-label="Eliminar imagen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                  ) : (
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
                     </div>
-                    {editingId && (
-                      <p className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white backdrop-blur">
-                        {imageFile ? "Nueva imagen seleccionada" : "Imagen actual"}
+                  )}
+
+                  {/* Mini floating panel in the preview */}
+                  <div
+                    className="absolute z-10 rounded-lg backdrop-blur-sm flex items-center justify-center
+                               top-2 bottom-2 left-2 right-2 sm:left-auto sm:right-2"
+                    style={{ backgroundColor: hexToRgba(form.overlayColor || "#000000") }}
+                  >
+                    <div className="flex flex-col items-center gap-1 px-3 py-2 sm:px-4 sm:py-3">
+                      <p
+                        className="text-center text-xs font-bold leading-tight sm:text-sm"
+                        style={{ color: form.textColor || "#ffffff" }}
+                      >
+                        {form.title || "Título del slide"}
                       </p>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                    />
-                  </div>
-                ) : (
-                  <label className="mb-2 flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground transition-colors hover:border-arcade-red/50 hover:text-arcade-red">
-                    <ImagePlus className="h-8 w-8" />
-                    <span>Hacé clic para seleccionar una imagen</span>
-                    <span className="text-xs">PNG, JPG o WEBP — Máx 2 MB</span>
-                    <span className="text-xs text-muted-foreground/60">Tamaño ideal: 1164 × 308 px (proporción ~3.8:1)</span>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Title */}
-              <div>
-                <label htmlFor="title" className="mb-1.5 block text-sm font-medium">
-                  Título <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  required
-                  maxLength={100}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
-                  placeholder="Ej: Bienvenido a ArcadePlay"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
-                  Subtítulo
-                </label>
-                <input
-                  id="description"
-                  type="text"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  maxLength={200}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
-                  placeholder="Ej: Descubrí juegos creados con MakeCode Arcade"
-                />
-              </div>
-
-              {/* CTA row */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="ctaText" className="mb-1.5 block text-sm font-medium">
-                    Texto del botón <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="ctaText"
-                    type="text"
-                    value={form.ctaText}
-                    onChange={(e) => setForm({ ...form, ctaText: e.target.value })}
-                    required
-                    maxLength={30}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
-                    placeholder="Ej: SABER MÁS"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="ctaLink" className="mb-1.5 block text-sm font-medium">
-                    Link del botón <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="ctaLink"
-                    type="text"
-                    value={form.ctaLink}
-                    onChange={(e) => setForm({ ...form, ctaLink: e.target.value })}
-                    required
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
-                    placeholder="Ej: /juego/123"
-                  />
-                </div>
-              </div>
-
-              {/* Colors */}
-              <div>
-                <p className="mb-2 text-sm font-medium">Colores personalizados</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {/* Overlay bg */}
-                  <div>
-                    <label htmlFor="overlayColor" className="mb-1 block text-xs text-muted-foreground">
-                      Fondo del panel
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="overlayColor"
-                        type="color"
-                        value={form.overlayColor}
-                        onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
-                        className="h-8 w-8 cursor-pointer rounded border"
-                      />
-                      <input
-                        type="text"
-                        value={form.overlayColor}
-                        onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
-                        className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:border-arcade-red"
-                        placeholder="rgba(0,0,0,0.4)"
-                      />
+                      {form.description && (
+                        <p
+                          className="max-w-[180px] text-center text-[10px] leading-tight sm:max-w-[240px] sm:text-xs"
+                          style={{ color: form.textColor ? `${form.textColor}cc` : "rgba(255,255,255,0.8)" }}
+                        >
+                          {form.description}
+                        </p>
+                      )}
+                      <span
+                        className="mt-0.5 inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs"
+                        style={{
+                          backgroundColor: form.buttonColor || "#d90057",
+                          color: form.textColor || "#ffffff",
+                        }}
+                      >
+                        {form.ctaText || "BOTÓN"}
+                      </span>
                     </div>
                   </div>
-                  {/* Text color */}
-                  <div>
-                    <label htmlFor="textColor" className="mb-1 block text-xs text-muted-foreground">
-                      Color del texto
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="textColor"
-                        type="color"
-                        value={form.textColor}
-                        onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                        className="h-8 w-8 cursor-pointer rounded border"
-                      />
-                      <input
-                        type="text"
-                        value={form.textColor}
-                        onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                        className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:border-arcade-red"
-                        placeholder="#ffffff"
-                      />
+                </div>
+
+                {/* Color swatches */}
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground">Colores</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] text-muted-foreground">Fondo panel</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={form.overlayColor}
+                          onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
+                          className="h-7 w-7 cursor-pointer rounded border"
+                        />
+                        <input
+                          type="text"
+                          value={form.overlayColor}
+                          onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
+                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  {/* Button bg */}
-                  <div>
-                    <label htmlFor="buttonColor" className="mb-1 block text-xs text-muted-foreground">
-                      Fondo del botón
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="buttonColor"
-                        type="color"
-                        value={form.buttonColor}
-                        onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
-                        className="h-8 w-8 cursor-pointer rounded border"
-                      />
-                      <input
-                        type="text"
-                        value={form.buttonColor}
-                        onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
-                        className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:border-arcade-red"
-                        placeholder="#d90057"
-                      />
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] text-muted-foreground">Texto</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="h-7 w-7 cursor-pointer rounded border"
+                        />
+                        <input
+                          type="text"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] text-muted-foreground">Botón</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={form.buttonColor}
+                          onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
+                          className="h-7 w-7 cursor-pointer rounded border"
+                        />
+                        <input
+                          type="text"
+                          value={form.buttonColor}
+                          onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
+                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                  disabled={saving}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || !form.title.trim() || !form.ctaText.trim() || !form.ctaLink.trim()}
-                  className="inline-flex items-center gap-2 rounded-lg bg-arcade-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-arcade-red/90 disabled:opacity-50"
-                >
-                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {editingId ? "Guardar cambios" : "Crear slide"}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
