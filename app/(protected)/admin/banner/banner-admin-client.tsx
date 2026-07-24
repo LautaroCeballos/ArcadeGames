@@ -582,8 +582,7 @@ export function BannerAdminClient() {
             <div className="hidden border-l bg-muted/30 sm:flex sm:w-1/2 sm:flex-col">
               <div className="p-6">
                 <p className="mb-3 text-sm font-medium">Vista previa</p>
-                <div className="relative overflow-hidden rounded-[8px] bg-gradient-to-br from-arcade-dark to-arcade-red/80"
-                     style={{ aspectRatio: "1725/910" }}>
+                <div className="relative overflow-hidden rounded-[8px] bg-gradient-to-br from-arcade-dark to-arcade-red/80 h-[180px]">
                   {/* Image or placeholder */}
                   {imagePreview ? (
                     <img

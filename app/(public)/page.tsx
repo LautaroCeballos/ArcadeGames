@@ -125,7 +125,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-10 px-4 py-6">
       {/* Hero Slider */}
-      <Suspense fallback={<div className="aspect-[1725/910] max-md:aspect-[4/3] animate-pulse rounded-[10px] bg-muted" />}>
+      <Suspense fallback={<div className="h-[250px] sm:h-[320px] md:h-[360px] lg:h-[400px] animate-pulse rounded-[10px] bg-muted" />}>
         <HeroSliderWrapper />
       </Suspense>
 
