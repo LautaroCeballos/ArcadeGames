@@ -177,38 +177,10 @@ function GameForm({
 
       {/* 2-column layout */}
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-12">
-        {/* ── LEFT COLUMN: Preview (sticky on desktop) ── */}
-        <div className="lg:sticky lg:top-6 lg:self-start space-y-4">
-          <Label className="text-base font-semibold">Vista previa</Label>
-
-          {previewEmbedUrl && !urlError ? (
-            platform === 'makecode' ? (
-              <ArcadeEmbed url={previewEmbedUrl} title="Vista previa del juego" />
-            ) : (
-              <ScratchEmbed url={previewEmbedUrl} title="Vista previa del juego" />
-            )
-          ) : (
-            <div className="flex aspect-video items-center justify-center rounded-[10px] border-2 border-dashed border-border bg-muted/30">
-              <div className="text-center px-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {urlError ? "URL inválida" : "Pegá la URL del juego"}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  {platform === 'makecode'
-                    ? "https://arcade.makecode.com/---run?id=..."
-                    : "https://scratch.mit.edu/projects/..."
-                  }
-                </p>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* ── RIGHT COLUMN: Inputs ── */}
-        <div className="mt-6 lg:mt-0 space-y-6">
+        {/* ── LEFT COLUMN: Inputs ── */}
+        <div className="flex flex-col gap-6">
           {/* URL input */}
-          <fieldset className="space-y-2 border-0 p-0 m-0">
+          <fieldset className="flex flex-col gap-2 border-0 p-0 m-0">
             <Label htmlFor="url">
               {platform === 'makecode' ? 'URL de MakeCode Arcade' : 'URL del proyecto de Scratch'}
               <span aria-hidden="true" className="text-destructive ml-0.5">*</span>
@@ -229,13 +201,13 @@ function GameForm({
               autoFocus
             />
             {urlError && (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <p id={urlErrorId} role="alert" className="text-xs text-destructive font-medium">
                   {urlError}
                 </p>
                 <div className="relative">
                   <div className="absolute -top-1.5 left-4 size-3 rotate-45 border-l border-t border-border bg-card" />
-                  <div className="rounded-lg border bg-card p-3 shadow-sm text-xs space-y-1.5">
+                  <div className="rounded-lg border bg-card p-3 shadow-sm text-xs flex flex-col gap-1.5">
                     <p className="font-semibold text-foreground">Formatos aceptados:</p>
                     {platform === 'makecode' ? (
                       <>
@@ -294,17 +266,12 @@ function GameForm({
           </fieldset>
 
           {/* Thumbnail */}
-          {shortId && !urlError && (
-            <fieldset className="space-y-2 border-0 p-0 m-0">
-              <legend className="text-sm font-medium">Miniatura</legend>
-              <ThumbnailPicker
-                shortId={shortId}
-                embedUrl={previewEmbedUrl}
-                onThumbnailChange={setThumbnailUrl}
-                platform={platform}
-              />
-            </fieldset>
-          )}
+          <ThumbnailPicker
+            shortId={shortId}
+            embedUrl={previewEmbedUrl}
+            onThumbnailChange={setThumbnailUrl}
+            platform={platform}
+          />
 
           {/* Server error */}
           {state.error && (
@@ -316,9 +283,41 @@ function GameForm({
           )}
 
           {/* Submit */}
-          <Button type="submit" disabled={pending} size="lg" className="w-full sm:w-auto">
-            {pending ? "Publicando..." : `Publicar en ${platform === 'makecode' ? 'MakeCode Arcade' : 'Scratch'}`}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" name="action" value="publish" disabled={pending} size="lg">
+              {pending ? "Publicando..." : `Publicar en ${platform === 'makecode' ? 'MakeCode Arcade' : 'Scratch'}`}
+            </Button>
+            <Button type="submit" name="action" value="draft" disabled={pending} variant="outline" size="lg">
+              {pending ? "Guardando..." : "Guardar borrador"}
+            </Button>
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN: Preview ── */}
+        <div className="mt-6 lg:mt-0 lg:sticky lg:top-6 lg:self-start space-y-4">
+          <Label className="text-base font-semibold">Vista previa</Label>
+
+          {previewEmbedUrl && !urlError ? (
+            platform === 'makecode' ? (
+              <ArcadeEmbed url={previewEmbedUrl} title="Vista previa del juego" />
+            ) : (
+              <ScratchEmbed url={previewEmbedUrl} title="Vista previa del juego" />
+            )
+          ) : (
+            <div className="flex aspect-video items-center justify-center rounded-[10px] border-2 border-dashed border-border bg-muted/30">
+              <div className="text-center px-4">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {urlError ? "URL inválida" : "Pegá la URL del juego"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  {platform === 'makecode'
+                    ? "https://arcade.makecode.com/---run?id=..."
+                    : "https://scratch.mit.edu/projects/..."
+                  }
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </form>

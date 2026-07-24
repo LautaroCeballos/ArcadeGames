@@ -45,11 +45,7 @@ export default async function EditPage({ params }: EditPageProps) {
   const gameTagIds = gameTagsResult.data?.map((gt: { tag_id: string }) => gt.tag_id) ?? []
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Editar juego</h1>
-        <p className="text-sm text-muted-foreground mt-1">{game.title}</p>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
       <EditGameForm
         game={{
           id: game.id,

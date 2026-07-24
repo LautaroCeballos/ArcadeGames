@@ -11,6 +11,7 @@ interface ThumbnailPickerProps {
   embedUrl: string | null
   onThumbnailChange: (url: string | null) => void
   platform?: 'makecode' | 'scratch'
+  currentThumbnailUrl?: string | null
 }
 
 type ThumbnailOption = {
@@ -20,12 +21,24 @@ type ThumbnailOption = {
   source: "auto" | "upload"
 }
 
-export function ThumbnailPicker({ shortId, embedUrl, onThumbnailChange, platform = 'makecode' }: ThumbnailPickerProps) {
+export function ThumbnailPicker({ shortId, embedUrl, onThumbnailChange, platform = 'makecode', currentThumbnailUrl }: ThumbnailPickerProps) {
   const [options, setOptions] = useState<ThumbnailOption[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isFetching, setIsFetching] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const initialized = useRef(false)
+
+  // ── Initialize with current thumbnail (for edit mode) ──
+  useEffect(() => {
+    if (initialized.current) return
+    if (currentThumbnailUrl) {
+      const id = "current"
+      setOptions([{ id, url: currentThumbnailUrl, label: "Actual", source: "auto" }])
+      setSelectedId(id)
+      initialized.current = true
+    }
+  }, [currentThumbnailUrl])
 
   // ── Fetch auto-thumbnail (MakeCode only) ──
   useEffect(() => {
@@ -48,8 +61,11 @@ export function ThumbnailPicker({ shortId, embedUrl, onThumbnailChange, platform
             label: "Oficial (auto)",
             source: "auto",
           }
-          setOptions([opt])
-          setSelectedId("auto")
+          setOptions((prev) => {
+            if (prev.find((o) => o.id === "auto")) return prev
+            return [opt, ...prev]
+          })
+          setSelectedId((prev) => prev ?? "auto")
         }
       })
       .catch(() => {})

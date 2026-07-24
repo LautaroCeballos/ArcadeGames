@@ -1,13 +1,12 @@
 import { Navbar } from "@/components/Navbar"
+import { Footer } from "@/components/Footer"
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navbar />
       <main className="flex-1">{children}</main>
-      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        <p>ArcadePlay — Juegos MakeCode Arcade</p>
-      </footer>
+      <Footer />
     </>
   )
 }

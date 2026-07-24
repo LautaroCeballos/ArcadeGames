@@ -14,7 +14,7 @@ export default async function SubirPage() {
   const { data: tags } = await supabase.from("tags").select("*")
 
   return (
-    <div className="mx-auto px-4 py-6 space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
       <SubmitGameForm tags={(tags ?? []) as Tag[]} />
     </div>
   )

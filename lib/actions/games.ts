@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { createNotification } from "@/lib/notifications"
 import { extractGameId, buildEmbedUrl, isValidMakeCodeUrl, extractScratchId, buildScratchEmbedUrl, isValidScratchUrl, extractGamePlatform } from "@/lib/game-utils"
 import { checkAndAwardBadges } from "@/lib/actions/badges"
 import type { Game, GameWithDetails, Profile, Tag } from "@/lib/definitions"
@@ -26,6 +27,9 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
   const platform = (formData.get("platform") as string) || extractGamePlatform(url) || 'makecode'
   const tagIdsRaw = formData.get("tag_ids") as string
   const tagIds: string[] = tagIdsRaw ? JSON.parse(tagIdsRaw) : []
+
+  const action = formData.get("action") as string
+  const isDraft = action === "draft"
 
   if (!url || !title) {
     return { error: "URL y título son obligatorios" }
@@ -79,7 +83,7 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
     description: description || null,
     embed_url: embedUrl,
     thumbnail_url: thumbnailUrl || null,
-    status: "approved",
+    status: isDraft ? "draft" : "pending",
     platform,
   })
 
@@ -114,7 +118,9 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
     }
   }
 
-  await checkAndAwardBadges(user.id)
+  if (!isDraft) {
+    await checkAndAwardBadges(user.id)
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -172,19 +178,23 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
   // Verify ownership
   const { data: game } = await supabase
     .from("games")
-    .select("id, platform")
+    .select("id, platform, status")
     .eq("id", gameId)
     .eq("user_id", user.id)
     .single()
 
   if (!game) return { error: "Juego no encontrado o no autorizado" }
 
+  // Reset to pending for re-moderation (but keep drafts as drafts)
+  const newStatus = game.status === "draft" ? "draft" : "pending"
   const { error } = await supabase
     .from("games")
     .update({
       title,
       description: description || null,
       thumbnail_url: thumbnailUrl || null,
+      status: newStatus,
+      rejection_reason: null,
     })
     .eq("id", gameId)
 
@@ -224,6 +234,7 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
 
   revalidatePath("/perfil/[username]", "page")
   revalidatePath(`/juego/${gameId}`)
+  revalidatePath("/moderar", "page")
   return { success: true }
 }
 
@@ -533,4 +544,351 @@ export async function getTopRated(limit = 8): Promise<GameThumbnailData[]> {
     .filter((g) => g.avg_rating !== null)
     .sort((a, b) => (b.avg_rating ?? 0) - (a.avg_rating ?? 0))
     .slice(0, limit)
+}
+
+// ─── Moderator / Admin helpers ────────────────────────────────────────────────
+
+async function getUserRole(): Promise<'user' | 'moderator' | 'admin' | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  return profile?.role ?? 'user'
+}
+
+async function assertModerator(): Promise<void> {
+  const role = await getUserRole()
+  if (role !== 'moderator' && role !== 'admin') {
+    throw new Error("No autorizado. Se requiere rol de moderador o admin.")
+  }
+}
+
+async function assertAdmin(): Promise<void> {
+  const role = await getUserRole()
+  if (role !== 'admin') {
+    throw new Error("No autorizado. Se requiere rol de admin.")
+  }
+}
+
+// ─── Moderation actions ───────────────────────────────────────────────────────
+
+export async function getPendingGames(page = 0, limit = 20) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { data: games, count } = await supabase
+    .from("games")
+    .select("*, profiles(username, avatar_url)", { count: "exact" })
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .range(page * limit, (page + 1) * limit - 1)
+
+  // Fetch tags for each game
+  const gameList = (games ?? []) as unknown as (Game & { profiles: Pick<Profile, "username" | "avatar_url"> | null })[]
+  const gameIds = gameList.map((g) => g.id)
+
+  let tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  const gamesWithTags = gameList.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  }))
+
+  return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }
+}
+
+export async function getModeratedGames(options: {
+  status?: string
+  page?: number
+  limit?: number
+} = {}) {
+  await assertModerator()
+  const supabase = await createClient()
+  const { status, page = 0, limit = 20 } = options
+
+  let query = supabase
+    .from("games")
+    .select("*, profiles(username, avatar_url)", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(page * limit, (page + 1) * limit - 1)
+
+  if (status) {
+    query = query.eq("status", status)
+  } else {
+    query = query.neq("status", "draft")
+  }
+
+  const { data: games, count } = await query
+
+  const gameList = (games ?? []) as unknown as (Game & { profiles: Pick<Profile, "username" | "avatar_url"> | null })[]
+  const gameIds = gameList.map((g) => g.id)
+
+  let tagsMap = new Map<string, Tag[]>()
+  if (gameIds.length > 0) {
+    const { data: gameTags } = await supabase
+      .from("game_tags")
+      .select("game_id, tags(*)")
+      .in("game_id", gameIds)
+
+    for (const gt of gameTags ?? []) {
+      const existing = tagsMap.get(gt.game_id) || []
+      existing.push((gt as { tags: unknown }).tags as Tag)
+      tagsMap.set(gt.game_id, existing)
+    }
+  }
+
+  const gamesWithTags = gameList.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+    avg_rating: null,
+    user_rating: null,
+  }))
+
+  return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }
+}
+
+export async function approveGame(gameId: string) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "approved" })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  // Fetch game details for notifications
+  const { data: game } = await supabase
+    .from("games")
+    .select("id, title, user_id")
+    .eq("id", gameId)
+    .single()
+
+  if (game) {
+    // 1. Notify the game owner
+    await createNotification({
+      user_id: game.user_id,
+      type: "game_approved",
+      title: "Juego aprobado",
+      message: `¡Tu juego "${game.title}" fue aprobado y ya está visible!`,
+      link_url: `/juego/${gameId}`,
+    })
+
+    // 2. Fan-out to followers of the creator
+    const { data: followers } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("following_id", game.user_id)
+
+    if (followers && followers.length > 0) {
+      const { data: creatorProfile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", game.user_id)
+        .single()
+
+      const creatorName = creatorProfile?.username ?? "Alguien"
+      for (const f of followers) {
+        await createNotification({
+          user_id: f.follower_id,
+          type: "new_game_from_following",
+          title: "Nuevo juego publicado",
+          message: `${creatorName} publicó un nuevo juego: "${game.title}"`,
+          link_url: `/juego/${gameId}`,
+          actor_id: game.user_id,
+        })
+      }
+    }
+  }
+
+  revalidatePath("/moderar")
+  revalidatePath("/perfil/[username]", "page")
+  revalidatePath("/", "layout")
+  return { success: true }
+}
+
+export async function rejectGame(gameId: string, reason?: string) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "rejected", rejection_reason: reason || null })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  // Fetch game details for notification
+  const { data: game } = await supabase
+    .from("games")
+    .select("id, title, user_id")
+    .eq("id", gameId)
+    .single()
+
+  if (game) {
+    await createNotification({
+      user_id: game.user_id,
+      type: "game_rejected",
+      title: "Juego rechazado",
+      message: reason
+        ? `Tu juego "${game.title}" fue rechazado. Motivo: ${reason}`
+        : `Tu juego "${game.title}" fue rechazado.`,
+      link_url: `/perfil/yo`,
+    })
+  }
+
+  revalidatePath("/moderar")
+  revalidatePath("/perfil/[username]", "page")
+  return { success: true }
+}
+
+export async function revertToPending(gameId: string) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "pending", rejection_reason: null })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/moderar")
+  revalidatePath("/perfil/[username]", "page")
+  return { success: true }
+}
+
+export async function modToggleVisibility(gameId: string) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { data: game } = await supabase
+    .from("games")
+    .select("hidden")
+    .eq("id", gameId)
+    .single()
+
+  if (!game) return { error: "Juego no encontrado" }
+
+  const { error } = await supabase
+    .from("games")
+    .update({ hidden: !game.hidden })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/moderar")
+  revalidatePath("/perfil/[username]", "page")
+  return { success: true }
+}
+
+export async function modDeleteGame(gameId: string) {
+  await assertModerator()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("games")
+    .delete()
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/moderar")
+  revalidatePath("/perfil/[username]", "page")
+  revalidatePath("/", "layout")
+  return { success: true }
+}
+
+// ─── Publish draft ────────────────────────────────────────────────────────────
+
+export async function publishGame(gameId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Debes iniciar sesión" }
+
+  const { data: game } = await supabase
+    .from("games")
+    .select("status, platform")
+    .eq("id", gameId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (!game) return { error: "Juego no encontrado o no autorizado" }
+  if (game.status !== "draft") return { error: "El juego ya fue publicado" }
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "pending", rejection_reason: null })
+    .eq("id", gameId)
+
+  if (error) return { error: error.message }
+
+  await checkAndAwardBadges(user.id)
+
+  revalidatePath("/perfil/[username]", "page")
+  revalidatePath(`/juego/${gameId}`)
+  return { success: true }
+}
+
+// ─── Admin actions (user management) ──────────────────────────────────────────
+
+export async function getUsers(options: {
+  search?: string
+  page?: number
+  limit?: number
+} = {}) {
+  await assertAdmin()
+  const supabase = await createClient()
+  const { search, page = 0, limit = 20 } = options
+
+  let query = supabase
+    .from("profiles")
+    .select("id, username, email, role, avatar_url, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(page * limit, (page + 1) * limit - 1)
+
+  if (search) {
+    query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`)
+  }
+
+  const { data: users, count } = await query
+  return { users: users ?? [], total: count ?? 0 }
+}
+
+export async function setUserRole(userId: string, role: 'user' | 'moderator' | 'admin') {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ role })
+    .eq("id", userId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/admin/usuarios")
+  revalidatePath("/moderar")
+  return { success: true }
 }
