@@ -91,8 +91,9 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 - La preview renderiza el slide en miniatura con la imagen, texto, overlay y botón en tiempo real
 - Selectores de color (nativos `<input type="color">` + entrada de texto para hex manual) ubicados en columna de preview
 - Helper `hexToRgba()` local para aplicar opacidad al overlay en la preview
-- **Panel options**: toggle switch para mostrar/ocultar panel flotante, segmented control para alineación (izquierda/centro/derecha) y modo del botón (completo/solo botón/sin botón)
+- **Panel options** en la columna de preview (debajo de la vista previa, antes de los colores): toggle switch para mostrar/ocultar panel flotante, segmented control para alineación (izquierda/centro/derecha) y modo del botón (completo/solo botón/sin botón)
 - Las opciones del panel se reflejan en la preview en vivo y en badges indicadores en la lista de slides
+- En modo **"Solo botón"** (`buttonMode: 'only'`), no se renderiza el fondo traslúcido del panel: el botón aparece directamente sobre la imagen de fondo
 - Upload de imagen vía `uploadBannerImage`
 - Ordenamiento con botones arriba/abajo
 - Estados: loading, empty (sin slides), error, submitting
@@ -105,7 +106,10 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 - `Slide` interface incluye `showPanel?`, `panelAlign?`, `buttonMode?` para controlar el layout del panel
 - **Panel condicional**: si `showPanel === false`, no renderiza el panel flotante (solo fondo)
 - **Alineación**: usa clases Tailwind dinámicas según `panelAlign` (`left`, `center`, `right`)
-- **Modo botón**: según `buttonMode` — `full` muestra título+desc+botón, `only` muestra solo botón, `none` muestra solo título+desc
+- **Modo botón**: según `buttonMode`:
+  - `full` — panel con backdrop + título + descripción + botón
+  - `only` — **solo el botón flotante**, sin backdrop ni panel traslúcido (el botón va directo sobre la imagen)
+  - `none` — panel con backdrop + título + descripción, sin botón
 
 ### `HeroSliderWrapper` (en `app/(public)/page.tsx`)
 - Server Component que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`
@@ -125,11 +129,11 @@ El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 - Modal de creación/edición con **diseño de dos columnas**: formulario a la izquierda, vista previa en vivo + selectores de color a la derecha
 - En mobile la preview se oculta y el formulario ocupa todo el ancho
 - La vista previa se actualiza en tiempo real al cambiar texto, imagen, colores y opciones de panel
-- **Opciones del panel**: sección "Opciones del panel" en el formulario con:
+- **Opciones del panel** en la columna de preview (debajo de la vista previa, antes de los colores): sección "Opciones del panel" con:
   - Toggle switch para mostrar/ocultar el panel
   - Segmented control para alineación (izquierda/centro/derecha) — solo visible si el panel está activo
   - Segmented control para modo del botón (completo/solo botón/sin botón) — solo visible si el panel está activo
-- Color pickers: nativos `<input type="color">` + entrada de texto para valores hex manuales, resumidos en la sección de preview
+- Color pickers: nativos `<input type="color">` + entrada de texto para valores hex manuales, debajo de las opciones del panel
 - Drag-free reordering con botones arriba/abajo
 
 ## Fallback

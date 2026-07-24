@@ -428,3 +428,10 @@ sources:
 - Commit: `7f3f8fd`
 - Build: 0 errores, migración aplicada a Supabase
 - Páginas actualizadas: [[features/banner]], [[frontend/components]], [[log]]
+
+## [2026-07-24] fix | panel-options-to-preview-column-no-backdrop-on-button-only
+- `banner-admin-client.tsx`: opciones del panel movidas de la columna del formulario a la columna de preview (debajo de la vista previa, antes de los colores)
+- `banner-admin-client.tsx` + `HeroSlider.tsx`: cuando `buttonMode === 'only'`, no se renderiza el backdrop del panel — el botón aparece directamente sobre la imagen de fondo
+- Commit: `d82c4d4`
+- Build: 0 errores
+- Páginas actualizadas: [[features/banner]], [[log]]
