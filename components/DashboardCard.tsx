@@ -3,8 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Pencil, Trash2, Play, Star, Clock, Loader2 } from "lucide-react"
-import { toggleVisibility, deleteGame } from "@/lib/actions/games"
+import { Eye, EyeOff, Pencil, Trash2, Play, Star, Clock, Loader2, Send } from "lucide-react"
+import { toggleVisibility, deleteGame, publishGame } from "@/lib/actions/games"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
@@ -28,6 +28,14 @@ function timeAgo(date: string): string {
 }
 
 function getStatusInfo(status: string, hidden: boolean) {
+  if (status === "draft") {
+    return {
+      label: "Borrador",
+      variant: "outline" as const,
+      className:
+        "border-gray-300 text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800",
+    }
+  }
   if (status === "pending") {
     return {
       label: "En moderación",
@@ -61,9 +69,22 @@ function getStatusInfo(status: string, hidden: boolean) {
 export function DashboardCard({ game }: DashboardCardProps) {
   const router = useRouter()
   const [toggling, setToggling] = useState(false)
+  const [publishing, setPublishing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const status = getStatusInfo(game.status, game.hidden)
+
+  async function handlePublish() {
+    setPublishing(true)
+    const result = await publishGame(game.id)
+    setPublishing(false)
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" })
+    } else {
+      toast({ title: "Juego enviado a moderación" })
+      router.refresh()
+    }
+  }
 
   async function handleToggle() {
     setToggling(true)
@@ -170,6 +191,22 @@ export function DashboardCard({ game }: DashboardCardProps) {
               Jugar
             </Link>
           </Button>
+          {game.status === "draft" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePublish}
+              disabled={publishing}
+              className="gap-1.5 text-xs text-arcade-green hover:text-arcade-green hover:bg-arcade-green/10"
+            >
+              {publishing ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Send className="size-3.5" />
+              )}
+              Publicar
+            </Button>
+          )}
           <Button variant="ghost" size="sm" asChild className="gap-1.5 text-xs">
             <Link href={`/editar/${game.id}`}>
               <Pencil className="size-3.5" />
