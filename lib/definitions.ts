@@ -172,13 +172,7 @@ export interface BannerSlide {
   cta_link: string
   sort_order: number
   active: boolean
-  overlay_color: string | null
-  text_color: string | null
-  button_color: string | null
-  show_panel: boolean | null
-  panel_align: string | null
-  panel_valign: string | null
-  button_mode: string | null
+  template: string
   created_at: string
   updated_at: string
 }

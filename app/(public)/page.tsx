@@ -100,13 +100,7 @@ async function HeroSliderWrapper() {
         description: s.description ?? "",
         ctaText: s.cta_text,
         ctaLink: s.cta_link,
-        overlayColor: s.overlay_color ?? undefined,
-        textColor: s.text_color ?? undefined,
-        buttonColor: s.button_color ?? undefined,
-        showPanel: s.show_panel ?? true,
-        panelAlign: s.panel_align ?? "right",
-        panelValign: s.panel_valign ?? "center",
-        buttonMode: s.button_mode ?? "full",
+        template: s.template || "bar-right",
       }))
     : undefined // use defaults
 

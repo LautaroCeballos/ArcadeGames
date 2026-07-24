@@ -4,16 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
-/** Converts a hex color like #ff0000 to rgba(r,g,b,opacity) */
-function hexToRgba(hex: string, opacity = 0.4): string {
-  const clean = hex.replace("#", "")
-  if (clean.length !== 6) return `rgba(0,0,0,${opacity})`
-  const r = Number.parseInt(clean.slice(0, 2), 16)
-  const g = Number.parseInt(clean.slice(2, 4), 16)
-  const b = Number.parseInt(clean.slice(4, 6), 16)
-  return `rgba(${r},${g},${b},${opacity})`
-}
-
 interface Slide {
   id: string
   imageUrl: string
@@ -21,16 +11,9 @@ interface Slide {
   description: string
   ctaText: string
   ctaLink: string
-  overlayColor?: string
-  textColor?: string
-  buttonColor?: string
-  showPanel?: boolean
-  panelAlign?: string
-  panelValign?: string
-  buttonMode?: string
+  template?: string
 }
 
-/** Mock slides — replace with CMS or dynamic data later */
 const defaultSlides: Slide[] = [
   {
     id: "1",
@@ -39,10 +22,7 @@ const defaultSlides: Slide[] = [
     description: "Descubrí juegos creados con MakeCode Arcade",
     ctaText: "SABER MÁS",
     ctaLink: "/",
-    showPanel: true,
-    panelAlign: "right",
-    panelValign: "center",
-    buttonMode: "full",
+    template: "bar-right",
   },
   {
     id: "2",
@@ -51,10 +31,7 @@ const defaultSlides: Slide[] = [
     description: "Aprendé a programar con MakeCode Arcade",
     ctaText: "EMPEZAR",
     ctaLink: "/",
-    showPanel: true,
-    panelAlign: "right",
-    panelValign: "center",
-    buttonMode: "full",
+    template: "bar-right",
   },
   {
     id: "3",
@@ -63,10 +40,7 @@ const defaultSlides: Slide[] = [
     description: "Publicá tus juegos y recibí feedback",
     ctaText: "SUBIR",
     ctaLink: "/subir",
-    showPanel: true,
-    panelAlign: "right",
-    panelValign: "center",
-    buttonMode: "full",
+    template: "bar-right",
   },
 ]
 
@@ -82,7 +56,6 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
     setCurrent((prev) => (prev + 1) % slides.length)
   }, [slides.length])
 
-  // Auto-play
   useEffect(() => {
     if (isPaused) return
     const timer = setInterval(next, 5000)
@@ -102,107 +75,12 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Slide content */}
-      <div className="relative flex h-[250px] sm:h-[320px] md:h-[360px] lg:h-[400px] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
-        {slide.imageUrl ? (
-          <img
-            src={slide.imageUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : (
-          /* Decorative background when no image */
-          <div className="absolute inset-0 opacity-10">
-            <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
-          </div>
-        )}
+      {slide.template === "full-image" ? (
+        <FullImageSlide slide={slide} />
+      ) : (
+        <BarSlide slide={slide} />
+      )}
 
-        {/* Floating panel with backdrop (only when panel shown AND not button-only mode) */}
-        {slide.showPanel !== false && slide.buttonMode !== "only" && (
-          <div
-            className={cn(
-              "absolute z-10 backdrop-blur-sm rounded-xl flex items-center justify-center",
-              // vertical positioning
-              slide.panelValign === "top" && "top-4 bottom-auto",
-              (!slide.panelValign || slide.panelValign === "center") && "top-1/2 -translate-y-1/2",
-              slide.panelValign === "bottom" && "bottom-4 top-auto",
-              // mobile: full width with margins
-              "left-4 right-4",
-              // desktop horizontal alignment
-              slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
-              slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto sm:max-w-[50%]",
-              (!slide.panelAlign || slide.panelAlign === "right") && "sm:left-auto sm:right-4",
-            )}
-            style={{ backgroundColor: hexToRgba(slide.overlayColor || "#000000") }}
-          >
-            <div className="flex flex-col items-center gap-2 px-6 py-4 sm:px-8 sm:py-5">
-              {/* Title + description (always shown since buttonMode !== 'only') */}
-              <h2
-                className="text-center text-xl font-bold sm:text-2xl"
-                style={{ color: slide.textColor || "#ffffff" }}
-              >
-                {slide.title}
-              </h2>
-              {slide.description && (
-                <p
-                  className="max-w-xs text-center text-sm sm:max-w-sm"
-                  style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
-                >
-                  {slide.description}
-                </p>
-              )}
-              {/* Show button only when buttonMode is 'full' */}
-              {slide.buttonMode === "full" && (
-                <Link
-                  href={slide.ctaLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
-                  style={{
-                    backgroundColor: slide.buttonColor || "#d90057",
-                    color: slide.textColor || "#ffffff",
-                  }}
-                >
-                  {slide.ctaText}
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Button-only mode: render just the floating button, no backdrop */}
-        {slide.showPanel !== false && slide.buttonMode === "only" && (
-          <div
-            className={cn(
-              "absolute z-10 flex items-center justify-center",
-              // vertical positioning
-              slide.panelValign === "top" && "top-4 bottom-auto",
-              (!slide.panelValign || slide.panelValign === "center") && "top-1/2 -translate-y-1/2",
-              slide.panelValign === "bottom" && "bottom-4 top-auto",
-              "left-4 right-4",
-              slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
-              slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",
-              (!slide.panelAlign || slide.panelAlign === "right") && "sm:left-auto sm:right-4",
-            )}
-          >
-            <Link
-              href={slide.ctaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
-              style={{
-                backgroundColor: slide.buttonColor || "#d90057",
-                color: slide.textColor || "#ffffff",
-              }}
-            >
-              {slide.ctaText}
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Dots */}
       {slides.length > 1 && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Navegación de slides">
           {slides.map((s, i) => (
@@ -224,5 +102,88 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
         </div>
       )}
     </section>
+  )
+}
+
+function FullImageSlide({ slide }: { slide: Slide }) {
+  return (
+    <Link
+      href={slide.ctaLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block"
+    >
+      <div className="relative flex h-[250px] sm:h-[320px] md:h-[360px] lg:h-[400px] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+        {slide.imageUrl ? (
+          <img
+            src={slide.imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 opacity-10">
+            <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
+          </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+      </div>
+    </Link>
+  )
+}
+
+function BarSlide({ slide }: { slide: Slide }) {
+  const isLeft = slide.template === "bar-left"
+
+  return (
+    <div className="relative flex h-[250px] sm:h-[320px] md:h-[360px] lg:h-[400px] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+      {slide.imageUrl ? (
+        <img
+          src={slide.imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 opacity-10">
+          <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
+        </div>
+      )}
+
+      {/* Glass bar */}
+      <div
+        className={cn(
+          "absolute z-10 backdrop-blur-sm bg-black/60 flex items-center justify-center gap-2 p-4",
+          // Desktop: vertical bar on the side
+          isLeft ? "left-0 inset-y-0 w-1/6" : "right-0 inset-y-0 w-1/6",
+          // Mobile: horizontal bar at the bottom
+          "max-md:inset-x-0 max-md:bottom-0 max-md:w-full max-md:h-auto max-md:flex-row max-md:p-3",
+        )}
+      >
+        <div className={cn(
+          "flex flex-col items-center gap-2",
+          "max-md:flex-1 max-md:items-start",
+        )}>
+          <h2
+            className="text-center text-xs font-bold leading-tight text-white sm:text-sm"
+          >
+            {slide.title}
+          </h2>
+          {slide.description && (
+            <p className="max-w-[120px] text-center text-[10px] leading-tight text-white/80 sm:max-w-[160px] sm:text-xs max-md:max-w-none max-md:text-left">
+              {slide.description}
+            </p>
+          )}
+        </div>
+        <Link
+          href={slide.ctaLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center rounded-[10px] bg-arcade-red px-3 py-1.5 text-[10px] font-semibold text-white shadow-lg transition-colors hover:brightness-110 sm:rounded-[12px] sm:px-4 sm:py-2 sm:text-xs shrink-0"
+        >
+          {slide.ctaText}
+        </Link>
+      </div>
+    </div>
   )
 }

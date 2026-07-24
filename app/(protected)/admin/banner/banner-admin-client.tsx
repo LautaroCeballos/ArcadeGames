@@ -1,33 +1,17 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { ImagePlus, Pencil, Trash2, GripVertical, AlertTriangle, Loader2, EyeOff, Eye } from "lucide-react"
+import { ImagePlus, Pencil, Trash2, AlertTriangle, Loader2, EyeOff } from "lucide-react"
 import { getBannerSlides, createBannerSlide, updateBannerSlide, deleteBannerSlide, reorderBannerSlides, uploadBannerImage } from "@/lib/actions/banner"
 import { cn } from "@/lib/utils"
 import type { BannerSlide } from "@/lib/definitions"
-
-/** Converts a hex color like #ff0000 to rgba(r,g,b,opacity) */
-function hexToRgba(hex: string, opacity = 0.4): string {
-  const clean = hex.replace("#", "")
-  if (clean.length !== 6) return `rgba(0,0,0,${opacity})`
-  const r = Number.parseInt(clean.slice(0, 2), 16)
-  const g = Number.parseInt(clean.slice(2, 4), 16)
-  const b = Number.parseInt(clean.slice(4, 6), 16)
-  return `rgba(${r},${g},${b},${opacity})`
-}
 
 interface SlideFormData {
   title: string
   description: string
   ctaText: string
   ctaLink: string
-  overlayColor: string
-  textColor: string
-  buttonColor: string
-  showPanel: boolean
-  panelAlign: "left" | "center" | "right"
-  panelValign: "top" | "center" | "bottom"
-  buttonMode: "full" | "only" | "none"
+  template: string
 }
 
 const emptyForm: SlideFormData = {
@@ -35,13 +19,17 @@ const emptyForm: SlideFormData = {
   description: "",
   ctaText: "",
   ctaLink: "/",
-  overlayColor: "#000000",
-  textColor: "#ffffff",
-  buttonColor: "#d90057",
-  showPanel: true,
-  panelAlign: "right",
-  panelValign: "center",
-  buttonMode: "full",
+  template: "bar-right",
+}
+
+const templates = [
+  { id: "bar-right", label: "Barra derecha", desc: "Imagen de fondo con barra vidriosa a la derecha" },
+  { id: "bar-left", label: "Barra izquierda", desc: "Imagen de fondo con barra vidriosa a la izquierda" },
+  { id: "full-image", label: "Imagen completa", desc: "Imagen 100%, sin texto visible. Todo el slide es clickeable." },
+] as const
+
+function hexToRgba(_hex: string, _opacity = 0.4): string {
+  return "rgba(0,0,0,0.6)"
 }
 
 export function BannerAdminClient() {
@@ -50,7 +38,6 @@ export function BannerAdminClient() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<SlideFormData>(emptyForm)
@@ -76,8 +63,6 @@ export function BannerAdminClient() {
     fetchSlides()
   }, [fetchSlides])
 
-  // ─── Dialog handlers ──────────────────────────────────────────────────────
-
   const openCreateDialog = () => {
     setEditingId(null)
     setForm(emptyForm)
@@ -94,13 +79,7 @@ export function BannerAdminClient() {
       description: slide.description ?? "",
       ctaText: slide.cta_text,
       ctaLink: slide.cta_link,
-      overlayColor: slide.overlay_color ?? "#000000",
-      textColor: slide.text_color ?? "#ffffff",
-      buttonColor: slide.button_color ?? "#d90057",
-      showPanel: slide.show_panel ?? true,
-      panelAlign: (slide.panel_align as "left" | "center" | "right") ?? "right",
-      panelValign: (slide.panel_valign as "top" | "center" | "bottom") ?? "center",
-      buttonMode: (slide.button_mode as "full" | "only" | "none") ?? "full",
+      template: slide.template || "bar-right",
     })
     setImageFile(null)
     setImagePreview(slide.image_url)
@@ -116,8 +95,6 @@ export function BannerAdminClient() {
     setImagePreview(null)
     setKeepImage(true)
   }
-
-  // ─── Image handlers ──────────────────────────────────────────────────────
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -145,8 +122,6 @@ export function BannerAdminClient() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  // ─── Submit ──────────────────────────────────────────────────────────────
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -155,7 +130,6 @@ export function BannerAdminClient() {
     try {
       let finalImageUrl = editingId && keepImage ? (imagePreview ?? null) : null
 
-      // Upload new image if selected
       if (imageFile) {
         const imgFormData = new FormData()
         imgFormData.set("file", imageFile)
@@ -168,22 +142,15 @@ export function BannerAdminClient() {
         finalImageUrl = uploadResult.url
       }
 
-      // Create or update
       const submitFormData = new FormData()
       submitFormData.set("title", form.title)
       submitFormData.set("description", form.description)
       submitFormData.set("ctaText", form.ctaText)
       submitFormData.set("ctaLink", form.ctaLink)
+      submitFormData.set("template", form.template)
       if (finalImageUrl !== null) {
         submitFormData.set("imageUrl", finalImageUrl)
       }
-      submitFormData.set("overlayColor", form.overlayColor)
-      submitFormData.set("textColor", form.textColor)
-      submitFormData.set("buttonColor", form.buttonColor)
-      submitFormData.set("showPanel", form.showPanel ? "true" : "false")
-      submitFormData.set("panelAlign", form.panelAlign)
-      submitFormData.set("panelValign", form.panelValign)
-      submitFormData.set("buttonMode", form.buttonMode)
 
       let result
       if (editingId) {
@@ -206,8 +173,6 @@ export function BannerAdminClient() {
     }
   }
 
-  // ─── Delete ──────────────────────────────────────────────────────────────
-
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este slide del banner?")) return
     setError(null)
@@ -222,8 +187,6 @@ export function BannerAdminClient() {
       setError(e instanceof Error ? e.message : "Error al eliminar")
     }
   }
-
-  // ─── Reorder ─────────────────────────────────────────────────────────────
 
   const moveSlide = async (index: number, direction: "up" | "down") => {
     const newSlides = [...slides]
@@ -240,7 +203,7 @@ export function BannerAdminClient() {
     }
   }
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  const templateLabel = (id: string) => templates.find((t) => t.id === id)?.label ?? id
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -368,26 +331,9 @@ export function BannerAdminClient() {
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                     {slide.cta_link}
                   </span>
-                  {slide.show_panel === false && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] text-yellow-700">
-                      <EyeOff className="h-3 w-3" /> Panel oculto
-                    </span>
-                  )}
-                  {slide.panel_align && slide.panel_align !== "right" && slide.show_panel !== false && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] text-blue-700">
-                      {slide.panel_align === "left" ? "Izquierda" : "Centro"}
-                    </span>
-                  )}
-                  {slide.button_mode && slide.button_mode !== "full" && slide.show_panel !== false && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700">
-                      {slide.button_mode === "only" ? "Solo botón" : "Sin botón"}
-                    </span>
-                  )}
-                  {slide.panel_valign && slide.panel_valign !== "center" && slide.show_panel !== false && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[11px] text-teal-700">
-                      {slide.panel_valign === "top" ? "Arriba" : "Abajo"}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] text-blue-700">
+                    {templateLabel(slide.template || "bar-right")}
+                  </span>
                 </div>
               </div>
 
@@ -597,238 +543,67 @@ export function BannerAdminClient() {
                     </div>
                   )}
 
-                  {!form.showPanel && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center">
-                      <span className="rounded-md bg-black/50 px-2 py-1 text-[10px] text-white/70 backdrop-blur-sm">
-                        Panel oculto
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Mini floating panel in the preview (full or none mode) */}
-                  {form.showPanel && form.buttonMode !== "only" && (
-                    <div
-                      className={cn(
-                        "absolute z-10 rounded-lg backdrop-blur-sm flex items-center justify-center",
-                        // vertical positioning
-                        form.panelValign === "top" && "top-2 bottom-auto",
-                        form.panelValign === "center" && "top-1/2 -translate-y-1/2",
-                        form.panelValign === "bottom" && "bottom-2 top-auto",
-                        "left-2 right-2",
-                        form.panelAlign === "left" && "sm:left-2 sm:right-auto",
-                        form.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto sm:max-w-[50%]",
-                        form.panelAlign === "right" && "sm:left-auto sm:right-2",
-                      )}
-                      style={{ backgroundColor: hexToRgba(form.overlayColor || "#000000") }}
-                    >
-                      <div className="flex flex-col items-center gap-1 px-3 py-2 sm:px-4 sm:py-3">
-                        {/* Title + description (always shown here since buttonMode !== 'only') */}
-                        <p
-                          className="text-center text-xs font-bold leading-tight sm:text-sm"
-                          style={{ color: form.textColor || "#ffffff" }}
-                        >
-                          {form.title || "Título del slide"}
+                  {/* Render according to template */}
+                  {form.template === "full-image" ? (
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                  ) : (
+                    <div className={cn(
+                      "absolute z-10 backdrop-blur-sm bg-black/60 flex items-center justify-center gap-1 p-2",
+                      form.template === "bar-left"
+                        ? "left-0 inset-y-0 w-1/5"
+                        : "right-0 inset-y-0 w-1/5",
+                      "max-md:inset-x-0 max-md:bottom-0 max-md:w-full max-md:h-auto max-md:flex-row",
+                    )}>
+                      <div className="flex flex-col items-center gap-0.5 max-md:flex-1 max-md:items-start">
+                        <p className="text-center text-[9px] font-bold leading-tight text-white">
+                          {form.title || "Título"}
                         </p>
                         {form.description && (
-                          <p
-                            className="max-w-[180px] text-center text-[10px] leading-tight sm:max-w-[240px] sm:text-xs"
-                            style={{ color: form.textColor ? `${form.textColor}cc` : "rgba(255,255,255,0.8)" }}
-                          >
+                          <p className="text-center text-[7px] leading-tight text-white/80 max-md:max-w-none max-md:text-left">
                             {form.description}
                           </p>
                         )}
-                        {/* Button shown only if not 'none' */}
-                        {form.buttonMode === "full" && (
-                          <span
-                            className="inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs"
-                            style={{
-                              backgroundColor: form.buttonColor || "#d90057",
-                              color: form.textColor || "#ffffff",
-                            }}
-                          >
-                            {form.ctaText || "BOTÓN"}
-                          </span>
-                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* buttonMode === 'only': render just the button, no backdrop */}
-                  {form.showPanel && form.buttonMode === "only" && (
-                    <div
-                      className={cn(
-                        "absolute z-10 flex items-center justify-center",
-                        // vertical positioning
-                        form.panelValign === "top" && "top-2 bottom-auto",
-                        form.panelValign === "center" && "top-1/2 -translate-y-1/2",
-                        form.panelValign === "bottom" && "bottom-2 top-auto",
-                        "left-2 right-2",
-                        form.panelAlign === "left" && "sm:left-2 sm:right-auto",
-                        form.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",
-                        form.panelAlign === "right" && "sm:left-auto sm:right-2",
-                      )}
-                    >
-                      <span
-                        className="inline-flex items-center justify-center rounded-[10px] px-3 py-1 text-[10px] font-semibold shadow-lg sm:rounded-[12px] sm:px-4 sm:py-1 sm:text-xs"
-                        style={{
-                          backgroundColor: form.buttonColor || "#d90057",
-                          color: form.textColor || "#ffffff",
-                        }}
-                      >
+                      <span className="inline-flex items-center justify-center rounded-[6px] bg-arcade-red px-2 py-1 text-[7px] font-semibold text-white shrink-0">
                         {form.ctaText || "BOTÓN"}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* ── Panel options ── */}
-                <div className="mt-4 space-y-3 rounded-lg border p-3">
-                  <p className="text-xs font-medium text-muted-foreground">Opciones del panel</p>
-
-                  {/* Show panel toggle */}
-                  <label className="flex cursor-pointer items-center gap-3">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.showPanel}
-                      onClick={() => setForm({ ...form, showPanel: !form.showPanel })}
-                      className={cn(
-                        "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors",
-                        form.showPanel ? "bg-arcade-red" : "bg-muted"
-                      )}
-                    >
-                      <span className={cn(
-                        "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
-                        form.showPanel ? "translate-x-4" : "translate-x-0"
-                      )} />
-                    </button>
-                    <span className="text-sm">Mostrar panel flotante</span>
-                  </label>
-
-                  {/* Alignment + Button mode (only if panel is shown) */}
-                  {form.showPanel && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación horizontal</label>
-                        <div className="flex gap-1 rounded-lg border p-1">
-                          {(["left", "center", "right"] as const).map((align) => (
-                            <button
-                              key={align}
-                              type="button"
-                              onClick={() => setForm({ ...form, panelAlign: align })}
-                              className={cn(
-                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                                form.panelAlign === align
-                                  ? "bg-arcade-red text-white shadow-sm"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {align === "left" ? "Izquierda" : align === "center" ? "Centro" : "Derecha"}
-                            </button>
-                          ))}
+                {/* ── Template selector ── */}
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Plantilla</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {templates.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setForm({ ...form, template: t.id })}
+                        className={cn(
+                          "rounded-lg border-2 p-2 text-left transition-colors",
+                          form.template === t.id
+                            ? "border-arcade-red bg-arcade-red/5"
+                            : "border-transparent bg-muted/50 hover:bg-muted",
+                        )}
+                      >
+                        {/* Mini visual representation */}
+                        <div className="mb-1.5 h-10 w-full overflow-hidden rounded bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+                          {t.id === "full-image" ? (
+                            <div className="flex h-full items-center justify-center">
+                              <ImagePlus className="h-4 w-4 text-white/40" />
+                            </div>
+                          ) : (
+                            <div className="flex h-full items-center">
+                              <div className="flex-1" />
+                              <div className="h-full w-1/3 bg-black/50 backdrop-blur-sm" />
+                            </div>
+                          )}
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación vertical</label>
-                        <div className="flex gap-1 rounded-lg border p-1">
-                          {([["top", "Arriba"], ["center", "Centro"], ["bottom", "Abajo"]] as const).map(([valign, label]) => (
-                            <button
-                              key={valign}
-                              type="button"
-                              onClick={() => setForm({ ...form, panelValign: valign })}
-                              className={cn(
-                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                                form.panelValign === valign
-                                  ? "bg-arcade-red text-white shadow-sm"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Botón</label>
-                        <div className="flex gap-1 rounded-lg border p-1">
-                          {([["full", "Completo"], ["only", "Solo botón"], ["none", "Sin botón"]] as const).map(([mode, label]) => (
-                            <button
-                              key={mode}
-                              type="button"
-                              onClick={() => setForm({ ...form, buttonMode: mode })}
-                              className={cn(
-                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                                form.buttonMode === mode
-                                  ? "bg-arcade-red text-white shadow-sm"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Color swatches */}
-                <div className="mt-4 space-y-3">
-                  <p className="text-xs font-medium text-muted-foreground">Colores</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] text-muted-foreground">Fondo panel</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={form.overlayColor}
-                          onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
-                          className="h-7 w-7 cursor-pointer rounded border"
-                        />
-                        <input
-                          type="text"
-                          value={form.overlayColor}
-                          onChange={(e) => setForm({ ...form, overlayColor: e.target.value })}
-                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] text-muted-foreground">Texto</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={form.textColor}
-                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                          className="h-7 w-7 cursor-pointer rounded border"
-                        />
-                        <input
-                          type="text"
-                          value={form.textColor}
-                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] text-muted-foreground">Botón</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={form.buttonColor}
-                          onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
-                          className="h-7 w-7 cursor-pointer rounded border"
-                        />
-                        <input
-                          type="text"
-                          value={form.buttonColor}
-                          onChange={(e) => setForm({ ...form, buttonColor: e.target.value })}
-                          className="flex-1 rounded-md border bg-background px-1.5 py-1 text-[11px] outline-none focus:border-arcade-red"
-                        />
-                      </div>
-                    </div>
+                        <p className="text-[11px] font-medium leading-tight">{t.label}</p>
+                        <p className="mt-0.5 text-[9px] leading-tight text-muted-foreground">{t.desc}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -841,7 +616,6 @@ export function BannerAdminClient() {
       {!loading && slides.length > 0 && (
         <p className="mt-6 text-xs text-muted-foreground">
           Los slides se muestran en el orden indicado. Solo se muestran en el home los slides activos.
-          Arrastrá con los botones de orden para reordenar.
         </p>
       )}
     </div>

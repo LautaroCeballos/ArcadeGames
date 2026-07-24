@@ -434,6 +434,19 @@ sources:
 - `banner-admin-client.tsx` + `HeroSlider.tsx`: cuando `buttonMode === 'only'`, no se renderiza el backdrop del panel — el botón aparece directamente sobre la imagen de fondo
 - Commit: `d82c4d4`
 - Build: 0 errores
+- Páginas actualizadas: [[log]]
+
+## [2026-07-24] feat | banner-templates
+- Migración `00021_banner_slide_templates.sql`: reemplaza opciones de panel granular por sistema de plantillas. Columna `template` (check bar-right/bar-left/full-image, default 'bar-right')
+- Se elimina la lectura de `overlay_color`, `text_color`, `button_color`, `show_panel`, `panel_align`, `panel_valign`, `button_mode` del HeroSlider y server actions
+- `lib/definitions.ts`: `BannerSlide` simplificado (solo `template`)
+- `lib/actions/banner.ts`: `createBannerSlide`/`updateBannerSlide` solo leen `template`; se eliminan todos los campos viejos
+- `components/HeroSlider.tsx`: reescritura completa. Render condicional según `template`:
+  - `bar-right`/`bar-left`: imagen 100% + barra vidriosa `backdrop-blur-sm bg-black/60` 1/6 lateral (desktop) / full-width abajo (mobile)
+  - `full-image`: Link wrapping toda la imagen, gradiente sutil para dots
+- `banner-admin-client.tsx`: **rediseño completo**. Se eliminan color pickers, toggle panel, alineaciones, modo botón, sección "Opciones del panel". Nuevo selector de plantillas (3 cards visuales). Formulario simplificado
+- `app/(public)/page.tsx`: mapeo simplificado (solo `id`, `imageUrl`, `title`, `description`, `ctaText`, `ctaLink`, `template`)
+- Build: 0 errores
 - Páginas actualizadas: [[features/banner]], [[log]]
 
 ## [2026-07-24] feat | panel-valign-vertical-alignment

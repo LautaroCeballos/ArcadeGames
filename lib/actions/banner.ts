@@ -69,13 +69,7 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
   const ctaText = formData.get("ctaText") as string
   const ctaLink = formData.get("ctaLink") as string
   const imageUrl = formData.get("imageUrl") as string | null
-  const overlayColor = formData.get("overlayColor") as string | null
-  const textColor = formData.get("textColor") as string | null
-  const buttonColor = formData.get("buttonColor") as string | null
-  const showPanel = formData.get("showPanel") as string | null
-  const panelAlign = formData.get("panelAlign") as string | null
-  const panelValign = formData.get("panelValign") as string | null
-  const buttonMode = formData.get("buttonMode") as string | null
+  const template = (formData.get("template") as string) || "bar-right"
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -105,13 +99,7 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
       cta_text: ctaText.trim(),
       cta_link: ctaLink.trim(),
       image_url: imageUrl || null,
-      overlay_color: overlayColor || null,
-      text_color: textColor || null,
-      button_color: buttonColor || null,
-      show_panel: showPanel !== "false",
-      panel_align: panelAlign || "right",
-      panel_valign: panelValign || "center",
-      button_mode: buttonMode || "full",
+      template,
       sort_order: nextOrder,
       active: true,
     })
@@ -134,14 +122,7 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   const ctaText = formData.get("ctaText") as string
   const ctaLink = formData.get("ctaLink") as string
   const imageUrl = formData.get("imageUrl") as string | null
-  const active = formData.get("active") as string | null
-  const overlayColor = formData.get("overlayColor") as string | null
-  const textColor = formData.get("textColor") as string | null
-  const buttonColor = formData.get("buttonColor") as string | null
-  const showPanel = formData.get("showPanel") as string | null
-  const panelAlign = formData.get("panelAlign") as string | null
-  const panelValign = formData.get("panelValign") as string | null
-  const buttonMode = formData.get("buttonMode") as string | null
+  const template = (formData.get("template") as string) || "bar-right"
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -158,27 +139,13 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
     description: description?.trim() || null,
     cta_text: ctaText.trim(),
     cta_link: ctaLink.trim(),
+    template,
     updated_at: new Date().toISOString(),
   }
 
   if (imageUrl !== null) {
     updates.image_url = imageUrl || null
   }
-
-  if (active !== null) {
-    updates.active = active === "true"
-  }
-
-  // Color fields: always include them (null = use frontend default)
-  updates.overlay_color = overlayColor || null
-  updates.text_color = textColor || null
-  updates.button_color = buttonColor || null
-
-  // Panel layout fields
-  updates.show_panel = showPanel !== "false"
-  updates.panel_align = panelAlign || "right"
-  updates.panel_valign = panelValign || "center"
-  updates.button_mode = buttonMode || "full"
 
   const { error } = await supabase
     .from("banner_slides")
@@ -221,7 +188,6 @@ export async function reorderBannerSlides(orderedIds: string[]): Promise<ActionR
     sort_order: index,
   }))
 
-  // Use a simple approach: update each one (Supabase doesn't have bulk update by array)
   for (const update of updates) {
     const { error } = await supabase
       .from("banner_slides")

@@ -4,9 +4,7 @@ tags: [feature, admin, frontend]
 last_updated: "2026-07-24"
 sources:
   - supabase/migrations/00017_banner_slides.sql
-  - supabase/migrations/00018_banner_slide_colors.sql
-  - supabase/migrations/00019_banner_slide_panel_options.sql
-  - supabase/migrations/00020_banner_slide_valign.sql
+  - supabase/migrations/00021_banner_slide_templates.sql
   - lib/actions/banner.ts
   - lib/definitions.ts
   - components/HeroSlider.tsx
@@ -14,15 +12,13 @@ sources:
   - app/(protected)/admin/banner/page.tsx
   - app/(protected)/admin/banner/banner-admin-client.tsx
   - components/NavbarClient.tsx
-  - docs/raw/plans/2026-07-23-admin-banner-content.md
+  - docs/raw/plans/2026-07-24-banner-templates.md
 ---
 
 # Sistema de Banner del Home
 
 El sistema permite a los administradores gestionar el contenido del slider principal del home
-desde un panel de administración. Cada slide del carrusel puede tener imagen de fondo, título,
-subtítulo, botón con texto + link, y opciones de layout del panel flotante (visibilidad,
-alineación horizontal y modo del botón).
+desde un panel de administración. Cada slide usa una **plantilla** que define su layout visual.
 
 ## Flujo
 
@@ -32,9 +28,20 @@ alineación horizontal y modo del botón).
 4. Los cambios se reflejan automáticamente en el HeroSlider del home.
 5. Si no hay slides configurados, el slider muestra los defaults hardcodeados.
 
-## Tabla `banner_slides`
+## Plantillas
 
-La migración `00017_banner_slides.sql` crea la tabla en la DB pública:
+| Template | Vista previa | Comportamiento |
+|----------|-------------|----------------|
+| **`bar-right`** | Imagen 100% de fondo + barra vidriosa 1/6 a la derecha | Título, subtítulo y botón dentro de la barra. Desktop: barra vertical. Mobile: barra horizontal abajo. |
+| **`bar-left`** | Imagen 100% de fondo + barra vidriosa 1/6 a la izquierda | Igual que bar-right pero la barra está a la izquierda. |
+| **`full-image`** | Imagen 100%, sin texto visible | Todo el slide es un link. Gradiente sutil abajo para los dots del carrusel. |
+
+### Características visuales de las barras
+- `backdrop-blur-sm` + `bg-black/60` — vidrio translúcido que deja ver la imagen de fondo
+- Texto blanco, botón `bg-arcade-red`
+- Sin overlay en la imagen, sin opciones de color configurables
+
+## Tabla `banner_slides`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
@@ -45,13 +52,7 @@ La migración `00017_banner_slides.sql` crea la tabla en la DB pública:
 | `cta_text` | `text` | Texto del botón (obligatorio) |
 | `cta_link` | `text` | Link del botón (obligatorio, default `/`) |
 | `sort_order` | `int` | Orden de aparición (default 0) |
-| `overlay_color` | `text?` | Color del overlay del panel flotante (hex, ej. `#000000`). Se aplica con opacidad 40% vía `hexToRgba()` |
-| `text_color` | `text?` | Color del texto del panel flotante (hex, ej. `#ffffff`) |
-| `button_color` | `text?` | Color de fondo del botón CTA (hex, ej. `#d90057`) |
-| `show_panel` | `bool` | Si se muestra el panel flotante con título/subtítulo/botón (default true). Migración `00019` |
-| `panel_align` | `text` | Alineación horizontal del panel: `left`, `center` o `right` (default `right`). Migración `00019` |
-| `panel_valign` | `text` | Alineación vertical del panel: `top`, `center` o `bottom` (default `center`). Migración `00020` |
-| `button_mode` | `text` | Modo del botón CTA: `full` (título+desc+botón), `only` (solo botón), `none` (sin botón). Default `full`. Migración `00019` |
+| `template` | `text` | Plantilla: `bar-right`, `bar-left` o `full-image` (default `bar-right`). Migración `00021` |
 | `active` | `bool` | Si está visible en el home (default true) |
 | `created_at` | `timestamptz` | Fecha de creación |
 | `updated_at` | `timestamptz` | Fecha de última modificación |
@@ -79,8 +80,8 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 |--------|-------|-----------|
 | `getBannerSlides()` | — | Obtiene todos los slides (admin) |
 | `getActiveBannerSlides()` | — | Obtiene slides activos para la home pública |
-| `createBannerSlide(formData)` | `FormData` con title, description, ctaText, ctaLink, imageUrl, overlayColor, textColor, buttonColor, showPanel, panelAlign, panelValign, buttonMode | Crea un nuevo slide |
-| `updateBannerSlide(id, formData)` | `string` + `FormData` | Actualiza un slide existente (incluye colores y opciones de panel) |
+| `createBannerSlide(formData)` | `FormData` con title, description, ctaText, ctaLink, imageUrl, template | Crea un nuevo slide |
+| `updateBannerSlide(id, formData)` | `string` + `FormData` | Actualiza un slide existente |
 | `deleteBannerSlide(id)` | `string` | Elimina un slide |
 | `reorderBannerSlides(orderedIds)` | `string[]` | Reordena slides según array de IDs |
 | `uploadBannerImage(formData)` | `FormData` con file | Sube imagen al bucket `banners` |
@@ -89,30 +90,24 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 
 ### `BannerAdminClient` (`app/(protected)/admin/banner/banner-admin-client.tsx`)
 - Client Component con listado de slides + modal de creación/edición
-- Diálogo rediseñado en dos columnas: formulario a la izquierda, **vista previa en vivo** a la derecha
-- La preview renderiza el slide en miniatura con la imagen, texto, overlay y botón en tiempo real
-- Selectores de color (nativos `<input type="color">` + entrada de texto para hex manual) ubicados en columna de preview
-- Helper `hexToRgba()` local para aplicar opacidad al overlay en la preview
-- **Panel options** en la columna de preview (debajo de la vista previa, antes de los colores): toggle switch para mostrar/ocultar panel flotante, segmented control para alineación horizontal (izquierda/centro/derecha), segmented control para alineación vertical (arriba/centro/abajo) y modo del botón (completo/solo botón/sin botón)
-- Las opciones del panel se reflejan en la preview en vivo y en badges indicadores en la lista de slides
-- En modo **"Solo botón"** (`buttonMode: 'only'`), no se renderiza el fondo traslúcido del panel: el botón aparece directamente sobre la imagen de fondo
+- Diálogo de dos columnas: formulario a la izquierda, vista previa + selector de plantilla a la derecha
+- **Selector de plantilla**: 3 cards visuales con miniaturas de cada layout (barra derecha, barra izquierda, imagen completa)
+- La preview renderiza el slide según la plantilla elegida con los datos ingresados
 - Upload de imagen vía `uploadBannerImage`
 - Ordenamiento con botones arriba/abajo
+- Badge indicador de plantilla en la lista de slides
 - Estados: loading, empty (sin slides), error, submitting
+- Sin color pickers, sin opciones de panel, sin alineaciones configurables
 
 ### `HeroSlider` (`components/HeroSlider.tsx`)
 - Client Component con carrusel de slides
 - Acepta `slides?: Slide[]` (opcional, usa defaults si no se provee)
 - Auto-play 5s, pausa en hover, dots de navegación
-- Fallback a 3 slides default hardcodeados si no hay datos de DB
-- `Slide` interface incluye `showPanel?`, `panelAlign?`, `panelValign?`, `buttonMode?` para controlar el layout del panel
-- **Panel condicional**: si `showPanel === false`, no renderiza el panel flotante (solo fondo)
-- **Alineación horizontal**: usa clases Tailwind dinámicas según `panelAlign` (`left`, `center`, `right`)
-- **Alineación vertical**: usa clases Tailwind dinámicas según `panelValign` (`top`, `center`, `bottom`) — `top-4 bottom-auto` para arriba, `top-1/2 -translate-y-1/2` para centro, `bottom-4 top-auto` para abajo
-- **Modo botón**: según `buttonMode`:
-  - `full` — panel con backdrop + título + descripción + botón
-  - `only` — **solo el botón flotante**, sin backdrop ni panel traslúcido (el botón va directo sobre la imagen)
-  - `none` — panel con backdrop + título + descripción, sin botón
+- Fallback a 3 slides default hardcodeados (`template: "bar-right"`)
+- `Slide` interface simplificada: solo `template` en lugar de overlayColor/textColor/buttonColor/showPanel/panelAlign/panelValign/buttonMode
+- Renderiza según `slide.template`:
+  - **`bar-right`/`bar-left`**: imagen 100% + barra vidriosa superpuesta (vertical en desktop, horizontal en mobile)
+  - **`full-image`**: Link wrapping toda la imagen, gradiente sutil inferior para dots
 
 ### `HeroSliderWrapper` (en `app/(public)/page.tsx`)
 - Server Component que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`
@@ -128,17 +123,20 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 
 El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 - Cabecera con título + botón "Nuevo Slide"
-- Cards de slides con preview de imagen, info, botones de acción + badges indicadores (panel oculto, alineación no-default, modo botón no-default)
-- Modal de creación/edición con **diseño de dos columnas**: formulario a la izquierda, vista previa en vivo + selectores de color a la derecha
+- Cards de slides con preview de imagen, info, botones de acción + badge de plantilla
+- Modal de creación/edición con diseño de dos columnas: formulario a la izquierda, vista previa + selector de plantilla a la derecha
 - En mobile la preview se oculta y el formulario ocupa todo el ancho
-- La vista previa se actualiza en tiempo real al cambiar texto, imagen, colores y opciones de panel
-- **Opciones del panel** en la columna de preview (debajo de la vista previa, antes de los colores): sección "Opciones del panel" con:
-  - Toggle switch para mostrar/ocultar el panel
-  - Segmented control para alineación horizontal (izquierda/centro/derecha) — solo visible si el panel está activo
-  - Segmented control para alineación vertical (arriba/centro/abajo) — solo visible si el panel está activo
-  - Segmented control para modo del botón (completo/solo botón/sin botón) — solo visible si el panel está activo
-- Color pickers: nativos `<input type="color">` + entrada de texto para valores hex manuales, debajo de las opciones del panel
-- Drag-free reordering con botones arriba/abajo
+- La vista previa se actualiza en tiempo real al cambiar texto o plantilla
+- **Selector de plantilla**: 3 cards con miniatura visual del layout, nombre y descripción corta
+- Sin color pickers, sin opciones de panel, sin alineaciones — la plantilla lo define todo
+
+## Altura del slider
+
+Alturas fijas responsive (no aspect ratio):
+- Mobile: 250px
+- `sm:` 320px
+- `md:` 360px
+- `lg:` 400px (desktop)
 
 ## Fallback
 
