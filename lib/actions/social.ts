@@ -1,7 +1,8 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, refresh as refreshRouter } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { createNotification } from "@/lib/notifications"
 
 export async function followUser(targetUserId: string) {
   const supabase = await createClient()
@@ -22,7 +23,24 @@ export async function followUser(targetUserId: string) {
     return { error: error.message }
   }
 
-  revalidatePath("/perfil", "layout")
+  // Notify the followed user
+  const { data: followerProfile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .single()
+
+  await createNotification({
+    user_id: targetUserId,
+    type: "new_follower",
+    title: "Nuevo seguidor",
+    message: `${followerProfile?.username ?? "Alguien"} empezó a seguirte`,
+    link_url: `/perfil/${followerProfile?.username ?? user.id}`,
+    actor_id: user.id,
+  })
+
+  await revalidateProfilePage(targetUserId)
+  refreshRouter()
   return { success: true }
 }
 
@@ -40,8 +58,25 @@ export async function unfollowUser(targetUserId: string) {
 
   if (error) return { error: error.message }
 
-  revalidatePath("/perfil", "layout")
+  await revalidateProfilePage(targetUserId)
+  refreshRouter()
   return { success: true }
+}
+
+async function revalidateProfilePage(userId: string) {
+  const supabase = await createClient()
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .single()
+
+  revalidatePath("/perfil", "layout")
+  if (target?.username) {
+    revalidatePath(`/perfil/${target.username}`, "page")
+    revalidatePath(`/perfil/${target.username}/seguidores`, "page")
+    revalidatePath(`/perfil/${target.username}/siguiendo`, "page")
+  }
 }
 
 export async function isFollowing(targetUserId: string) {
@@ -50,12 +85,17 @@ export async function isFollowing(targetUserId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("follows")
-    .select("id")
+    .select("follower_id")
     .eq("follower_id", user.id)
     .eq("following_id", targetUserId)
     .maybeSingle()
+
+  if (error) {
+    console.error("isFollowing error:", error)
+    return false
+  }
 
   return data !== null
 }

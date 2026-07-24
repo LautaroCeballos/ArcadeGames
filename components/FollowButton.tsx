@@ -10,37 +10,48 @@ interface FollowButtonProps {
   isFollowing: boolean
 }
 
+type FollowState = {
+  isFollowing: boolean
+  error: string | null
+}
+
 export function FollowButton({ targetUserId, isFollowing: initialFollowing }: FollowButtonProps) {
-  const followAction = async (_prev: { error?: string } | null, formData: FormData) => {
-    const action = formData.get("action") as string
-    if (action === "unfollow") {
-      return await unfollowUser(targetUserId)
+  async function toggleFollow(prevState: FollowState, _formData: FormData): Promise<FollowState> {
+    if (prevState.isFollowing) {
+      const result = await unfollowUser(targetUserId)
+      if (result.error) return { isFollowing: true, error: result.error }
+      return { isFollowing: false, error: null }
+    } else {
+      const result = await followUser(targetUserId)
+      if (result.error) return { isFollowing: false, error: result.error }
+      return { isFollowing: true, error: null }
     }
-    return await followUser(targetUserId)
   }
 
-  const [state, formAction, pending] = useActionState(followAction, null)
+  const [state, formAction, pending] = useActionState(toggleFollow, {
+    isFollowing: initialFollowing,
+    error: null,
+  })
 
   return (
     <form action={formAction}>
-      <input type="hidden" name="action" value={initialFollowing ? "unfollow" : "follow"} />
       <Button
         type="submit"
         disabled={pending}
-        variant={initialFollowing ? "outline" : "default"}
+        variant={state.isFollowing ? "outline" : "default"}
         size="sm"
         className="gap-1.5"
       >
         {pending ? (
           <Loader2 className="size-4 animate-spin" />
-        ) : initialFollowing ? (
+        ) : state.isFollowing ? (
           <UserCheck className="size-4" />
         ) : (
           <UserPlus className="size-4" />
         )}
-        {initialFollowing ? "Siguiendo" : "Seguir"}
+        {state.isFollowing ? "Siguiendo" : "Seguir"}
       </Button>
-      {state?.error && (
+      {state.error && (
         <p className="text-xs text-destructive mt-1">{state.error}</p>
       )}
     </form>
