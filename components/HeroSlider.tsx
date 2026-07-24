@@ -103,7 +103,7 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Slide content */}
-      <div className="relative flex aspect-[1164/308] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+      <div className="relative flex aspect-[1725/910] max-md:aspect-[4/3] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
         {slide.imageUrl ? (
           <img
             src={slide.imageUrl}

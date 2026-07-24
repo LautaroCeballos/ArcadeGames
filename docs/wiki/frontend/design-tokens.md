@@ -68,7 +68,7 @@ Implementado en `app/globals.css` mediante CSS variables con `@theme inline` de 
 - Implementado en [[frontend/components]] como `Navbar.tsx`
 
 ### Hero Slider
-- Contenedor con imagen destacada de 1164×308px
+- Contenedor con imagen destacada de 1725×910px (desktop) / 4:3 (mobile)
 - Botón "SABER MAS" rectangular rojo con border-radius 15px
 - Dots de navegación (elipses, 18×18px)
 - Altura total: 368px

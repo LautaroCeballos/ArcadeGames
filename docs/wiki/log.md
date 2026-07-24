@@ -445,3 +445,11 @@ sources:
 - `app/(public)/page.tsx`: mapeo de `panel_valign` en `HeroSliderWrapper`
 - Build: 0 errores
 - Páginas actualizadas: [[features/banner]], [[log]]
+
+## [2026-07-24] fix | slider-aspect-ratio-1725-910
+- `components/HeroSlider.tsx`: aspect ratio cambiado de `[1164/308]` a `[1725/910] max-md:aspect-[4/3]` — imágenes se ven menos cortadas gracias a una proporción más natural (~1.9:1 vs 3.78:1)
+- `app/(public)/page.tsx`: skeleton actualizado al mismo ratio
+- `app/(protected)/admin/banner/banner-admin-client.tsx`: preview del admin actualizado a `aspectRatio: "1725/910"`
+- `docs/wiki/frontend/design-tokens.md`: referencia actualizada
+- Build: 0 errores
+- Páginas actualizadas: [[log]]
