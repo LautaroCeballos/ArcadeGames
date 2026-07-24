@@ -177,6 +177,7 @@ export interface BannerSlide {
   button_color: string | null
   show_panel: boolean | null
   panel_align: string | null
+  panel_valign: string | null
   button_mode: string | null
   created_at: string
   updated_at: string

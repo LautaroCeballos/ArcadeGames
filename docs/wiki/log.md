@@ -435,3 +435,13 @@ sources:
 - Commit: `d82c4d4`
 - Build: 0 errores
 - Páginas actualizadas: [[features/banner]], [[log]]
+
+## [2026-07-24] feat | panel-valign-vertical-alignment
+- Migración `00020_banner_slide_valign.sql`: añade columna `panel_valign` (text, check top/center/bottom, default 'center') a `banner_slides`
+- `lib/definitions.ts`: añadido `panel_valign` a `BannerSlide`
+- `lib/actions/banner.ts`: `createBannerSlide` y `updateBannerSlide` leen/escriben `panelValign` desde formData (default 'center')
+- `banner-admin-client.tsx`: nuevo segmented control para alineación vertical (arriba/centro/abajo) en las opciones del panel; badge indicador en lista cuando no es 'center'; preview en vivo refleja la posición vertical
+- `components/HeroSlider.tsx`: posicionamiento vertical del panel — `top-4 bottom-auto` (arriba), `top-1/2 -translate-y-1/2` (centro), `bottom-4 top-auto` (abajo); aplica tanto al panel con backdrop como al modo button-only
+- `app/(public)/page.tsx`: mapeo de `panel_valign` en `HeroSliderWrapper`
+- Build: 0 errores
+- Páginas actualizadas: [[features/banner]], [[log]]

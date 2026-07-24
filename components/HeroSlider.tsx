@@ -26,6 +26,7 @@ interface Slide {
   buttonColor?: string
   showPanel?: boolean
   panelAlign?: string
+  panelValign?: string
   buttonMode?: string
 }
 
@@ -40,6 +41,7 @@ const defaultSlides: Slide[] = [
     ctaLink: "/",
     showPanel: true,
     panelAlign: "right",
+    panelValign: "center",
     buttonMode: "full",
   },
   {
@@ -51,6 +53,7 @@ const defaultSlides: Slide[] = [
     ctaLink: "/",
     showPanel: true,
     panelAlign: "right",
+    panelValign: "center",
     buttonMode: "full",
   },
   {
@@ -62,6 +65,7 @@ const defaultSlides: Slide[] = [
     ctaLink: "/subir",
     showPanel: true,
     panelAlign: "right",
+    panelValign: "center",
     buttonMode: "full",
   },
 ]
@@ -118,10 +122,14 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
         {slide.showPanel !== false && slide.buttonMode !== "only" && (
           <div
             className={cn(
-              "absolute z-10 backdrop-blur-sm rounded-xl flex items-center justify-center top-4 bottom-4",
+              "absolute z-10 backdrop-blur-sm rounded-xl flex items-center justify-center",
+              // vertical positioning
+              slide.panelValign === "top" && "top-4 bottom-auto",
+              (!slide.panelValign || slide.panelValign === "center") && "top-1/2 -translate-y-1/2",
+              slide.panelValign === "bottom" && "bottom-4 top-auto",
               // mobile: full width with margins
               "left-4 right-4",
-              // desktop alignment
+              // desktop horizontal alignment
               slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
               slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto sm:max-w-[50%]",
               (!slide.panelAlign || slide.panelAlign === "right") && "sm:left-auto sm:right-4",
@@ -167,7 +175,11 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
         {slide.showPanel !== false && slide.buttonMode === "only" && (
           <div
             className={cn(
-              "absolute z-10 flex items-center justify-center top-4 bottom-4",
+              "absolute z-10 flex items-center justify-center",
+              // vertical positioning
+              slide.panelValign === "top" && "top-4 bottom-auto",
+              (!slide.panelValign || slide.panelValign === "center") && "top-1/2 -translate-y-1/2",
+              slide.panelValign === "bottom" && "bottom-4 top-auto",
               "left-4 right-4",
               slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
               slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",

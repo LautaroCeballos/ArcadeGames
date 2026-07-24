@@ -74,6 +74,7 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
   const buttonColor = formData.get("buttonColor") as string | null
   const showPanel = formData.get("showPanel") as string | null
   const panelAlign = formData.get("panelAlign") as string | null
+  const panelValign = formData.get("panelValign") as string | null
   const buttonMode = formData.get("buttonMode") as string | null
 
   if (!title || !title.trim()) {
@@ -109,6 +110,7 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
       button_color: buttonColor || null,
       show_panel: showPanel !== "false",
       panel_align: panelAlign || "right",
+      panel_valign: panelValign || "center",
       button_mode: buttonMode || "full",
       sort_order: nextOrder,
       active: true,
@@ -138,6 +140,7 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   const buttonColor = formData.get("buttonColor") as string | null
   const showPanel = formData.get("showPanel") as string | null
   const panelAlign = formData.get("panelAlign") as string | null
+  const panelValign = formData.get("panelValign") as string | null
   const buttonMode = formData.get("buttonMode") as string | null
 
   if (!title || !title.trim()) {
@@ -174,6 +177,7 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   // Panel layout fields
   updates.show_panel = showPanel !== "false"
   updates.panel_align = panelAlign || "right"
+  updates.panel_valign = panelValign || "center"
   updates.button_mode = buttonMode || "full"
 
   const { error } = await supabase

@@ -105,6 +105,7 @@ async function HeroSliderWrapper() {
         buttonColor: s.button_color ?? undefined,
         showPanel: s.show_panel ?? true,
         panelAlign: s.panel_align ?? "right",
+        panelValign: s.panel_valign ?? "center",
         buttonMode: s.button_mode ?? "full",
       }))
     : undefined // use defaults

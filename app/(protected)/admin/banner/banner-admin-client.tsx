@@ -26,6 +26,7 @@ interface SlideFormData {
   buttonColor: string
   showPanel: boolean
   panelAlign: "left" | "center" | "right"
+  panelValign: "top" | "center" | "bottom"
   buttonMode: "full" | "only" | "none"
 }
 
@@ -39,6 +40,7 @@ const emptyForm: SlideFormData = {
   buttonColor: "#d90057",
   showPanel: true,
   panelAlign: "right",
+  panelValign: "center",
   buttonMode: "full",
 }
 
@@ -97,6 +99,7 @@ export function BannerAdminClient() {
       buttonColor: slide.button_color ?? "#d90057",
       showPanel: slide.show_panel ?? true,
       panelAlign: (slide.panel_align as "left" | "center" | "right") ?? "right",
+      panelValign: (slide.panel_valign as "top" | "center" | "bottom") ?? "center",
       buttonMode: (slide.button_mode as "full" | "only" | "none") ?? "full",
     })
     setImageFile(null)
@@ -179,6 +182,7 @@ export function BannerAdminClient() {
       submitFormData.set("buttonColor", form.buttonColor)
       submitFormData.set("showPanel", form.showPanel ? "true" : "false")
       submitFormData.set("panelAlign", form.panelAlign)
+      submitFormData.set("panelValign", form.panelValign)
       submitFormData.set("buttonMode", form.buttonMode)
 
       let result
@@ -377,6 +381,11 @@ export function BannerAdminClient() {
                   {slide.button_mode && slide.button_mode !== "full" && slide.show_panel !== false && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700">
                       {slide.button_mode === "only" ? "Solo botón" : "Sin botón"}
+                    </span>
+                  )}
+                  {slide.panel_valign && slide.panel_valign !== "center" && slide.show_panel !== false && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[11px] text-teal-700">
+                      {slide.panel_valign === "top" ? "Arriba" : "Abajo"}
                     </span>
                   )}
                 </div>
@@ -601,7 +610,11 @@ export function BannerAdminClient() {
                   {form.showPanel && form.buttonMode !== "only" && (
                     <div
                       className={cn(
-                        "absolute z-10 rounded-lg backdrop-blur-sm flex items-center justify-center top-2 bottom-2",
+                        "absolute z-10 rounded-lg backdrop-blur-sm flex items-center justify-center",
+                        // vertical positioning
+                        form.panelValign === "top" && "top-2 bottom-auto",
+                        form.panelValign === "center" && "top-1/2 -translate-y-1/2",
+                        form.panelValign === "bottom" && "bottom-2 top-auto",
                         "left-2 right-2",
                         form.panelAlign === "left" && "sm:left-2 sm:right-auto",
                         form.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto sm:max-w-[50%]",
@@ -645,7 +658,11 @@ export function BannerAdminClient() {
                   {form.showPanel && form.buttonMode === "only" && (
                     <div
                       className={cn(
-                        "absolute z-10 flex items-center justify-center top-2 bottom-2",
+                        "absolute z-10 flex items-center justify-center",
+                        // vertical positioning
+                        form.panelValign === "top" && "top-2 bottom-auto",
+                        form.panelValign === "center" && "top-1/2 -translate-y-1/2",
+                        form.panelValign === "bottom" && "bottom-2 top-auto",
                         "left-2 right-2",
                         form.panelAlign === "left" && "sm:left-2 sm:right-auto",
                         form.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto",
@@ -693,7 +710,7 @@ export function BannerAdminClient() {
                   {form.showPanel && (
                     <div className="space-y-3">
                       <div>
-                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación</label>
+                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación horizontal</label>
                         <div className="flex gap-1 rounded-lg border p-1">
                           {(["left", "center", "right"] as const).map((align) => (
                             <button
@@ -708,6 +725,27 @@ export function BannerAdminClient() {
                               )}
                             >
                               {align === "left" ? "Izquierda" : align === "center" ? "Centro" : "Derecha"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-1.5 block text-[11px] text-muted-foreground">Alineación vertical</label>
+                        <div className="flex gap-1 rounded-lg border p-1">
+                          {([["top", "Arriba"], ["center", "Centro"], ["bottom", "Abajo"]] as const).map(([valign, label]) => (
+                            <button
+                              key={valign}
+                              type="button"
+                              onClick={() => setForm({ ...form, panelValign: valign })}
+                              className={cn(
+                                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                                form.panelValign === valign
+                                  ? "bg-arcade-red text-white shadow-sm"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {label}
                             </button>
                           ))}
                         </div>
