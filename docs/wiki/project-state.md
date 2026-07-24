@@ -55,6 +55,7 @@ app/
     layout.tsx            ← Navbar + footer (igual que public)
     subir/page.tsx        ← Formulario de publicación
     dashboard/page.tsx    ← Redirige a `/perfil/{username}`
+    cuenta/page.tsx       ← Administrar cuenta (info registro, editar perfil, cambiar contraseña)
     editar/[id]/page.tsx  ← Editar juego
 ```
 
@@ -74,8 +75,8 @@ app/
 | `ScratchEmbed.tsx` | Client | `url, title` — iframe con `allowtransparency`, aspect 485/402, loading/fallback |
 | `GameTabs.tsx` | Client | `gameId, title, platform?, embedUrl?` — tabs adaptativos: MakeCode → Juego + Editor; Scratch → solo Juego |
 | `GameActions.tsx` | Client | `gameId, hidden` — ocultar/eliminar |
-| `RankingSection.tsx` | Server | Rankings mock — 2 layouts: simple (3 entries) y doble (6 entries en 2 columnas) |
-| `PodiumCard.tsx` | Server | Top 3 global con trofeos oro/plata/bronce, mismo formato visual que RankingCard |
+| `RankingSection.tsx` | Server | Ranking real de jugadores conectado a DB (suma de ratings recibidos). Layout: podio (top 3) + lista (#4-#50). Recibe `players: PlayerRankingEntry[]` |
+| `PodiumCard.tsx` | Server | Top 3 destacado con trofeos y cards individuales. 2° | 1° (featured) | 3°. Recibe `topPlayers: PlayerRankingEntry[]` |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
 | `CategoryFilter.tsx` (→ `TagFilter`) | Client | Pills de tags, URL param `?tag=` |
@@ -90,8 +91,10 @@ app/
 | `FollowButton.tsx` | Client | `{ targetUserId, isFollowing }` — botón seguir/dejar de seguir con useActionState |
 | `GameActionsInline.tsx` | Client | `ToggleVisibilityButton`, `DeleteGameButton` — wrappers useActionState para acciones inline |
 | `AuthButton.tsx` | Server | Form action `signOut` |
-| `LoginForm.tsx` | Client | `useActionState(signIn)` |
-| `SignUpForm.tsx` | Client | `useActionState(signUp)` |
+| `LoginForm.tsx` | Client | `useActionState(signIn)` — campo "Usuario o email", contraseña con toggle de visibilidad |
+| `SignUpForm.tsx` | Client | `useActionState(signUp)` + `useActionState(resendVerificationEmail)`. Campos: username sanitizado, email, password + confirmación (con toggle visibilidad), mes/año nacimiento (Select+Input), país (selector ISO), pantalla de éxito con reenvío de email |
+| `AccountForm.tsx` | Client | `{ profile }` — panel colapsable con botón "Editar Perfil". Avatar upload (Storage), username checker onBlur, bio, fecha nacimiento, país |
+| `ChangePasswordForm.tsx` | Client | Formulario de cambio de contraseña con confirmación y toggle de visibilidad |
 | `ui/*.tsx` | — | button, card, input, toast, badge, etc. |
 
 ### `/lib/` — Lógica
@@ -100,11 +103,11 @@ app/
 | `supabase/client.ts` | Browser client (createBrowserClient) |
 | `supabase/server.ts` | Server client (cookies, RSC) |
 | `supabase/middleware.ts` | Session refresh middleware (usado por proxy.ts) |
-| `actions/auth.ts` | signIn, signUp, signOut (useActionState signature) |
+| `actions/auth.ts` | signIn, signUp, resendVerificationEmail, signOut — sanitización de username, validación de password (mayúscula+minúscula+número+min8), confirmación de contraseña, campos birth_month/birth_year/country |
 | `actions/games.ts` | createGame, updateGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames, getRecentGames, getMostPlayed, getTopRated |
 | `actions/ratings.ts` | rateGame (upsert — awards badges to rater + game owner) |
 | `actions/thumbnails.ts` | uploadThumbnail |
-| `actions/profile.ts` | getProfileByUsername, updateMyProfile |
+| `actions/profile.ts` | getProfileByUsername, updateMyProfile, updateAccount (perfil completo + avatar upload), updatePassword, checkUsername |
 | `actions/social.ts` | followUser, unfollowUser, isFollowing, getFollowers, getFollowing |
 | `actions/badges.ts` | checkAndAwardBadges, getAllBadges |
 | `definitions.ts` | Tipos Database, Game, Profile, Category, Tag, Rating, GameWithDetails |
@@ -125,6 +128,10 @@ app/
 | `00003_add_platform.sql` | Columna `platform` en games + índice | ✅ Ejecutada |
 | `00004_revoke_public_execute.sql` | Revocar EXECUTE público en funciones SECURITY DEFINER | ✅ Ejecutada |
 | `00005_tags_migration.sql` | Seed tags + migrar category_id + drop columna | ✅ Ejecutada |
+| `00006_more_tags.sql` | Más tags adicionales | ✅ Ejecutada |
+| `00007_profiles_birth_country.sql` | birth_month, birth_year, country en profiles | ✅ Ejecutada |
+| `00008_profiles_email_display_name.sql` | Columna `email` en profiles, trigger actualizado (usa `raw_user_meta_data->>'username'`) | ✅ Ejecutada |
+| `00009_avatars_storage.sql` | Bucket `avatars` en Storage con RLS policies | ✅ Ejecutada |
 
 ---
 
@@ -134,7 +141,7 @@ Migración `supabase/migrations/00001_initial_schema.sql` ejecutada vía MCP Sup
 
 | Tabla | Filas | RLS |
 |-------|-------|-----|
-| `profiles` | 0 (se crean al registrarse) | ✅ |
+| `profiles` | 0 (se crean al registrarse, con birth_month/birth_year/country opcionales) | ✅ |
 | `categories` | 10 (seed: Acción, Aventura, Puzzle...) | ✅ |
 | `games` | 0 | ✅ |
 | `tags` | 0 | ✅ |
@@ -166,8 +173,9 @@ Archivo `.env.local`:
 ## Autenticación
 
 - **Método**: Email/password via Supabase Auth
-- **Registro**: Formulario en `/signup` → `supabase.auth.signUp()` → trigger crea perfil
-- **Login**: Formulario en `/login` → `supabase.auth.signInWithPassword()` → redirect a `/dashboard`
+- **Registro**: Formulario en `/signup` → `supabase.auth.signUp()` con campos sanitizados (username, email, password + confirmación, birth_month, birth_year, country) → trigger crea perfil. Pantalla de éxito con opción de reenviar email de verificación
+- **Login**: Formulario en `/login` con campo "Usuario o email" → `signIn()` busca username en `profiles` (case-insensitive) o usa email directo → `supabase.auth.signInWithPassword()` → redirect a `/dashboard`
+- **Cuenta**: Página `/cuenta` con info del registro, edición de perfil (avatar upload, username checker, bio, fecha, país) y cambio de contraseña
 - **Logout**: Botón en Navbar → `supabase.auth.signOut()` → redirect a `/`
 - **Proxy**: `proxy.ts` (renombrado de `middleware.ts`, Next.js 16) refresca sesión via `@supabase/ssr`
 
@@ -278,11 +286,23 @@ Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
 
 ## Pendiente (próximos pasos)
 
-1. 🔵 Reemplazar datos mock del ranking con queries reales de ratings
-2. 🔵 Conectar HeroSlider a CMS o datos dinámicos
-3. 🔵 Contador de vistas (increment en cada visita)
-4. 🔵 Modo oscuro
-5. 🔵 Página 404 personalizada con search
+1. ✅ ~~Reemplazar datos mock del ranking con queries reales de ratings~~ (2026-07-20)
+2. 🔴 **Aplicar migración Realtime**: Ejecutar `supabase migration up` para `00015_enable_realtime_notifications.sql` (agrega `notifications` a `supabase_realtime`). Sin esto, las notificaciones en vivo no funcionan.
+3. 🔵 Conectar HeroSlider a CMS o datos dinámicos
+4. 🔵 Contador de vistas (increment en cada visita)
+5. 🔵 Modo oscuro
+6. 🔵 Página 404 personalizada con search
+
+## Implementado recientemente
+
+- ✅ **Sistema de moderación** (2026-07-20)
+  - Roles: `user`, `moderator`, `admin` en tabla `profiles`
+  - Juegos nuevos se crean como `pending` en vez de `approved`
+  - Panel de moderación en `/moderar` con tabs (pendientes/aprobados/rechazados/todos)
+  - Acciones: aprobar, rechazar, ocultar/mostrar, eliminar cualquier juego
+  - Admins pueden asignar roles desde `/admin/usuarios`
+  - Moderadores ven juegos no aprobados en perfiles ajenos
+  - Ver [[features/moderacion]]
 
 > Leyenda: 🔴 Crítico · 🟡 Importante · 🟢 Nice-to-have · 🔵 Futuro
 

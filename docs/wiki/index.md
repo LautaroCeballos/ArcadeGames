@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Índice del Wiki"
 tags: [index]
-last_updated: "2026-07-20"
+last_updated: "2026-07-23"
 ---
 
 # ArcadePlay — Índice del Wiki
@@ -30,3 +30,7 @@ Portal web de juegos MakeCode Arcade y Scratch. Inspirado en arcade portals como
 
 ### Features
 - [[features/games]] — Sistema de juegos: creación (MakeCode + Scratch), embed, búsqueda, ratings
+- [[features/moderacion]] — Sistema de moderación: roles, panel de moderación, admin de usuarios
+- [[features/social]] — Sistema de follows: seguir/dejar de seguir, contadores, listas
+- [[features/notifications]] — Sistema de notificaciones: tipos, server actions, UI
+- [[features/banner]] — Sistema de banner del home: gestión de slides desde admin

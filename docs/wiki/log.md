@@ -1,10 +1,140 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-20"
+last_updated: "2026-07-23"
+sources:
+  - supabase/migrations/00015_enable_realtime_notifications.sql
+  - hooks/use-realtime-notifications.ts
+  - components/NavbarClient.tsx
+  - docs/wiki/features/notifications.md
+  - lib/actions/auth.ts
+  - lib/actions/profile.ts
+  - lib/actions/social.ts
+  - lib/actions/search.ts
+  - components/SignUpForm.tsx
+  - components/LoginForm.tsx
+  - components/AccountForm.tsx
+  - components/FollowButton.tsx
+  - supabase/migrations/00007_profiles_birth_country.sql
+  - supabase/migrations/00008_profiles_email_display_name.sql
+  - supabase/migrations/00009_avatars_storage.sql
+  - docs/raw/plans/2026-07-23-header-redesign-search.md
+  - docs/raw/plans/2026-07-23-live-search-dropdown.md
+  - app/(public)/buscar/page.tsx
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-23] implement | live-search-dropdown
+- Input de búsqueda ahora muestra dropdown en tiempo real tras 500ms de debounce
+- `components/NavbarClient.tsx`: debounce effect con flag `cancelled` para evitar race conditions, dropdown con secciones Juegos (thumbnail + título + autor), Usuarios (avatar + username), Categorías (pills), loading state, empty state, footer "Ver todos los resultados"
+- Cierra con Escape, click fuera, navegación
+- Enter sigue navegando a `/buscar?q=...`
+- Plan: `docs/raw/plans/2026-07-23-live-search-dropdown.md`
+- Páginas actualizadas: [[log]]
+
+## [2026-07-23] implement | header-redesign-multi-search
+- Rediseño completo del header: iconos homogéneos, avatar con dropdown unificado, search input funcional
+- `components/Navbar.tsx`: agregado fetch de `avatar_url` desde profiles
+- `components/NavbarClient.tsx`: reemplazado icono Search por input que navega a `/buscar?q=...`; avatar + dropdown reemplaza User/Settings/Moderar/Admin/Cerrar sesión individuales; iconos consistentes (`variant="ghost"` beige sobre rojo)
+- `lib/actions/search.ts`: nueva server action `searchAll` — búsqueda multi-entidad con ILIKE en games, profiles y tags (3 queries paralelas, límite 8 por entidad)
+- `app/(public)/buscar/page.tsx`: nueva ruta de resultados con grid 3-columnas (Juegos, Usuarios, Categorías), empty state, contador de resultados
+- Plan: `docs/raw/plans/2026-07-23-header-redesign-search.md`
+- Páginas actualizadas: [[frontend/components]], [[architecture/routes]], [[log]]
+
+## [2026-07-23] debug | verify-realtime-notifications-end-to-end
+- **Propósito**: Verificar si el Realtime de notificaciones funciona end-to-end (server action → RPC → INSERT → Realtime → browser)
+- **Prueba 1**: Direct INSERT via SQL → evento Realtime recibido ✅
+- **Prueba 2**: `SELECT create_notification(...)` via SQL (RPC function) → evento Realtime recibido ✅
+- **Prueba 3**: Click "Seguir" en perfil de Creativos_Digitales → server action `followUser` → `createNotification` → RPC → INSERT → evento Realtime recibido ✅
+- **Teoría descartada**: `SECURITY DEFINER` NO bloquea la entrega de eventos Realtime. La función RPC inserta en `notifications` y el cambio se replica correctamente vía WAL → Realtime → browser.
+- **Nuevo hallazgo**: La función `create_notification` carece de `set search_path` explícito, lo que es un riesgo de seguridad. Documentado como gotcha.
+- **Conclusión**: El sistema de notificaciones Realtime funciona correctamente en todos los escenarios probados.
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-23] ingest | debugging-notifications-realtime-not-delivered
+- **Fuente**: `docs/raw/debugging/2026-07-23-notifications-realtime-not-delivered.md`
+- Integración del informe de debugging sobre notificaciones Realtime no entregadas
+- **Nuevo escenario documentado**: La tabla `notifications` puede ser removida de la publicación `supabase_realtime` incluso después de haber sido agregada por migración — posiblemente por reset en Supabase Dashboard al agregar/modificar otras tablas Realtime
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-23] fix | notifications-realtime-publication
+- **Diagnóstico**: La migración `00014_notifications.sql` no incluye `alter publication supabase_realtime add table notifications;`, por lo que Supabase Realtime nunca replica cambios de la tabla `notifications`. Tanto el hook en NavbarClient como la suscripción inline en `/notificaciones` reciben 0 eventos.
+- **Síntoma reportado**: Las notificaciones no llegan en tiempo real al header (campanita). En `/notificaciones` el usuario cree que funciona, pero solo se debe al fetch inicial — las nuevas no aparecen sin recargar.
+- **Fix**: Migración `00015_enable_realtime_notifications.sql` con el `alter publication`.
+- **Ubicación**: `supabase/migrations/00015_enable_realtime_notifications.sql`
+- **Gotcha documentado**: En `[[features/notifications]]` — prevenir futuras tablas Realtime sin publicación.
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-23] implement | realtime-follow-counts
+- Implementación de Supabase Realtime para contadores de seguidores/siguiendo en vivo en perfiles
+- Migración `00016_enable_realtime_follows.sql`: agrega tabla `follows` a publicación `supabase_realtime`
+- Nuevo hook `hooks/use-realtime-follow-counts.ts`: suscripción a INSERT/DELETE en `follows` filtrado por `following_id=eq.profileUserId`, incrementa/decrementa contador
+- Nuevo componente `components/ProfileStats.tsx`: Client Component con grilla de stats + hook Realtime
+- `components/ProfileHeader.tsx`: reemplazada grilla inline por `ProfileStats`
+- Patrón consistente con `useRealtimeNotifications`: `didInit.current` para initial data solo en mount
+- Build verificado: 0 errores
+- Páginas actualizadas: [[features/social]], [[log]]
+
+## [2026-07-23] debug | notifications-realtime-not-delivered
+- **Bug**: Después de agregar Realtime a `follows`, las notificaciones dejaron de llegar en tiempo real al Navbar
+- **Diagnóstico**: `createNotification` RPC funciona (server log: "Success"), pero el evento INSERT de Realtime nunca llega al browser. Ambos canales muestran SUBSCRIBED. El canal `follows` recibe eventos correctamente; el de `notifications` no.
+- **Causa probable**: Supabase Realtime no está entregando eventos de la tabla `notifications` (posible remoción de la publicación o glitch del servicio)
+- **Próximo paso**: Verificar en Supabase Dashboard si `notifications` sigue en `supabase_realtime` publication
+- Informe completo: `docs/raw/debugging/2026-07-23-notifications-realtime-not-delivered.md`
+- Páginas actualizadas: [[log]]
+
+## [2026-07-23] fix | notifications-realtime-initial-data-reset
+- **Diagnóstico**: La publicación Realtime **ya existía** (error "relation notifications is already member of publication supabase_realtime"). El hook y la suscripción inline en `/notificaciones` **sí recibían** eventos Realtime correctamente. El problema real era que el hook `useRealtimeNotifications` sobreescribía el estado Realtime con datos del servidor en cada re-render del Server Component Navbar.
+- **Causa raíz**: `Navbar.tsx` (Server Component en layout) re-renderiza en cada navegación del cliente → pasa nuevos props `initial` → el `useEffect([initial])` del hook ejecutaba `setNotifications(initial.notifications)` y `setUnreadCount(initial.unreadCount)` → el estado que Realtime acababa de actualizar se perdía.
+- **Síntoma verificado**: `/notificaciones` page recibe INSERT en vivo (funciona). Navbar badge muestra 0/valor stale (no funciona).
+- **Fix**: Reemplazado `useEffect([initial])` con `didInit.current` flag — solo aplica datos del servidor en el primer montaje. Los renders subsecuentes se ignoran.
+- **Archivos modificados**: `hooks/use-realtime-notifications.ts`, `app/(protected)/notificaciones/page.tsx`
+- **Cleanup**: Eliminados todos los `console.log` de debug de ambos archivos.
+- **Gotcha documentado**: En `[[features/notifications]]` — Server Components en layout + Realtime hooks requieren initial data solo en mount.
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-23] implement | notifications-realtime
+- Implementación de Supabase Realtime para delivery instantáneo de notificaciones
+- Hook creado: `hooks/use-realtime-notifications.ts` — suscripción a INSERT + UPDATE con cleanup automático
+- `components/Navbar.tsx`: agregado `currentUserId` prop a NavbarClient
+- `components/NavbarClient.tsx`: integrado hook Realtime para badge + dropdown en vivo; eliminados useEffects duplicados (scroll y route change)
+- `app/(protected)/notificaciones/page.tsx`: agregada suscripción Realtime inline para lista y UPDATE en vivo
+- Build exitoso (0 errores TypeScript)
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-23] implement | notification-system
+- Implementación completa del sistema de notificaciones: 5 tipos, tabla + RLS + función SECURITY DEFINER
+- Server actions: getUnreadCount, getNotifications, getRecentNotifications, markAsRead, markAllAsRead
+- Helper interno createNotification en lib/notifications.ts (llama a supabase.rpc)
+- Puntos de inserción: approveGame (dueño + fan-out), rejectGame, rateGame, followUser
+- Navbar: Bell icon con badge + dropdown con últimas 5 notificaciones
+- Página /notificaciones con paginación, markAsRead, markAllAsRead
+- Build exitoso (0 errores TypeScript)
+- Páginas creadas: [[features/notifications]]
+- Páginas actualizadas: [[database/schema]], [[frontend/components]], [[architecture/routes]], [[index]], [[log]]
+
+## [2026-07-23] plan | notification-system
+- Plan completo para sistema de notificaciones: 5 tipos (game_approved, game_rejected, new_game_from_following, new_rating, new_follower)
+- Tabla `notifications` con RLS, server actions, dropdown en Navbar + página `/notificaciones`
+- 4 puntos de inserción: approveGame (dueño + fan-out), rejectGame, rateGame, followUser
+- Plan guardado en `docs/raw/plans/2026-07-23-notification-system.md`
+- Páginas actualizadas: [[log]]
+
+## [2026-07-20] implement | header-link-directo-perfil
+- `components/Navbar.tsx`: ahora fetchea `username` desde profiles y lo pasa a `NavbarClient`
+- `components/NavbarClient.tsx`: ícono User linkea directo a `/perfil/{username}` en vez de `/dashboard`. Fallback a `/dashboard` si no hay username
+- NavbarClient: label cambiado de "Dashboard" a "Perfil" tanto desktop como mobile
+- Páginas actualizadas: [[frontend/components]]
+
+## [2026-07-20] implement | registro-higienizado-seguro
+- Migración `00007_profiles_birth_country.sql` ejecutada en Supabase
+- Nuevas columnas en profiles: `birth_month` (CHECK 1-12), `birth_year` (CHECK 1900-{current}), `country` (text)
+- `lib/actions/auth.ts`: sanitización de username (regex), validación de password (mayúscula+minúscula+número, min 8), confirmación de contraseña, validación de email, validación de rangos. Nueva acción `resendVerificationEmail`
+- `components/SignUpForm.tsx`: refactor completo — campos username (sanitizado), email, password + confirmación (con toggle visibilidad con Eye/EyeOff), mes/año nacimiento (Select + Input), país (selector con lista completa ISO), pantalla de éxito post-registro con reenvío de email
+- `app/(public)/signup/page.tsx`: detección de sesión activa (redirige a dashboard)
+- `lib/definitions.ts`: agregados `birth_month`, `birth_year`, `country` a `Profile`
+- Páginas actualizadas: [[auth/flow]], [[database/schema]], [[frontend/components]], [[log]]
 
 ## [2026-07-13] update | implementacion-fase-0-7
 - Checkpoint: implementación completa de Fases 0 a 7
@@ -158,6 +288,116 @@ last_updated: "2026-07-20"
   - Tags reemplazan categorías (migración DB + TagPicker visual)
   - Interfaz child-friendly con burbujas coloridas
 - Páginas actualizadas: [[features/games]], [[frontend/components]], [[database/schema]], [[overview]], [[project-state]], [[log]]
+
+## [2026-07-20] update | subir-layout-columnas- footer-unificado
+- Subir page: `max-w-7xl` para ancho consistente con header
+- Columnas intercambiadas: inputs izquierda, preview derecha sticky
+- ThumbnailPicker siempre visible, sin fieldset wrapper (usa título interno "Miniatura del juego")
+- Footer unificado: protected layout ahora usa el mismo `Footer` component que el layout público
+- Archivos modificados: `app/(protected)/subir/page.tsx`, `components/SubmitGameForm.tsx`, `app/(protected)/layout.tsx`
+- Páginas actualizadas: [[frontend/components]], [[features/games]]
+- Build verificado: 0 errores
+
+## [2026-07-20] update | ranking-conectado-rediseno
+- Ranking real conectado a DB: `getPlayerLeaderboard()` suma ratings recibidos por dueño de juego
+- Rediseño completo: podio destacado (2°|1°|3°) + lista #4-#50 limpia sin fondos verdes
+- Estilo alineado al resto del sitio: título `text-[25px] font-semibold`, cards `bg-card border shadow-sm`
+- Archivos creados: `lib/actions/ranking.ts`
+- Archivos modificados: `components/RankingSection.tsx`, `components/PodiumCard.tsx`, `app/(public)/page.tsx`, `lib/definitions.ts`
+- Build verificado: 0 errores
+- Pendiente eliminado de [[project-state]]: ranking mock reemplazado ✅
+- Páginas actualizadas: [[project-state]], [[frontend/components]], [[log]]
+
+## [2026-07-20] implement | login-username-cuenta
+- Login ahora acepta username o email (campo "Usuario o email", búsqueda case-insensitive en profiles)
+- LoginForm: toggle de visibilidad en contraseña (Eye/EyeOff)
+- Trigger `handle_new_user` actualizado: usa `raw_user_meta_data->>'username'` y almacena email
+- Nueva columna `email` en profiles (backfilled desde `auth.users`)
+- Bucket `avatars` en Supabase Storage (2 MB, PNG/JPG/WebP/GIF)
+- Nueva página `/cuenta`: info del registro, editar perfil colapsable (avatar upload, username checker onBlur, bio, fecha, país), cambio de contraseña
+- Nuevos server actions: `updateAccount`, `updatePassword`, `checkUsername`
+- Nuevos componentes: `AccountForm`, `ChangePasswordForm`, `Textarea`
+- Navbar: agregado ícono Settings enlace a /cuenta
+- Páginas actualizadas: [[auth/flow]], [[database/schema]], [[frontend/components]], [[architecture/routes]], [[project-state]], [[log]]
+
+## [2026-07-20] update | cuenta-info-unificada
+- Card "Información del registro" + Card "Editar perfil" fusionadas en un solo Card "Información"
+- `AccountForm` refactorizado: nueva vista información con avatar (siempre visible), username, email, bio, fecha, país, creada — y botón "Editar perfil" en header que reemplaza el contenido por el formulario inline
+- `app/(protected)/cuenta/page.tsx`: simplificado — eliminados imports y cards redundantes, solo `AccountForm` + `ChangePasswordForm`
+- País ahora muestra nombre legible (ej. "Argentina") en vez de código ISO ("AR")
+- Build verificado: 0 errores TS
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-20] implement | sistema-moderacion-roles
+- Migración `00010_moderator_role.sql`: columna `role` en profiles (user/moderator/admin), RLS para moderadores (SELECT/UPDATE/DELETE en cualquier juego)
+- Types: `UserRole` y `role` en interface `Profile`
+- Server actions: `getPendingGames`, `getModeratedGames`, `approveGame`, `rejectGame`, `modToggleVisibility`, `modDeleteGame`, `getUsers`, `setUserRole`
+- `createGame` ahora crea juegos con `status: 'pending'` en vez de `'approved'`
+- Nuevo dashboard de moderación `/moderar` con tabs y CRUD completo
+- Nueva página admin `/admin/usuarios` con tabla + selector de roles
+- Navbar: links condicionales "Moderar" (moderator/admin) y "Admin" (solo admin)
+- ProfileGameCard: moderadores ven todos los juegos + botones de acción (aprobación/rechazo/eliminación)
+- Nuevo componente `ModeratorGameActions` para acciones rápidas en perfil ajeno
+- Páginas actualizadas: [[features/moderacion]], [[database/schema]], [[features/games]], [[frontend/components]], [[architecture/routes]], [[index]], [[log]]
+
+## [2026-07-21] update | draft-status-publicacion-opcional
+- Migración `00013_draft_status.sql`: agrega `draft` al CHECK constraint de `games.status`
+- `lib/actions/games.ts`: `createGame` lee `action` del form ("draft"/"publish") para decidir status, nueva `publishGame()` para enviar borrador a moderación, `updateGame` preserva drafts
+- `components/SubmitGameForm.tsx`: dos botones submit "Publicar" y "Guardar borrador"
+- `components/ProfileGameCard.tsx`: badge "Borrador", botón "Publicar" para drafts dueño
+- `components/DashboardCard.tsx`: badge "Borrador", botón "Publicar" para drafts
+- `components/ProfileTabs.tsx`: filtro "Borradores" en sub-tabs del dueño
+- `lib/definitions.ts`: `Game.status` cambia de `string` a `'draft' | 'pending' | 'approved' | 'rejected'`
+
+## [2026-07-21] update | moderacion-rechazo-motivo-revertir
+- Migración `00011_rejection_reason.sql`: columna `rejection_reason` en `games`
+- `lib/actions/games.ts`: `rejectGame` ahora acepta `reason?` opcional, nueva acción `revertToPending`
+- `app/(protected)/moderar/moderator-dashboard.tsx`: botón "Volver a pendiente" en juegos aprobados, diálogo modal para motivo de rechazo al hacer clic en "Rechazar", muestra `rejection_reason` en cards rechazadas
+- `components/ProfileGameCard.tsx`: muestra motivo de rechazo al desarrollador en su perfil
+- `components/ProfileTabs.tsx`: sub-tabs de filtro por status (Todos/Publicados/En moderación/Rechazados) cuando `isOwner=true`, botón Logros como toggle
+- Páginas actualizadas: [[features/moderacion]], [[database/schema]], [[frontend/components]], [[log]]
+
+## [2026-07-23] implement | admin-banner-content
+- Implementación completa del sistema de administración de banner del home
+- Migración `00017_banner_slides.sql`: tabla `banner_slides` + RLS + storage bucket `banners`
+- Server actions en `lib/actions/banner.ts`: CRUD + reorder + upload de imágenes
+- Admin panel en `/admin/banner`: listado, creación, edición, eliminación, reorden de slides
+- HeroSlider actualizado para leer desde DB con fallback a defaults
+- Links en NavbarClient (desktop + mobile) para acceso rápido
+- Plan: `docs/raw/plans/2026-07-23-admin-banner-content.md`
+- Páginas creadas: [[features/banner]]
+- Páginas actualizadas: [[frontend/components]], [[database/schema]], [[architecture/routes]], [[index]], [[log]]
+
+## [2026-07-23] plan | supabase-client-pattern
+- Auditoría completa: **58 llamadas a `createClient()` en 21 archivos**, ~15 redundantes
+- Causa: helpers internos crean su propio cliente (`revalidateProfilePage`, `getUserRole/assertModerator`)
+- Plan: `React.cache()` en `lib/supabase/server.ts` para deduplicar por request, documentar singleton en browser
+- Plan movido a `docs/raw/plans/2026-07-23-supabase-client-pattern.md`
+- Páginas actualizadas: [[index]], [[log]]
+
+## [2026-07-23] fix | followlist-no-mostrar-boton-propio
+- `components/FollowList.tsx`: nuevo prop `currentUserId` — oculta `FollowButton` cuando `currentUserId === user.id` (no te puedes seguir a ti mismo)
+- `app/(public)/perfil/[username]/seguidores/page.tsx` y `siguiendo/page.tsx`: pasan `currentUserId={user?.id}`
+- Páginas actualizadas: [[features/social]], [[log]]
+
+## [2026-07-23] fix | select-id-inexistente-en-contadores-y-isFollowing
+- `lib/actions/profile.ts`: `followersResult` y `followingResult` también usaban `select("id", { count: "exact", head: true })` en tabla sin columna `id` → 400 Bad Request → contadores siempre en 0. Cambiado a `select("follower_id", ...)`.
+- Mismo bug raíz que `isFollowing`: la tabla `follows` tiene PK compuesta, no existe columna `id`.
+- Páginas actualizadas: [[features/social]], [[log]]
+
+## [2026-07-23] fix | isFollowing-select-id-inexistente
+- `lib/actions/social.ts`: `isFollowing()` usaba `select("id")` pero la tabla `follows` NO tiene columna `id` (PK compuesta `(follower_id, following_id)`). Cambiado a `select("follower_id")` + manejo de error.
+- Bug raíz: `isFollowing` siempre devolvía `false` → botón siempre mostraba "Seguir" aunque ya se siguiera al usuario → al hacer clic intentaba INSERT duplicado → error "Ya sigues a este usuario".
+- También se agregó manejo de error con `console.error` para que futuros bugs de query sean visibles.
+- Páginas actualizadas: [[features/social]], [[log]]
+
+## [2026-07-21] fix | follow-system-reparado
+- `lib/actions/social.ts`: agregado `refresh()` de `next/cache` en `followUser`/`unfollowUser` para refrescar el router del cliente
+- `lib/actions/social.ts`: `revalidateProfilePage` ahora también revalida `/perfil/[username]/seguidores` y `/perfil/[username]/siguiendo`
+- `components/FollowButton.tsx`: refactorizado de wrapper cliente (`handleSubmit` + `router.refresh()`) a `useActionState` con server action directo `toggleFollow`
+- Patrón: Server action directo al form → React 19 maneja estado pending/error/success → `refresh()` en servidor garantiza que el Server Component se re-renderice
+- Páginas creadas: [[features/social]]
+- Páginas actualizadas: [[index]], [[log]]
 
 ## [2026-07-14] update | ranking-section-rediseno
 

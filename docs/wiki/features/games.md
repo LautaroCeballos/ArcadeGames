@@ -6,6 +6,8 @@ sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
+  - supabase/migrations/00010_moderator_role.sql
+  - lib/actions/games.ts
 ---
 
 # ArcadePlay — Sistema de Juegos
@@ -71,16 +73,19 @@ Ver `components/TagPicker.tsx` — componente visual de selección múltiple.
 2. **Step 1** — Pantalla de bienvenida: "¿Qué tipo de juego querés publicar?"
    - Dos cards visuales grandes: MakeCode Arcade (rojo, ícono Gamepad2) y Scratch (verde, ícono Puzzle)
    - Sin opciones extras, solo elegir plataforma
-3. **Step 2** — Formulario 2 columnas (como la página de juego):
-   - **Izquierda** (sticky): Preview embed. Inicialmente placeholder "Pegá la URL del juego", luego embed real + tag cloud
-   - **Derecha**: URL input, título, descripción, TagPicker (visual multi-select), ThumbnailPicker
+3. **Step 2** — Formulario 2 columnas:
+   - **Izquierda**: URL input, título, descripción, TagPicker (visual multi-select), ThumbnailPicker (siempre visible)
+   - **Derecha** (sticky): Preview embed. Inicialmente placeholder "Pegá la URL del juego", luego embed real
 4. El sistema extrae el ID, verifica que no exista duplicado y construye el embed URL
 5. Thumbnail: MakeCode → auto (vía API) + upload; Scratch → solo upload
 6. Usuario selecciona tags adicionales (plataforma ya está como locked tag en TagPicker)
-7. Submit → `createGame` action → inserta con `platform` + `game_tags`, `status: 'approved'`
-8. Redirige al perfil del usuario
+7. Submit → `createGame` action → inserta con `platform` + `game_tags`, `status: 'pending'`
+8. El juego queda **pendiente de moderación** — no es visible al público
+9. Redirige al perfil del usuario (el dueño ve el badge "En moderación")
+10. Un moderador debe aprobar el juego desde el panel de moderación (`/moderar`) para que sea público
 
 > [!done] Implementado como parte del plan `docs/raw/plans/2026-07-20-submit-form-tags-redesign.md`.
+> [!note] El flujo de moderación se agregó con la migración `00010`. Antes los juegos se creaban automáticamente como `approved`.
 
 ## Página de detalle (`/juego/[id]`)
 
