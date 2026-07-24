@@ -33,6 +33,11 @@ export interface Database {
         Insert: Omit<Rating, "id">
         Update: Partial<Omit<Rating, "id">>
       }
+      banner_slides: {
+        Row: BannerSlide
+        Insert: Omit<BannerSlide, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<BannerSlide, "id">>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -40,12 +45,19 @@ export interface Database {
   }
 }
 
+export type UserRole = 'user' | 'moderator' | 'admin'
+
 export interface Profile {
   id: string
   username: string | null
+  email: string | null
   avatar_url: string | null
   bio: string | null
   website: string | null
+  birth_month: number | null
+  birth_year: number | null
+  country: string | null
+  role: UserRole
   created_at: string
 }
 
@@ -73,6 +85,12 @@ export interface Follow {
   following?: Pick<Profile, "id" | "username" | "avatar_url">
 }
 
+export interface FollowUserItem {
+  id: string
+  username: string | null
+  avatar_url: string | null
+}
+
 export interface ProfileWithStats extends Profile {
   total_games: number
   total_stars: number
@@ -94,11 +112,12 @@ export interface Game {
   description: string | null
   embed_url: string
   thumbnail_url: string | null
-  status: string
+  status: 'draft' | 'pending' | 'approved' | 'rejected'
   hidden: boolean
   created_at: string
   views: number
   platform: 'makecode' | 'scratch'
+  rejection_reason: string | null
 }
 
 export interface Tag {
@@ -123,4 +142,47 @@ export type GameWithDetails = Game & {
   tags: Tag[]
   avg_rating: number | null
   user_rating: number | null
+}
+
+export type NotificationType =
+  | 'game_approved'
+  | 'game_rejected'
+  | 'new_game_from_following'
+  | 'new_rating'
+  | 'new_follower'
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  message: string
+  link_url: string
+  actor_id: string | null
+  read: boolean
+  created_at: string
+}
+
+export interface BannerSlide {
+  id: string
+  image_url: string | null
+  title: string
+  description: string | null
+  cta_text: string
+  cta_link: string
+  sort_order: number
+  active: boolean
+  overlay_color: string | null
+  text_color: string | null
+  button_color: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PlayerRankingEntry {
+  username: string
+  avatarUrl: string | null
+  totalStars: number
+  gamesCount: number
+  rankedGames: number
 }

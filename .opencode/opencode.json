@@ -23,22 +23,35 @@
         },
         "supabase": {
             "type": "remote",
-            "url": "https://mcp.supabase.com/mcp?project_ref=gbuayimtfyvbeqkcvfff&features=docs%2Cdatabase%2Caccount%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+            "url": "https://mcp.supabase.com/mcp?project_ref=gbuayimtfyvbeqkcvfff&features=docs%2Caccount%2Cdebugging%2Cdatabase%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage",
+            "enabled": true
         },
         "chrome-devtools": {
             "type": "local",
-            "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
+            "command": [
+                "npx",
+                "-y",
+                "chrome-devtools-mcp@latest"
+            ]
         },
         "TestSprite": {
             "type": "local",
-            "command": ["npx", "-y", "@testsprite/testsprite-mcp@latest"],
+            "command": [
+                "npx",
+                "-y",
+                "@testsprite/testsprite-mcp@latest"
+            ],
             "environment": {
                 "API_KEY": "sk-user-E5asyvAPccgM-xx7hoZ73s0tdX5SnO22rZtaRbrnW7dAkU793VbVAiHmm15yK_xzBvIAF-t4cjkNDi8XaE8P1HeYxEZh0P_VYypVx_DhRGi8h0lBw_HiCq9XUUpVkymTtyg"
             }
         },
         "next-devtools": {
             "type": "local",
-            "command": ["npx", "-y", "next-devtools-mcp@latest"]
+            "command": [
+                "npx",
+                "-y",
+                "next-devtools-mcp@latest"
+            ]
         }
     }
 }
