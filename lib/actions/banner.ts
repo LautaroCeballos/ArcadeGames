@@ -72,6 +72,9 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
   const overlayColor = formData.get("overlayColor") as string | null
   const textColor = formData.get("textColor") as string | null
   const buttonColor = formData.get("buttonColor") as string | null
+  const showPanel = formData.get("showPanel") as string | null
+  const panelAlign = formData.get("panelAlign") as string | null
+  const buttonMode = formData.get("buttonMode") as string | null
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -104,6 +107,9 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
       overlay_color: overlayColor || null,
       text_color: textColor || null,
       button_color: buttonColor || null,
+      show_panel: showPanel !== "false",
+      panel_align: panelAlign || "right",
+      button_mode: buttonMode || "full",
       sort_order: nextOrder,
       active: true,
     })
@@ -130,6 +136,9 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   const overlayColor = formData.get("overlayColor") as string | null
   const textColor = formData.get("textColor") as string | null
   const buttonColor = formData.get("buttonColor") as string | null
+  const showPanel = formData.get("showPanel") as string | null
+  const panelAlign = formData.get("panelAlign") as string | null
+  const buttonMode = formData.get("buttonMode") as string | null
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -161,6 +170,11 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   updates.overlay_color = overlayColor || null
   updates.text_color = textColor || null
   updates.button_color = buttonColor || null
+
+  // Panel layout fields
+  updates.show_panel = showPanel !== "false"
+  updates.panel_align = panelAlign || "right"
+  updates.button_mode = buttonMode || "full"
 
   const { error } = await supabase
     .from("banner_slides")

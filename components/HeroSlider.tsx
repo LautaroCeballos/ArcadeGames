@@ -24,6 +24,9 @@ interface Slide {
   overlayColor?: string
   textColor?: string
   buttonColor?: string
+  showPanel?: boolean
+  panelAlign?: string
+  buttonMode?: string
 }
 
 /** Mock slides — replace with CMS or dynamic data later */
@@ -35,6 +38,9 @@ const defaultSlides: Slide[] = [
     description: "Descubrí juegos creados con MakeCode Arcade",
     ctaText: "SABER MÁS",
     ctaLink: "/",
+    showPanel: true,
+    panelAlign: "right",
+    buttonMode: "full",
   },
   {
     id: "2",
@@ -43,6 +49,9 @@ const defaultSlides: Slide[] = [
     description: "Aprendé a programar con MakeCode Arcade",
     ctaText: "EMPEZAR",
     ctaLink: "/",
+    showPanel: true,
+    panelAlign: "right",
+    buttonMode: "full",
   },
   {
     id: "3",
@@ -51,6 +60,9 @@ const defaultSlides: Slide[] = [
     description: "Publicá tus juegos y recibí feedback",
     ctaText: "SUBIR",
     ctaLink: "/subir",
+    showPanel: true,
+    panelAlign: "right",
+    buttonMode: "full",
   },
 ]
 
@@ -102,43 +114,58 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
           </div>
         )}
 
-        {/* Floating full-height panel with backdrop */}
-        <div
-          className="absolute z-10 backdrop-blur-sm rounded-xl
-                     flex items-center justify-center
-                     top-4 bottom-4 left-4 right-4
-                     sm:left-auto sm:right-4"
-          style={{ backgroundColor: hexToRgba(slide.overlayColor || "#000000") }}
-        >
-          <div className="flex flex-col items-center gap-2 px-6 py-4 sm:px-8 sm:py-5">
-            <h2
-              className="text-center text-xl font-bold sm:text-2xl"
-              style={{ color: slide.textColor || "#ffffff" }}
-            >
-              {slide.title}
-            </h2>
-            {slide.description && (
-              <p
-                className="max-w-xs text-center text-sm sm:max-w-sm"
-                style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
-              >
-                {slide.description}
-              </p>
+        {/* Floating panel with backdrop (conditionally rendered) */}
+        {slide.showPanel !== false && (
+          <div
+            className={cn(
+              "absolute z-10 backdrop-blur-sm rounded-xl flex items-center justify-center top-4 bottom-4",
+              // mobile: full width with margins
+              "left-4 right-4",
+              // desktop alignment
+              slide.panelAlign === "left" && "sm:left-4 sm:right-auto",
+              slide.panelAlign === "center" && "sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:right-auto sm:max-w-[50%]",
+              (!slide.panelAlign || slide.panelAlign === "right") && "sm:left-auto sm:right-4",
             )}
-            <Link
-              href={slide.ctaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
-              style={{
-                backgroundColor: slide.buttonColor || "#d90057",
-                color: slide.textColor || "#ffffff",
-              }}
-            >
-              {slide.ctaText}
-            </Link>
+            style={{ backgroundColor: hexToRgba(slide.overlayColor || "#000000") }}
+          >
+            <div className="flex flex-col items-center gap-2 px-6 py-4 sm:px-8 sm:py-5">
+              {/* Show title + description unless buttonMode is 'only' */}
+              {slide.buttonMode !== "only" && (
+                <>
+                  <h2
+                    className="text-center text-xl font-bold sm:text-2xl"
+                    style={{ color: slide.textColor || "#ffffff" }}
+                  >
+                    {slide.title}
+                  </h2>
+                  {slide.description && (
+                    <p
+                      className="max-w-xs text-center text-sm sm:max-w-sm"
+                      style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
+                    >
+                      {slide.description}
+                    </p>
+                  )}
+                </>
+              )}
+              {/* Show button unless buttonMode is 'none' */}
+              {slide.buttonMode !== "none" && (
+                <Link
+                  href={slide.ctaLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
+                  style={{
+                    backgroundColor: slide.buttonColor || "#d90057",
+                    color: slide.textColor || "#ffffff",
+                  }}
+                >
+                  {slide.ctaText}
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Dots */}
