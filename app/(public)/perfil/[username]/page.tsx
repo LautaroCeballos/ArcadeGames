@@ -5,7 +5,7 @@ import { getProfileByUsername } from "@/lib/actions/profile"
 import { isFollowing } from "@/lib/actions/social"
 import { ProfileHeader } from "@/components/ProfileHeader"
 import { ProfileTabs } from "@/components/ProfileTabs"
-import type { GameWithDetails, Game, Tag } from "@/lib/definitions"
+import type { GameWithDetails, Game, Tag, UserRole } from "@/lib/definitions"
 import type { Profile } from "@/lib/definitions"
 
 interface ProfilePageProps {
@@ -40,6 +40,19 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const isOwner = user?.id === profile.id
 
+  // Check if viewer is moderator/admin
+  let viewerRole: UserRole = 'user'
+  if (user) {
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle()
+    viewerRole = (viewerProfile?.role ?? 'user') as UserRole
+  }
+
+  const isModOrAdmin = viewerRole === 'moderator' || viewerRole === 'admin'
+
   const [gamesResult, following] = await Promise.all([
     supabase
       .from("games")
@@ -51,7 +64,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   let gamesData = (gamesResult.data ?? []) as Game[]
 
-  if (!isOwner) {
+  // Moderators/admins can see all games; regular users only see approved + visible
+  if (!isOwner && !isModOrAdmin) {
     gamesData = gamesData.filter((g) => g.status === "approved" && !g.hidden)
   }
 
@@ -104,7 +118,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
       <ProfileHeader profile={profile} isOwnProfile={isOwner} isFollowing={following} />
-      <ProfileTabs games={games} badges={profile.badges} isOwner={isOwner} />
+      <ProfileTabs games={games} badges={profile.badges} isOwner={isOwner} isModOrAdmin={isModOrAdmin} />
     </div>
   )
 }
