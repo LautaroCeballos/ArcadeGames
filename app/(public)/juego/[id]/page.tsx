@@ -67,7 +67,17 @@ export default async function GamePage({ params }: GamePageProps) {
           <div>
             <h1 className="text-2xl font-bold text-arcade-dark">{game.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Por {game.profiles?.username ?? "Anónimo"}
+              Por{" "}
+              {game.profiles?.username ? (
+                <Link
+                  href={`/perfil/${game.profiles.username}`}
+                  className="font-medium text-arcade-dark underline-offset-2 transition-colors hover:text-arcade-red hover:underline"
+                >
+                  {game.profiles.username}
+                </Link>
+              ) : (
+                "Anónimo"
+              )}
             </p>
           </div>
 
