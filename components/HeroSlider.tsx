@@ -4,6 +4,16 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+/** Converts a hex color like #ff0000 to rgba(r,g,b,opacity) */
+function hexToRgba(hex: string, opacity = 0.4): string {
+  const clean = hex.replace("#", "")
+  if (clean.length !== 6) return `rgba(0,0,0,${opacity})`
+  const r = Number.parseInt(clean.slice(0, 2), 16)
+  const g = Number.parseInt(clean.slice(2, 4), 16)
+  const b = Number.parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${opacity})`
+}
+
 interface Slide {
   id: string
   imageUrl: string
@@ -11,6 +21,9 @@ interface Slide {
   description: string
   ctaText: string
   ctaLink: string
+  overlayColor?: string
+  textColor?: string
+  buttonColor?: string
 }
 
 /** Mock slides — replace with CMS or dynamic data later */
@@ -74,7 +87,7 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Slide content */}
-      <div className="relative flex aspect-[1164/308] items-center justify-center bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+      <div className="relative flex aspect-[1164/308] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
         {slide.imageUrl ? (
           <img
             src={slide.imageUrl}
@@ -89,22 +102,42 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
           </div>
         )}
 
-        {/* Text overlay */}
-        <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
-          <h2 className="text-2xl font-bold text-arcade-beige sm:text-3xl">
-            {slide.title}
-          </h2>
-          {slide.description && (
-            <p className="max-w-md text-sm text-arcade-beige/80">
-              {slide.description}
-            </p>
-          )}
-          <Link
-            href={slide.ctaLink}
-            className="inline-flex items-center justify-center rounded-[15px] bg-arcade-red px-6 py-2.5 text-sm font-semibold text-arcade-beige transition-colors hover:bg-arcade-red/90"
-          >
-            {slide.ctaText}
-          </Link>
+        {/* Floating full-height panel with backdrop */}
+        <div
+          className="absolute z-10 backdrop-blur-sm rounded-xl
+                     flex items-center justify-center
+                     top-4 bottom-4 left-4 right-4
+                     sm:left-auto sm:right-4"
+          style={{ backgroundColor: hexToRgba(slide.overlayColor || "#000000") }}
+        >
+          <div className="flex flex-col items-center gap-2 px-6 py-4 sm:px-8 sm:py-5">
+            <h2
+              className="text-center text-xl font-bold sm:text-2xl"
+              style={{ color: slide.textColor || "#ffffff" }}
+            >
+              {slide.title}
+            </h2>
+            {slide.description && (
+              <p
+                className="max-w-xs text-center text-sm sm:max-w-sm"
+                style={{ color: slide.textColor ? `${slide.textColor}cc` : "rgba(255,255,255,0.8)" }}
+              >
+                {slide.description}
+              </p>
+            )}
+            <Link
+              href={slide.ctaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center justify-center rounded-[15px] px-6 py-2 text-sm font-semibold shadow-lg transition-colors hover:brightness-110"
+              style={{
+                backgroundColor: slide.buttonColor || "#d90057",
+                color: slide.textColor || "#ffffff",
+              }}
+            >
+              {slide.ctaText}
+            </Link>
+          </div>
         </div>
       </div>
 
