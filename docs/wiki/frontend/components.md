@@ -49,7 +49,7 @@ sources:
 | `/editar/[id]` | `app/(protected)/editar/[id]/page.tsx` | EditGameForm |
 | `/moderar` | `app/(protected)/moderar/page.tsx` | ModeratorDashboard — panel de moderación con tabs, acciones CRUD (aprobar/rechazar con motivo/volver a pendiente/ocultar/eliminar) |
 | `/admin/usuarios` | `app/(protected)/admin/usuarios/page.tsx` | AdminUsersClient — gestión de roles de usuarios |
-| `/admin/banner` | `app/(protected)/admin/banner/page.tsx` | BannerAdminClient — gestión de slides del banner del home |
+| `/admin/banner` | `app/(protected)/admin/banner/page.tsx` | BannerAdminClient — gestión de slides del banner del home con preview en vivo, color pickers y opciones de panel (visibilidad, alineación, modo botón) |
 
 ## Componentes compartidos
 
@@ -70,7 +70,7 @@ sources:
 
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
-| HeroSlider | `components/HeroSlider.tsx` | Client | `slides[]` — useState + useEffect para auto-play 5s. Fallback a 3 slides default si no hay datos. Ahora recibe slides desde DB vía `getActiveBannerSlides()` en home page |
+| HeroSlider | `components/HeroSlider.tsx` | Client | `slides: Slide[]` — auto-play 5s, fallback a 3 defaults. `Slide` interface incluye `overlayColor?`, `textColor?`, `buttonColor?` (hex), `showPanel?`, `panelAlign?`, `buttonMode?`. Usa `hexToRgba()` inline para overlay con opacidad. Panel condicional según `showPanel`, alineación según `panelAlign`, modo botón según `buttonMode`. Slider recibe slides desde DB vía `getActiveBannerSlides()` en home page |
 | HeroSliderWrapper | `app/(public)/page.tsx` | Server | Wrapper que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`. Si no hay slides en DB, pasa `undefined` para que HeroSlider use defaults |
 | CuratedSection | `components/CuratedSection.tsx` | Server | `{ title, games[] }` — overflow-x scroll con snap |
 | CuratedSectionSkeleton | `components/CuratedSection.tsx` | Server | 4 placeholders animados |

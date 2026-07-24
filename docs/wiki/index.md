@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Índice del Wiki"
 tags: [index]
-last_updated: "2026-07-23"
+last_updated: "2026-07-24"
 ---
 
 # ArcadePlay — Índice del Wiki

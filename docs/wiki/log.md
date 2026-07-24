@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-23"
+last_updated: "2026-07-24"
 sources:
   - supabase/migrations/00015_enable_realtime_notifications.sql
   - hooks/use-realtime-notifications.ts
@@ -410,3 +410,21 @@ sources:
 - Contraste mejorado: fondos sólidos, tipografía `text-base sm:text-lg`
 - Build verificado: 0 errores
 - Páginas actualizadas: [[frontend/components]], [[frontend/design-tokens]], [[project-state]]
+
+## [2026-07-24] update | admin-banner-live-preview-colors
+- `app/(protected)/admin/banner/banner-admin-client.tsx`: agregada función `hexToRgba()` local, rediseño del diálogo a dos columnas (formulario izquierda, preview en vivo + color pickers derecha)
+- La preview se actualiza en tiempo real al cambiar texto, imagen o colores del slide
+- Color pickers movidos a la columna de preview con nativos `<input type="color">` + entrada de texto hex
+- Commit: `102f43d`
+- Páginas actualizadas: [[features/banner]], [[frontend/components]], [[log]]
+
+## [2026-07-24] implement | banner-panel-options
+- Nueva migración `00019_banner_slide_panel_options.sql`: columnas `show_panel`, `panel_align`, `button_mode` en `banner_slides`
+- `lib/definitions.ts`: nuevos campos en `BannerSlide`
+- `lib/actions/banner.ts`: create/update leen `showPanel`, `panelAlign`, `buttonMode` de formData
+- `components/HeroSlider.tsx`: panel condicional según `showPanel`, alineación según `panelAlign`, modo botón según `buttonMode`
+- `app/(protected)/admin/banner/banner-admin-client.tsx`: toggle para mostrar/ocultar panel, segmented controls para alineación y modo botón, preview en vivo refleja las opciones, badges indicadores en lista de slides
+- `app/(public)/page.tsx`: mapping de nuevos campos en `HeroSliderWrapper`
+- Commit: `7f3f8fd`
+- Build: 0 errores, migración aplicada a Supabase
+- Páginas actualizadas: [[features/banner]], [[frontend/components]], [[log]]
