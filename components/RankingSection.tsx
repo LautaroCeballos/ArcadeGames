@@ -83,7 +83,7 @@ export function RankingSection({ players }: RankingSectionProps) {
         </h2>
         <div className="flex flex-col items-center gap-2 rounded-[10px] border bg-card py-12 text-center text-muted-foreground shadow-sm">
           <Star className="size-8 text-muted-foreground/40" />
-          <p className="text-sm">Aún no hay suficientes ratings para mostrar un ranking.</p>
+          <p className="text-sm">Aún no hay estrellas para mostrar un ranking.</p>
           <p className="text-xs">¡Votá juegos para que aparezcan acá!</p>
         </div>
       </section>

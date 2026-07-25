@@ -89,10 +89,10 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false }: Profile
           )}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>{game.views} vistas</span>
-            {(game.avg_rating ?? 0) > 0 && (
+            {(game.stars_count ?? 0) > 0 && (
               <span className="flex items-center gap-0.5">
                 <Star className="size-3 fill-amber-400 text-amber-400" />
-                {game.avg_rating?.toFixed(1)}
+                {game.stars_count}
               </span>
             )}
             <span>{formatRelativeDate(game.created_at)}</span>

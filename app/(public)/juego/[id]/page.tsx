@@ -3,8 +3,10 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { getGameById } from "@/lib/actions/games"
+import { isFavorited } from "@/lib/actions/favorites"
 import { GameTabs } from "@/components/GameTabs"
 import { Rating } from "@/components/Rating"
+import { FavoriteButton } from "@/components/FavoriteButton"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
@@ -32,8 +34,13 @@ export default async function GamePage({ params }: GamePageProps) {
 
   if (!game) notFound()
 
-  // Related games: match first non-platform tag
+  // Check if current user has favorited this game
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const favorited = user ? await isFavorited(id) : false
+  const isOwner = user?.id === game.user_id
+
+  // Related games: match first non-platform tag
   const primaryTag = game.tags?.find((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch')
   const { data: related } = primaryTag
     ? await supabase
@@ -109,14 +116,26 @@ export default async function GamePage({ params }: GamePageProps) {
 
           <Separator className="bg-border" />
 
-          {/* Rating */}
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-arcade-dark">Calificar</h3>
-            <Rating
-              gameId={game.id}
-              avgRating={game.avg_rating}
-              userRating={game.user_rating}
-            />
+          {/* Rating & Favorites */}
+          <div className="flex flex-wrap items-start gap-4">
+            <div>
+              <h3 className="mb-2 text-sm font-medium text-arcade-dark">Calificar</h3>
+              <Rating
+                gameId={game.id}
+                starsCount={game.stars_count}
+                hasStarred={game.has_starred}
+              />
+            </div>
+            {!isOwner && (
+              <div>
+                <h3 className="mb-2 text-sm font-medium text-arcade-dark">Favoritos</h3>
+                <FavoriteButton
+                  gameId={game.id}
+                  isFavorited={favorited}
+                  isAuthenticated={!!user}
+                />
+              </div>
+            )}
           </div>
 
           {/* Related games */}

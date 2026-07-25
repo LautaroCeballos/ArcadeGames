@@ -40,26 +40,20 @@ export async function getProfileByUsername(username: string) {
   const gameIds = (gameIdsResult.data ?? []).map((g) => g.id)
 
   let totalStars = 0
-  let avgRating: number | null = null
 
   if (gameIds.length > 0) {
-    const { data: ratingsData } = await supabase
+    const { count } = await supabase
       .from("ratings")
-      .select("value")
+      .select("id", { count: "exact", head: true })
       .in("game_id", gameIds)
 
-    const allRatings = ratingsData ?? []
-    totalStars = allRatings.reduce((sum, r) => sum + r.value, 0)
-    if (allRatings.length > 0) {
-      avgRating = Math.round((totalStars / allRatings.length) * 10) / 10
-    }
+    totalStars = count ?? 0
   }
 
   return {
     ...profile,
     total_games: gameIdsResult.data?.length ?? 0,
     total_stars: totalStars,
-    avg_rating: avgRating,
     followers_count: followersResult.count ?? 0,
     following_count: followingResult.count ?? 0,
     badges: (badgesResult.data ?? []) as unknown as ProfileWithStats["badges"],

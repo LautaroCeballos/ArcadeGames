@@ -268,7 +268,7 @@ export async function getGames(options: {
 
   let query = supabase
     .from("games")
-    .select("*, profiles(username, avatar_url)", { count: "exact" })
+    .select("*, profiles!games_user_id_fkey(username, avatar_url)", { count: "exact" })
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
@@ -328,8 +328,8 @@ export async function getGames(options: {
   const gamesWithTags = games.map((g) => ({
     ...g,
     tags: tagsMap.get(g.id) ?? [],
-    avg_rating: null,
-    user_rating: null,
+    stars_count: null,
+    has_starred: null,
   }))
 
   return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }
@@ -340,7 +340,7 @@ export async function getGameById(id: string) {
 
   const { data: game, error } = await supabase
     .from("games")
-    .select("*, profiles(username, avatar_url)")
+    .select("*, profiles!games_user_id_fkey(username, avatar_url)")
     .eq("id", id)
     .single()
 
@@ -351,34 +351,27 @@ export async function getGameById(id: string) {
     .select("tags(*)")
     .eq("game_id", id)
 
-  const { data: avgRating } = await supabase
+  const { data: ratingsData } = await supabase
     .from("ratings")
-    .select("value")
+    .select("value, user_id")
     .eq("game_id", id)
 
-  const avg = avgRating && avgRating.length > 0
-    ? Math.round((avgRating.reduce((sum, r) => sum + r.value, 0) / avgRating.length) * 10) / 10
+  const starsCount = ratingsData && ratingsData.length > 0
+    ? ratingsData.length
     : null
 
   const { data: { user } } = await supabase.auth.getUser()
-  let userRating: number | null = null
+  let hasStarred: boolean | null = null
 
   if (user) {
-    const { data: myRating } = await supabase
-      .from("ratings")
-      .select("value")
-      .eq("game_id", id)
-      .eq("user_id", user.id)
-      .maybeSingle()
-
-    userRating = myRating?.value ?? null
+    hasStarred = ratingsData?.some((r) => r.user_id === user.id) ?? false
   }
 
   return {
     ...game,
     tags: tags?.map((t: { tags: unknown }) => t.tags) ?? [],
-    avg_rating: avg,
-    user_rating: userRating,
+    stars_count: starsCount,
+    has_starred: hasStarred,
   } as unknown as GameWithDetails
 }
 
@@ -395,7 +388,7 @@ export async function getUserGames(username: string) {
 
   const { data: games } = await supabase
     .from("games")
-    .select("*, profiles(username, avatar_url)")
+    .select("*, profiles!games_user_id_fkey(username, avatar_url)")
     .eq("user_id", profile.id)
     .eq("status", "approved")
     .eq("hidden", false)
@@ -422,8 +415,8 @@ export async function getUserGames(username: string) {
   return gameList.map((g) => ({
     ...g,
     tags: tagsMap.get(g.id) ?? [],
-    avg_rating: null,
-    user_rating: null,
+    stars_count: null,
+    has_starred: null,
   })) as unknown as GameWithDetails[]
 }
 
@@ -461,13 +454,13 @@ export async function getMyGames() {
     ...g,
     profiles: null,
     tags: tagsMap.get(g.id) ?? [],
-    avg_rating: null,
-    user_rating: null,
+    stars_count: null,
+    has_starred: null,
   })) as unknown as GameWithDetails[]
 }
 
 /** Minimal game data used in GameThumbnail / CuratedSection */
-export type GameThumbnailData = Pick<GameWithDetails, "id" | "title" | "thumbnail_url" | "avg_rating">
+export type GameThumbnailData = Pick<GameWithDetails, "id" | "title" | "thumbnail_url" | "stars_count">
 
 /** Get the most recently added games (for "Últimos Juegos") */
 export async function getRecentGames(limit = 8): Promise<GameThumbnailData[]> {
@@ -481,7 +474,7 @@ export async function getRecentGames(limit = 8): Promise<GameThumbnailData[]> {
     .order("created_at", { ascending: false })
     .limit(limit)
 
-  return (data ?? []).map((g) => ({ ...g, avg_rating: null }))
+  return (data ?? []).map((g) => ({ ...g, stars_count: null }))
 }
 
 /** Get the most played games by view count (for "Más Jugados") */
@@ -496,14 +489,14 @@ export async function getMostPlayed(limit = 8): Promise<GameThumbnailData[]> {
     .order("views", { ascending: false })
     .limit(limit)
 
-  return (data ?? []).map((g) => ({ ...g, avg_rating: null }))
+  return (data ?? []).map((g) => ({ ...g, stars_count: null }))
 }
 
-/** Get the highest-rated games (for "Mejor Valorados") */
+/** Get the most starred games (for "Mejor Valorados") */
 export async function getTopRated(limit = 8): Promise<GameThumbnailData[]> {
   const supabase = await createClient()
 
-  // Fetch a larger pool to compute ratings from
+  // Fetch a larger pool to compute stars from
   const { data: games } = await supabase
     .from("games")
     .select("id, title, thumbnail_url")
@@ -518,31 +511,24 @@ export async function getTopRated(limit = 8): Promise<GameThumbnailData[]> {
 
   const { data: ratings } = await supabase
     .from("ratings")
-    .select("game_id, value")
+    .select("game_id")
     .in("game_id", gameIds)
 
-  // group ratings by game
-  const ratingMap = new Map<string, number[]>()
+  // Count stars per game
+  const starCountMap = new Map<string, number>()
   for (const r of ratings ?? []) {
-    const bucket = ratingMap.get(r.game_id)
-    if (bucket) bucket.push(r.value)
-    else ratingMap.set(r.game_id, [r.value])
+    starCountMap.set(r.game_id, (starCountMap.get(r.game_id) ?? 0) + 1)
   }
 
-  const gamesWithRating = games.map((g) => {
-    const vals = ratingMap.get(g.id)
-    return {
-      ...g,
-      avg_rating: vals
-        ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
-        : null,
-    }
-  })
+  const gamesWithRating = games.map((g) => ({
+    ...g,
+    stars_count: starCountMap.get(g.id) ?? null,
+  }))
 
-  // Sort by avg_rating descending, then by title for deterministic order
+  // Sort by stars_count descending, then by title for deterministic order
   return gamesWithRating
-    .filter((g) => g.avg_rating !== null)
-    .sort((a, b) => (b.avg_rating ?? 0) - (a.avg_rating ?? 0))
+    .filter((g) => g.stars_count !== null)
+    .sort((a, b) => (b.stars_count ?? 0) - (a.stars_count ?? 0))
     .slice(0, limit)
 }
 
@@ -584,7 +570,7 @@ export async function getPendingGames(page = 0, limit = 20) {
 
   const { data: games, count } = await supabase
     .from("games")
-    .select("*, profiles(username, avatar_url)", { count: "exact" })
+    .select("*, profiles!games_user_id_fkey(username, avatar_url)", { count: "exact" })
     .eq("status", "pending")
     .order("created_at", { ascending: false })
     .range(page * limit, (page + 1) * limit - 1)
@@ -610,8 +596,8 @@ export async function getPendingGames(page = 0, limit = 20) {
   const gamesWithTags = gameList.map((g) => ({
     ...g,
     tags: tagsMap.get(g.id) ?? [],
-    avg_rating: null,
-    user_rating: null,
+    stars_count: null,
+    has_starred: null,
   }))
 
   return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }
@@ -628,7 +614,7 @@ export async function getModeratedGames(options: {
 
   let query = supabase
     .from("games")
-    .select("*, profiles(username, avatar_url)", { count: "exact" })
+    .select("*, profiles!games_user_id_fkey(username, avatar_url)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(page * limit, (page + 1) * limit - 1)
 
@@ -660,8 +646,8 @@ export async function getModeratedGames(options: {
   const gamesWithTags = gameList.map((g) => ({
     ...g,
     tags: tagsMap.get(g.id) ?? [],
-    avg_rating: null,
-    user_rating: null,
+    stars_count: null,
+    has_starred: null,
   }))
 
   return { games: gamesWithTags as unknown as GameWithDetails[], total: count ?? 0 }

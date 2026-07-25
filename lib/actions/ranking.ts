@@ -13,7 +13,7 @@ export async function getPlayerLeaderboard(limit = 50): Promise<PlayerRankingEnt
   // 1. Get all approved, non-hidden games with owner profile
   const { data: games, error: gamesError } = await supabase
     .from("games")
-    .select("id, user_id, profiles!inner(username, avatar_url)")
+    .select("id, user_id, profiles!games_user_id_fkey!inner(username, avatar_url)")
     .eq("status", "approved")
     .eq("hidden", false)
 
@@ -73,7 +73,8 @@ export async function getPlayerLeaderboard(limit = 50): Promise<PlayerRankingEnt
     if (ownerId) {
       const user = userMap.get(ownerId)
       if (user) {
-        user.totalStars += rating.value
+        // Each rating = 1 star (binary toggle system)
+        user.totalStars += 1
         user.rankedGames.add(rating.game_id)
       }
     }

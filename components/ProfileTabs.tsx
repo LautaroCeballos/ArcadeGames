@@ -10,9 +10,10 @@ interface ProfileTabsProps {
   badges: { badges: Badge }[]
   isOwner: boolean
   isModOrAdmin?: boolean
+  favoritedGames?: GameWithDetails[]
 }
 
-type Tab = "juegos" | "logros"
+type Tab = "juegos" | "favoritos" | "logros"
 type GameFilter = "all" | "approved" | "pending" | "rejected" | "draft"
 
 const gameFilterLabels: Record<GameFilter, string> = {
@@ -23,7 +24,7 @@ const gameFilterLabels: Record<GameFilter, string> = {
   draft: "Borradores",
 }
 
-export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false }: ProfileTabsProps) {
+export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false, favoritedGames }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("juegos")
   const [gameFilter, setGameFilter] = useState<GameFilter>("all")
 
@@ -49,6 +50,12 @@ export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false }: Pr
             {games.length > 0 && (
               <span className="ml-1.5 text-xs text-muted-foreground">({games.length})</span>
             )}
+          </TabButton>
+        )}
+        {isOwner && favoritedGames && favoritedGames.length > 0 && (
+          <TabButton active={activeTab === "favoritos"} onClick={() => setActiveTab("favoritos")}>
+            Favoritos
+            <span className="ml-1.5 text-xs text-muted-foreground">({favoritedGames.length})</span>
           </TabButton>
         )}
         {badges.length > 0 && (
@@ -95,6 +102,20 @@ export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false }: Pr
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === "favoritos" && favoritedGames && (
+          <div className="space-y-3">
+            {favoritedGames.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>Este usuario aún no tiene juegos favoritos</p>
+              </div>
+            ) : (
+              favoritedGames.map((game) => (
+                <ProfileGameCard key={game.id} game={game} isOwner={false} />
+              ))
+            )}
           </div>
         )}
 

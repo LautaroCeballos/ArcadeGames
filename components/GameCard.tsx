@@ -8,7 +8,7 @@ interface GameCardProps {
 }
 
 export function GameCard({ game }: GameCardProps) {
-  const rating = game.avg_rating
+  const starsCount = game.stars_count
 
   return (
     <Link
@@ -40,10 +40,10 @@ export function GameCard({ game }: GameCardProps) {
             {game.profiles?.username ?? "Anónimo"}
           </span>
 
-          {rating !== null && (
+          {starsCount !== null && (
             <span className="flex items-center gap-1 text-xs text-arcade-beige/80">
               <Star className="h-3 w-3 fill-current" />
-              {rating}
+              {starsCount}
             </span>
           )}
         </div>

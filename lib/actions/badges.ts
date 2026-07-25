@@ -19,11 +19,11 @@ export async function checkAndAwardBadges(userId: string) {
   let totalStars = 0
   const ownGameIds = (gameIdsResult.data ?? []).map((g) => g.id)
   if (ownGameIds.length > 0) {
-    const { data: ratingsData } = await supabase
+    const { count } = await supabase
       .from("ratings")
-      .select("value")
+      .select("id", { count: "exact", head: true })
       .in("game_id", ownGameIds)
-    totalStars = (ratingsData ?? []).reduce((s, r) => s + r.value, 0)
+    totalStars = count ?? 0
   }
 
   const { count: ratedByUser } = await supabase

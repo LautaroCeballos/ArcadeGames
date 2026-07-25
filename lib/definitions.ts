@@ -38,6 +38,11 @@ export interface Database {
         Insert: Omit<BannerSlide, "id" | "created_at" | "updated_at">
         Update: Partial<Omit<BannerSlide, "id">>
       }
+      favorites: {
+        Row: Favorite
+        Insert: Favorite
+        Update: Favorite
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -94,7 +99,6 @@ export interface FollowUserItem {
 export interface ProfileWithStats extends Profile {
   total_games: number
   total_stars: number
-  avg_rating: number | null
   followers_count: number
   following_count: number
   badges: (UserBadge & { badges: Badge })[]
@@ -140,8 +144,15 @@ export interface Rating {
 export type GameWithDetails = Game & {
   profiles: Pick<Profile, "username" | "avatar_url"> | null
   tags: Tag[]
-  avg_rating: number | null
-  user_rating: number | null
+  stars_count: number | null
+  has_starred: boolean | null
+  is_favorited: boolean | null
+}
+
+export interface Favorite {
+  user_id: string
+  game_id: string
+  created_at: string
 }
 
 export type NotificationType =
@@ -150,6 +161,7 @@ export type NotificationType =
   | 'new_game_from_following'
   | 'new_rating'
   | 'new_follower'
+  | 'new_favorite'
 
 export interface AppNotification {
   id: string

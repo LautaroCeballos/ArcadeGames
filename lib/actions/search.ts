@@ -10,7 +10,7 @@ export async function searchAll(query: string) {
   const [gamesResult, usersResult, tagsResult] = await Promise.all([
     supabase
       .from("games")
-      .select("*, profiles(username, avatar_url)")
+      .select("*, profiles!games_user_id_fkey(username, avatar_url)")
       .eq("status", "approved")
       .eq("hidden", false)
       .ilike("title", search)

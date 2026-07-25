@@ -5,7 +5,7 @@ export interface GameThumbnailData {
   id: string
   title: string
   thumbnail_url: string | null
-  avg_rating: number | null
+  stars_count: number | null
 }
 
 interface GameThumbnailProps {
@@ -37,10 +37,10 @@ export function GameThumbnail({ game }: GameThumbnailProps) {
         <p className="truncate text-sm font-semibold text-arcade-beige">
           {game.title}
         </p>
-        {game.avg_rating !== null && (
+        {game.stars_count !== null && (
           <span className="mt-0.5 flex items-center gap-1 text-xs text-arcade-beige/80">
             <Star className="h-3 w-3 fill-current" />
-            {game.avg_rating}
+            {game.stars_count}
           </span>
         )}
       </div>

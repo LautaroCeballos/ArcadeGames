@@ -164,10 +164,10 @@ export function DashboardCard({ game }: DashboardCardProps) {
             <Eye className="size-3" />
             {game.views} vista{game.views !== 1 ? "s" : ""}
           </span>
-          {game.avg_rating !== null && (
+          {game.stars_count !== null && (
             <span className="flex items-center gap-1">
               <Star className="size-3 fill-amber-400 text-amber-400" />
-              {game.avg_rating}
+              {game.stars_count}
             </span>
           )}
           <span className="flex items-center gap-1">
