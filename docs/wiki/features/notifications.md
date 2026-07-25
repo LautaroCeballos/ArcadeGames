@@ -1,10 +1,11 @@
 ---
 title: "ArcadePlay — Sistema de Notificaciones"
 tags: [feature, notifications]
-last_updated: "2026-07-23"
+last_updated: "2026-07-25"
 sources:
   - supabase/migrations/00014_notifications.sql
   - supabase/migrations/00015_enable_realtime_notifications.sql
+  - supabase/migrations/00024_favorites_notification_type.sql
   - lib/actions/notifications.ts
   - lib/notifications.ts
   - lib/definitions.ts
@@ -15,10 +16,12 @@ sources:
   - lib/actions/games.ts
   - lib/actions/social.ts
   - lib/actions/ratings.ts
+  - lib/actions/favorites.ts
   - docs/raw/plans/2026-07-23-notification-system.md
   - docs/raw/plans/2026-07-23-notifications-realtime.md
   - docs/raw/plans/2026-07-23-fix-notifications-realtime.md
   - docs/raw/debugging/2026-07-23-notifications-realtime-not-delivered.md
+  - hooks/use-realtime-follow-counts.ts
 ---
 
 # ArcadePlay — Sistema de Notificaciones
@@ -36,6 +39,7 @@ Las notificaciones informan a los usuarios sobre eventos importantes: aprobació
 | `new_game_from_following` | `approveGame` (fan-out) | Seguidores del creador | `lib/actions/games.ts:669` |
 | `new_rating` | `rateGame` | Dueño del juego | `lib/actions/ratings.ts:7` |
 | `new_follower` | `followUser` | Usuario seguido | `lib/actions/social.ts:6` |
+| `new_favorite` | `toggleFavorite` | Dueño del juego | `lib/actions/favorites.ts:17` |
 
 ## Tabla `notifications`
 
@@ -65,6 +69,7 @@ Todas con `"use server"`:
 - **`rejectGame`**: Notifica al dueño (`game_rejected`) con razón opcional
 - **`rateGame`**: Notifica al dueño del juego (`new_rating`), excepto si el usuario vota su propio juego
 - **`followUser`**: Notifica al usuario seguido (`new_follower`)
+- **`toggleFavorite`**: Notifica al dueño del juego (`new_favorite`), excepto si el usuario favorita su propio juego
 
 ## UI
 
@@ -220,6 +225,28 @@ Esto expone la tabla `notifications` a cambios vía Realtime. RLS sigue protegie
 > **Fix**: Reemplazado por `didInit.current` flag que solo aplica `initial` en el primer montaje. Los renders subsecuentes del Server Component se ignoran — el estado ya está vivo vía Realtime.
 >
 > **Prevención futura**: Cuando un Server Component en layout pasa datos a un Client Component con Realtime, el hook debe consumir `initial` solo en mount, nunca en cambios subsecuentes del prop.
+
+### Canal Realtime con nombre estático + React Strict Mode
+
+> [!warning] Gotcha crítico (2026-07-25)
+> Usar un nombre de canal fijo como `supabase.channel("notifications-realtime")` causa el error `cannot add postgres_changes callbacks for realtime:... after subscribe()` en desarrollo con React Strict Mode.
+>
+> **Síntoma**: Error en consola del navegador al cargar la página de notificaciones. La suscripción Realtime no se establece.
+>
+> **Causa**: `supabase.channel(nombre)` con el mismo nombre devuelve la **misma instancia** de canal ya creada. React Strict Mode ejecuta los `useEffect` dos veces en desarrollo. El flujo exacto (`app/(protected)/notificaciones/page.tsx:61`):
+> 1. **Ejecución 1**: `getUser()` → promesa pendiente → cleanup (array vacío)
+> 2. **Ejecución 2**: `getUser()` → promesa pendiente
+> 3. Promesa de ejec. 1 resuelve → `supabase.channel("notificaciones-page")` → `.on(INSERT)` → `.on(UPDATE)` → `.subscribe()`
+> 4. Promesa de ejec. 2 resuelve → `supabase.channel("notificaciones-page")` ← **devuelve el canal ya suscrito** → `.on(INSERT)` → **ERROR**
+>
+> Además, hay un leak potencial: si cleanup corre antes de que `getUser()` resuelva, el array `channels` está vacío, y la suscripción creada después nunca se limpia.
+>
+> **Fix en `app/(protected)/notificaciones/page.tsx` y `hooks/use-realtime-notifications.ts`**:
+> - **Nombre de canal único**: `` `notificaciones-page-${crypto.randomUUID()}` `` — cada ejecución del effect crea un canal nuevo, evitando colisiones.
+> - **Cancellation guard**: variable `cancelled` que impide crear suscripciones si el effect ya fue limpiado, previniendo leaks del async `getUser()`.
+> - **Cleanup directo**: guardar el channel en variable local (no array) y removerlo en cleanup.
+>
+> **Prevención futura**: Siempre usar un identificador único por instancia de canal Realtime (ej. `crypto.randomUUID()`), especialmente cuando la suscripción depende de una operación asíncrona como `getUser()`. Los canales con nombre dinámico como `` `follows-${profileUserId}` `` (`` `hooks/use-realtime-follow-counts.ts:41` ``) son seguros porque el nombre ya varía por perfil.
 
 ## Archivos relacionados
 

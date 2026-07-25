@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Inventario de Componentes Frontend"
 tags: [frontend, architecture]
-last_updated: "2026-07-23"
+last_updated: "2026-07-25"
 sources:
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
@@ -14,10 +14,12 @@ sources:
   - components/
   - components/AccountForm.tsx
   - components/NavbarClient.tsx
+  - components/FavoriteButton.tsx
   - lib/actions/search.ts
   - lib/actions/ranking.ts
   - lib/actions/profile.ts
   - lib/actions/banner.ts
+  - lib/actions/favorites.ts
   - app/(public)/page.tsx
   - app/(public)/buscar/page.tsx
   - app/(protected)/cuenta/page.tsx
@@ -39,7 +41,7 @@ sources:
 | Ruta | Archivo | Componentes que usa |
 |------|---------|-------------------|
 | `/` | `app/(public)/page.tsx` | HeroSlider, CuratedSection (×3), RankingSection |
-| `/juego/[id]` | `app/(public)/juego/[id]/page.tsx` | GameTabs, Rating, Badge |
+| `/juego/[id]` | `app/(public)/juego/[id]/page.tsx` | GameTabs, Rating, FavoriteButton, Badge |
 | `/perfil/[username]` | `app/(public)/perfil/[username]/page.tsx` | ProfileHeader, ProfileTabs, ProfileGameCard, ProfileBadges |
 | `/login` | `app/(public)/login/page.tsx` | LoginForm |
 | `/signup` | `app/(public)/signup/page.tsx` | SignUpForm |
@@ -70,7 +72,7 @@ sources:
 
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
-| HeroSlider | `components/HeroSlider.tsx` | Client | `slides: Slide[]` — auto-play 5s, fallback a 3 defaults. `Slide` interface incluye `overlayColor?`, `textColor?`, `buttonColor?` (hex), `showPanel?`, `panelAlign?`, `buttonMode?`. Usa `hexToRgba()` inline para overlay con opacidad. Panel condicional según `showPanel`, alineación según `panelAlign`, modo botón según `buttonMode`. Slider recibe slides desde DB vía `getActiveBannerSlides()` en home page |
+| HeroSlider | `components/HeroSlider.tsx` | Client | `slides: Slide[]` — auto-play 5s con fade `transition-all duration-500`. Todos los slides apilados con CSS Grid. Fallback a 3 defaults. `Slide` interface simplificada: solo `template` (`bar-right`, `bar-left`, `full-image`). BarSlide: split 25/75 con colores dominantes extractados vía `useDominantColors()`. Fondo con gradiente de 2 colores oscuros extraídos de la imagen (k-means, canvas 32×32). Desktop `md:aspect-[3/1]` flex-row. Mobile flex-col con altura auto para contenido + aspect-video para imagen. |
 | HeroSliderWrapper | `app/(public)/page.tsx` | Server | Wrapper que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`. Si no hay slides en DB, pasa `undefined` para que HeroSlider use defaults |
 | CuratedSection | `components/CuratedSection.tsx` | Server | `{ title, games[] }` — overflow-x scroll con snap |
 | CuratedSectionSkeleton | `components/CuratedSection.tsx` | Server | 4 placeholders animados |
@@ -107,9 +109,10 @@ sources:
 | ProfileBadges | `components/ProfileBadges.tsx` | Server | `{ badges: { badges: Badge }[] }` — grid de emblemas con hover tooltip. Se oculta si no hay badges |
 | ProfileGameCard | `components/ProfileGameCard.tsx` | Client | `{ game: GameWithDetails, isOwner, isModOrAdmin? }` — card con thumbnail, status badge, vistas/rating/fecha, motivo de rechazo si aplica (`rejection_reason`), acciones (jugar, editar, ocultar, eliminar solo si es dueño; si es moderador/admin muestra `ModeratorGameActions`). Si `game.status === "draft"` e `isOwner`, muestra botón "Publicar" que llama a `publishGame` |
 | ModeratorGameActions | `components/ModeratorGameActions.tsx` | Client | `{ game: GameWithDetails }` — botones Aprobar (pendiente), Rechazar (pendiente), Eliminar (aprobado/rechazado) para moderadores en perfiles ajenos |
-| ProfileTabs | `components/ProfileTabs.tsx` | Client | `{ games[], badges[], isOwner, isModOrAdmin? }` — tabs "Juegos" (default) y "Logros" (solo si tiene badges). Cuando `isOwner=true`: sub-tabs de filtro (Todos / Publicados / En moderación / Rechazados) con conteo por status, botón "Logros" como toggle. Cuando `isOwner=false`: comportamiento original con tabs Juegos/Logros |
+| ProfileTabs | `components/ProfileTabs.tsx` | Client | `{ games[], badges[], favoritedGames?, isOwner, isModOrAdmin? }` — tabs "Juegos" (default) y "Logros" (solo si tiene badges). Cuando `isOwner=true`: sub-tabs de filtro (Todos / Publicados / En moderación / Rechazados) con conteo por status, botón "Logros" como toggle, botón "Favoritos (N)" (solo si tiene favoritos). Cuando `isOwner=false`: comportamiento original con tabs Juegos/Logros. La tab Favoritos muestra juegos con `ProfileGameCard` en modo vista (sin acciones). |
 | FollowButton | `components/FollowButton.tsx` | Client | `{ targetUserId, isFollowing }` — botón Seguir/Siguiendo con useActionState |
 | GameActionsInline | `components/GameActionsInline.tsx` | Client | `ToggleVisibilityButton(gameId, hidden)` y `DeleteGameButton(gameId)` — wrappers useActionState para evitar inline "use server" en client components |
+| FavoriteButton | `components/FavoriteButton.tsx` | Client | `{ gameId, initialFavorited, isAuthenticated }` — corazón toggle con 3 estados: no autenticado (deshabilitado + tooltip "Inicia sesión"), sin favorito (outline Heart icon), favoritado (relleno rojo `bg-red-500` Heart icon). Usa `useActionState(toggleFavorite)` con optimistic UI. Se oculta completamente si el usuario es el dueño del juego |
 
 ### Auth
 
@@ -145,6 +148,7 @@ sources:
 | use-debounce | `hooks/use-debounce.ts` | Debounce genérico (300ms en SearchBar) |
 | use-toast | `hooks/use-toast.ts` | Estado global de toasts |
 | useRealtimeNotifications | `hooks/use-realtime-notifications.ts` | Suscripción Realtime a INSERT/UPDATE en `notifications` |
+| useDominantColors | `hooks/use-dominant-colors.ts` | Extrae 2 colores dominantes de una imagen vía k-means (k=2, 4 iteraciones, canvas 32×32). Oscurece colores a ≤35% luminosidad para fondos con texto blanco. Cachea resultados por URL. |
 
 ## Server Actions
 
@@ -203,3 +207,6 @@ sources:
 | deleteBannerSlide | `lib/actions/banner.ts` | Eliminar slide (admin) |
 | reorderBannerSlides | `lib/actions/banner.ts` | Reordenar slides (admin) |
 | uploadBannerImage | `lib/actions/banner.ts` | Subir imagen al bucket `banners` (admin) |
+| toggleFavorite | `lib/actions/favorites.ts` | Agregar/quitar favorito (INSERT/DELETE en `favorites`). Rechaza con error si el usuario es el dueño del juego (verificado server-side). Si agrega, dispara notificación `new_favorite` al dueño del juego |
+| isFavorited | `lib/actions/favorites.ts` | Check si el usuario autenticado tiene un juego como favorito (booleano) |
+| getUserFavorites | `lib/actions/favorites.ts` | Lista de juegos favoritos de un usuario (solo aprobados + visibles) |

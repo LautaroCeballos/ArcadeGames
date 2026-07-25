@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Esquema de Base de Datos"
 tags: [database, schema]
-last_updated: "2026-07-23"
+last_updated: "2026-07-25"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
@@ -14,6 +14,8 @@ sources:
   - supabase/migrations/00012_admin_update_profiles.sql
   - supabase/migrations/00013_draft_status.sql
   - supabase/migrations/00017_banner_slides.sql
+  - supabase/migrations/00023_favorites.sql
+  - supabase/migrations/00024_favorites_notification_type.sql
 ---
 
 # ArcadePlay — Esquema de Base de Datos
@@ -109,7 +111,7 @@ sources:
 |---------|------|-------|
 | id | uuid PK | Default `gen_random_uuid()` |
 | user_id | uuid FK → profiles(id) | ON DELETE CASCADE |
-| type | text | CHECK: `game_approved`, `game_rejected`, `new_game_from_following`, `new_rating`, `new_follower` |
+| type | text | CHECK: `game_approved`, `game_rejected`, `new_game_from_following`, `new_rating`, `new_follower`, `new_favorite` |
 | title | text NOT NULL | Título corto de la notificación |
 | message | text NOT NULL | Mensaje descriptivo |
 | link_url | text NOT NULL | URL al recurso relacionado |
@@ -146,6 +148,20 @@ sources:
 
 **RLS**: SELECT pública, INSERT/UPDATE/DELETE solo admin (vía `profiles.role = 'admin'`).
 **Migración**: `00017_banner_slides.sql`.
+
+### `favorites`
+| Columna | Tipo | Notas |
+|---------|------|-------|
+| user_id | uuid FK → profiles(id) | ON DELETE CASCADE |
+| game_id | text FK → games(id) | ON DELETE CASCADE |
+| created_at | timestamp | Default `now()` |
+| PK | (user_id, game_id) | |
+
+**Índices**: `idx_favorites_user` (user_id), `idx_favorites_game` (game_id)
+
+**RLS**: SELECT pública (solo ve aprobados + visibles), INSERT/DELETE solo `auth.uid() = user_id`.
+
+**Migración**: `00023_favorites.sql`.
 
 ## Storage
 
@@ -189,6 +205,11 @@ sources:
 - **SELECT**: público
 - **INSERT**: `auth.uid() = follower_id`
 - **DELETE**: `auth.uid() = follower_id`
+
+### `favorites`
+- **SELECT**: público (solo juegos aprobados + visibles, vía política)
+- **INSERT**: `auth.uid() = user_id`
+- **DELETE**: `auth.uid() = user_id`
 
 ## Políticas RLS (Row Level Security)
 

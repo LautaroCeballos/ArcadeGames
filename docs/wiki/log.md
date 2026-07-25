@@ -1,8 +1,14 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-24"
+last_updated: "2026-07-25"
 sources:
+  - lib/actions/ranking.ts
+  - docs/raw/plans/2026-07-25-fix-ranking-system.md
+  - supabase/migrations/00023_favorites.sql
+  - supabase/migrations/00024_favorites_notification_type.sql
+  - lib/actions/favorites.ts
+  - components/FavoriteButton.tsx
   - supabase/migrations/00015_enable_realtime_notifications.sql
   - hooks/use-realtime-notifications.ts
   - components/NavbarClient.tsx
@@ -21,9 +27,26 @@ sources:
   - docs/raw/plans/2026-07-23-header-redesign-search.md
   - docs/raw/plans/2026-07-23-live-search-dropdown.md
   - app/(public)/buscar/page.tsx
+  - app/(protected)/notificaciones/page.tsx
+  - hooks/use-realtime-follow-counts.ts
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-25] fix | realtime-channel-static-name-strict-mode
+- **Bug**: Error `cannot add postgres_changes callbacks for realtime:notificaciones-page after subscribe()` en desarrollo con React Strict Mode.
+- **Causa raíz**: `supabase.channel("notificaciones-page")` con nombre estático. React Strict Mode ejecuta el `useEffect` dos veces. El primer `getUser()` crea y subscribe el canal; el segundo obtiene la misma instancia ya suscrita e intenta agregar `.on()` → error.
+- **Fix**: Nombre de canal único por instancia (`crypto.randomUUID()`) + `cancelled` flag para prevenir leaks del async `getUser()`.
+- **Archivos modificados**: `app/(protected)/notificaciones/page.tsx`, `hooks/use-realtime-notifications.ts`
+- **Gotcha documentado**: En [[features/notifications]] — prevenir canales Realtime con nombre estático.
+- Páginas actualizadas: [[features/notifications]], [[log]]
+
+## [2026-07-25] fix | ranking-FK-ambiguity-getPlayerLeaderboard
+- **Bug**: `getPlayerLeaderboard()` en `lib/actions/ranking.ts` usaba `profiles!inner(...)` sin especificar FK constraint → PostgREST fallaba con "Could not embed because more than one relationship was found for 'games' and 'profiles'" → función retornaba `[]` silenciosamente → "Top de Jugadores" siempre en empty state.
+- **Causa raíz**: Ambigüedad FK entre `games.user_id → profiles.id` y `ratings.user_id → profiles.id`. El resto del código ya usaba `profiles!games_user_id_fkey(...)` (fix del bug en `favorite-button-toggle`), pero `ranking.ts` quedó fuera.
+- **Fix**: `profiles!inner(username, avatar_url)` → `profiles!games_user_id_fkey!inner(username, avatar_url)` en `ranking.ts:16`.
+- **Plan**: `docs/raw/plans/2026-07-25-fix-ranking-system.md`
+- Páginas actualizadas: [[log]]
 
 ## [2026-07-23] implement | live-search-dropdown
 - Input de búsqueda ahora muestra dropdown en tiempo real tras 500ms de debounce
@@ -457,6 +480,46 @@ sources:
 - `components/HeroSlider.tsx`: posicionamiento vertical del panel — `top-4 bottom-auto` (arriba), `top-1/2 -translate-y-1/2` (centro), `bottom-4 top-auto` (abajo); aplica tanto al panel con backdrop como al modo button-only
 - `app/(public)/page.tsx`: mapeo de `panel_valign` en `HeroSliderWrapper`
 - Build: 0 errores
+- Páginas actualizadas: [[features/banner]], [[log]]
+
+## [2026-07-25] update | rating-star-toggle
+- Migración `00022_ratings_star_toggle.sql` ejecutada en Supabase
+- Sistema de rating cambiado de rango 1-5 a estrella única toggle (on/off)
+- `components/Rating.tsx`: nuevo Client Component con optimistic UI — un clic da/quita estrella sin esperar respuesta del servidor
+- `lib/actions/ratings.ts`: reemplazado `rateGame(value)` por `toggleStar(gameId)` — INSERT si no existe, DELETE si existe
+- Notificaciones: solo se disparan al agregar estrella (no al quitarla)
+- Badges: `checkAndAwardBadges` se ejecuta tanto para dueño como votante
+- Plan: `docs/raw/plans/2026-07-25-rating-to-star-toggle.md`
+- Páginas actualizadas: [[features/games]], [[log]]
+
+## [2026-07-25] implement | slider-fade-transition
+- `components/HeroSlider.tsx`: reemplazado el render condicional de un solo slide por CSS grid stacking (`grid grid-cols-1 grid-rows-1` + `col-span-full row-span-full`). Todos los slides se renderizan apilados y el slide activo cambia su opacidad con `transition-all duration-500 ease-in-out`.
+- `components/HeroSlider.tsx`: columna de contenido cambió de `grid` (altura forzada) a `flex-col` (altura auto en mobile). Desktop usa `md:aspect-[3/1]` para que contenido e imagen tengan el mismo alto.
+- `hooks/use-dominant-colors.ts`: nuevo hook de extracción de colores dominantes vía k-means (k=2, 4 iteraciones, canvas 32×32). Los colores extraídos se oscurecen (máx 35% luminosidad) para legibilidad.
+- Páginas actualizadas: [[features/banner]], [[frontend/components]], [[log]]
+
+## [2026-07-25] fix | no-favoritar-propio-juego
+- `lib/actions/favorites.ts`: agregada validación server-side — si `game.user_id === user.id`, retorna error antes del INSERT
+- `app/(public)/juego/[id]/page.tsx`: FavoriteButton envuelto en `{!isOwner && (...)}` — no se renderiza si el usuario es el dueño del juego
+- Doble capa de seguridad: UI no muestra el botón + server action lo rechaza
+- Build: 0 errores
+- Páginas actualizadas: [[features/games]], [[frontend/components]], [[log]]
+
+## [2026-07-25] implement | favorite-button-toggle
+- Migración `00023_favorites.sql`: tabla `favorites` con PK compuesta (user_id, game_id), RLS, índices
+- Migración `00024_favorites_notification_type.sql`: agregado `new_favorite` al CHECK de notifications.type
+- `lib/actions/favorites.ts`: `toggleFavorite(gameId)` (INSERT/DELETE + notify owner), `isFavorited(gameId)`, `getUserFavorites(username)`
+- `components/FavoriteButton.tsx`: corazón toggle con 3 estados (no autenticado deshabilitado, outline unfavorited, red fill favorited). `useActionState` con optimistic UI
+- `app/(public)/juego/[id]/page.tsx`: fetch `isFavorited`, renderiza FavoriteButton junto a Rating
+- `components/ProfileTabs.tsx`: nueva tab "Favoritos" (solo dueño, si tiene favoritos). Muestra `ProfileGameCard` en modo vista
+- **Bug bloqueante**: Ambigüedad FK entre `profiles` y `games` al agregar FK de `favorites` → PostgREST no podía resolver embedding. Fix: reemplazar `profiles(username, avatar_url)` por `profiles!games_user_id_fkey(username, avatar_url)` en todas las queries (7 ocurrencias en 4 archivos: `lib/actions/games.ts`, `lib/actions/search.ts`, `lib/actions/favorites.ts`, `perfil/[username]/page.tsx`)
+- Verificación chrome-devtools: home ✅, game page ✅ (FavoriteButton visible + disabled sin sesión), perfil ✅ (Favoritos(1) tab)
+- Páginas actualizadas: [[database/schema]], [[frontend/components]], [[features/notifications]], [[features/games]], [[log]]
+
+## [2026-07-25] update | slider-split-layout
+- `components/HeroSlider.tsx`: `BarSlide` reescrito a layout partido 50/50. En desktop: contenido (título → subtítulo → botón) e imagen lado a lado. En mobile: apilados (contenido arriba, imagen abajo). Eliminada la barra vidriosa superpuesta.
+- `banner-admin-client.tsx`: preview y miniaturas de template actualizadas al split 50/50. Descripciones de templates actualizadas.
+- `docs/wiki/features/banner.md`: documentación actualizada al nuevo layout.
 - Páginas actualizadas: [[features/banner]], [[log]]
 
 ## [2026-07-24] fix | slider-aspect-ratio-1725-910

@@ -1,13 +1,19 @@
 ---
 title: "ArcadePlay — Sistema de Juegos"
 tags: [feature, games]
-last_updated: "2026-07-20"
+last_updated: "2026-07-25"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
+  - docs/raw/plans/2026-07-25-rating-to-star-toggle.md
+  - docs/raw/plans/2026-07-25-fix-ranking-system.md
   - supabase/migrations/00010_moderator_role.sql
+  - supabase/migrations/00022_ratings_star_toggle.sql
   - lib/actions/games.ts
+  - lib/actions/ratings.ts
+  - lib/actions/ranking.ts
+  - components/Rating.tsx
 ---
 
 # ArcadePlay — Sistema de Juegos
@@ -41,6 +47,9 @@ La URL de embed se construye como `https://arcade.makecode.com/---run?id={ID}`.
 La URL de embed se construye como `https://scratch.mit.edu/projects/{ID}/embed`.
 
 > [!note] Los IDs de Scratch se almacenan con prefijo `scratch_` (ej. `scratch_617923907`) para evitar colisiones con IDs de MakeCode.
+> 
+> [!warning] FK ambiguity con Supabase
+> Cada vez que se hace un join de `games` → `profiles` en Supabase, **siempre** usar `profiles!games_user_id_fkey(...)` en lugar de `profiles(...)`. Esto es porque tanto `games.user_id` como `ratings.user_id` referencian `profiles(id)`, y PostgREST rechaza la query si no se especifica la constraint FK. Este bug ya se ha escapado en 2 ocasiones: favorites y ranking.
 
 ## Identificador
 
@@ -95,7 +104,7 @@ La página del juego (`app/(public)/juego/[id]/page.tsx`) tiene dos columnas en 
   - **MakeCode**: dos tabs — **Juego** (default, embed `---run?id=`) y **Editor** (embed `#pub:` con sandbox)
   - **Scratch**: un solo tab — **Juego** con el embed de Scratch (`scratch.mit.edu/projects/{id}/embed`)
   - Los tabs aparecen **debajo** del embed. El activo tiene indicador rojo (`bg-arcade-red`).
-- **Derecha**: metadata (título, autor, badges, descripción, rating, juegos relacionados)
+- **Derecha**: metadata (título, autor, badges, descripción, rating + FavoriteButton oculto si el usuario es el dueño del juego, juegos relacionados)
 
 Ver [[frontend/components#GameTabs]] para detalles del componente.
 
@@ -106,7 +115,7 @@ Reemplaza al antiguo dashboard. La ruta `/dashboard` ahora redirige a `/perfil/{
 El perfil propio incluye gestión completa de juegos:
 
 - **Header**: avatar, username, bio, website, stats bar (estrellas totales, cantidad de juegos, seguidores, siguiendo)
-- **Tabs**: "Juegos" (grid de `ProfileGameCard`) y "Logros" (grid de badges ganados)
+- **Tabs**: "Juegos" (grid de `ProfileGameCard`), "Logros" (grid de badges ganados), y "Favoritos" (solo dueño, si tiene juegos favoritos)
 - **ProfileGameCard**: cada juego con thumbnail, badge de estado, métricas (vistas, rating), y acciones:
   - **Editar**: redirige a `/editar/[id]`
   - **Ocultar/Mostrar**: toggle vía `ToggleVisibilityButton`
@@ -141,6 +150,7 @@ Formulario pre-cargado con los datos actuales del juego:
 - Juegos ocultos no aparecen en listados públicos
 - Juegos `pending` no son visibles al público
 - Usuarios anónimos pueden jugar (embed) pero no votar
+- No se puede marcar como favorito un juego propio (bloqueado en UI y server action)
 
 ## Búsqueda
 
@@ -151,12 +161,34 @@ Implementada con ILIKE sobre `title` + filtro por tags:
 - Paginación via LIMIT/OFFSET
 - Orden por `created_at DESC` por defecto
 
-## Rating
+## Rating (sistema de estrella única toggle)
 
-- 1 voto por usuario por juego (constraint UNIQUE en `ratings(game_id, user_id)`)
-- Rango 1-5
-- `rateGame(gameId, value)` hace upsert
-- El promedio se calcula dinámicamente con AVG
+- **1 estrella por usuario por juego** — no hay rango 1-5 ni valor numérico. El usuario tiene estrella o no la tiene.
+- **Toggle**: un solo clic da o quita la estrella. No hay hover-select ni half-stars.
+- **Optimistic UI**: el componente `Rating.tsx` actualiza el estado local (starred + count) inmediatamente al hacer clic, antes de que la server action responda. Revierte si hay error.
+- `toggleStar(gameId)` en `lib/actions/ratings.ts`: server action que verifica existencia del rating previo → INSERT si no existe, DELETE si existe.
+- **Sin upsert**: se usan INSERT/DELETE en lugar de `rateGame()` con valor.
+- **Backend**: la tabla `ratings` almacena `value = 1` siempre. El promedio se calcula dinámicamente con AVG sobre `ratings.value` (COUNT de estrellas).
+- **Notificaciones**: solo se disparan cuando se AGREGA una estrella (no al quitarla).
+- **Badges**: `checkAndAwardBadges` se ejecuta tanto para el dueño del juego como para el votante al agregar estrella.
+
+### Estados del botón
+
+| Estado | Apariencia | Comportamiento |
+|--------|-----------|----------------|
+| Sin estrella | Borde gris, icono Star sin relleno, texto "Dar estrella" | Al clic: optimistic add + server INSERT |
+| Con estrella | Borde amarillo, fondo amarillo claro, Star rellena, texto "Estrella dada" | Al clic: optimistic remove + server DELETE |
+| Cargando | Opacidad reducida, pointer-events none | No responde a clics |
+| No autenticado | Opacidad reducida, cursor not-allowed | No responde a clics (botón deshabilitado) |
+
+### Componentes
+
+- `components/Rating.tsx` — Client Component "use client", recibe `gameId`, `starsCount` (número de estrellas actual), `hasStarred` (booleano o null si no autenticado).
+- `lib/actions/ratings.ts` — Server action `toggleStar()`.
+
+### Migración
+
+- `supabase/migrations/00022_ratings_star_toggle.sql` — migración que adapta el sistema de ratings al modelo toggle.
 
 Ver [[database/schema]] para estructura de tablas.
 Ver [[architecture/routes]] para rutas.

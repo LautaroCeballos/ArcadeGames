@@ -1,13 +1,14 @@
 ---
 title: "Sistema de Banner del Home"
 tags: [feature, admin, frontend]
-last_updated: "2026-07-24"
+last_updated: "2026-07-25"
 sources:
   - supabase/migrations/00017_banner_slides.sql
   - supabase/migrations/00021_banner_slide_templates.sql
   - lib/actions/banner.ts
   - lib/definitions.ts
   - components/HeroSlider.tsx
+  - hooks/use-dominant-colors.ts
   - app/(public)/page.tsx
   - app/(protected)/admin/banner/page.tsx
   - app/(protected)/admin/banner/banner-admin-client.tsx
@@ -32,14 +33,16 @@ desde un panel de administración. Cada slide usa una **plantilla** que define s
 
 | Template | Vista previa | Comportamiento |
 |----------|-------------|----------------|
-| **`bar-right`** | Imagen 100% de fondo + barra vidriosa 1/6 a la derecha | Título, subtítulo y botón dentro de la barra. Desktop: barra vertical. Mobile: barra horizontal abajo. |
-| **`bar-left`** | Imagen 100% de fondo + barra vidriosa 1/6 a la izquierda | Igual que bar-right pero la barra está a la izquierda. |
+| **`bar-right`** | Split 25/75: texto a la izquierda (25%), imagen a la derecha (75%) | Título, subtítulo y botón en columna vertical centrada. Desktop: lado a lado. Mobile: contenido arriba (auto), imagen abajo (aspect-video). |
+| **`bar-left`** | Split 25/75: imagen a la izquierda (75%), texto a la derecha (25%) | Igual que bar-right pero imagen a la izquierda y texto a la derecha. |
 | **`full-image`** | Imagen 100%, sin texto visible | Todo el slide es un link. Gradiente sutil abajo para los dots del carrusel. |
 
-### Características visuales de las barras
-- `backdrop-blur-sm` + `bg-black/60` — vidrio translúcido que deja ver la imagen de fondo
-- Texto blanco, botón `bg-arcade-red`
-- Sin overlay en la imagen, sin opciones de color configurables
+### Características visuales del split (`components/HeroSlider.tsx:136`)
+- **Desktop**: `flex-row` con `md:aspect-[3/1]` en el contenedor padre. Columna de texto 25% (`md:w-[25%]`), imagen 75% (`md:w-[75%]`). Ambas columnas tienen la misma altura determinada por el aspect ratio.
+- **Mobile**: `flex-col` sin aspect ratio fijo. Columna de texto ocupa su altura natural (auto), imagen debajo con `aspect-video` (16:9).
+- **Colores dominantes**: el fondo del texto extrae 2 colores de la imagen vía k-means (`hooks/use-dominant-colors.ts`). Se oscurecen forzosamente (luminosidad ≤ 35%) para garantizar legibilidad del texto blanco. Fallback: `bg-gradient-to-br from-arcade-dark to-arcade-red/80`.
+- **Contenido**: título `text-xl` → `md:text-3xl`, descripción `text-sm` → `sm:text-base`, botón `bg-arcade-red rounded-[10px]`. Todo centrado con `text-center` + `items-center justify-center`.
+- **Imagen**: `object-cover` dentro de un contenedor `absolute inset-0`.
 
 ## Tabla `banner_slides`
 
@@ -102,11 +105,13 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 ### `HeroSlider` (`components/HeroSlider.tsx`)
 - Client Component con carrusel de slides
 - Acepta `slides?: Slide[]` (opcional, usa defaults si no se provee)
-- Auto-play 5s, pausa en hover, dots de navegación
-- Fallback a 3 slides default hardcodeados (`template: "bar-right"`)
+- Estado: `current` (índice activo), `isPaused` (hover)
+- Auto-play cada 5s via `setInterval` (`components/HeroSlider.tsx:60-64`). Pausa en hover (`onMouseEnter`/`onMouseLeave`).
+- **Transición suave**: todos los slides se renderizan siempre apilados con CSS Grid (`grid grid-cols-1 grid-rows-1`). Cada slide ocupa la misma celda (`col-span-full row-span-full`). El slide activo tiene `opacity-100`, los inactivos `opacity-0 pointer-events-none`. La transición se hace con `transition-all duration-500 ease-in-out` (`components/HeroSlider.tsx:79-95`).
+- Dots de navegación (`absolute bottom-4`) con `role="tablist"` y `aria-selected` (`components/HeroSlider.tsx:97-117`).
+- Fallback a 3 slides default hardcodeados (`template: "bar-right"`).
 - `Slide` interface simplificada: solo `template` en lugar de overlayColor/textColor/buttonColor/showPanel/panelAlign/panelValign/buttonMode
-- Renderiza según `slide.template`:
-  - **`bar-right`/`bar-left`**: imagen 100% + barra vidriosa superpuesta (vertical en desktop, horizontal en mobile)
+  - **`bar-right`/`bar-left`**: split 25/75 — columna de contenido + columna de imagen con colores dominantes. Desktop lado a lado con alturas iguales. Mobile apilados (auto + aspect-video).
   - **`full-image`**: Link wrapping toda la imagen, gradiente sutil inferior para dots
 
 ### `HeroSliderWrapper` (en `app/(public)/page.tsx`)
@@ -132,11 +137,11 @@ El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 
 ## Altura del slider
 
-Alturas fijas responsive (no aspect ratio):
-- Mobile: 250px
-- `sm:` 320px
-- `md:` 360px
-- `lg:` 400px (desktop)
+La altura varía según plantilla y viewport:
+
+- **BarSlide (desktop)**: `md:aspect-[3/1]` en el contenedor padre. La altura es relativa al ancho (3:1). Ejemplo: a 1280px → ~411px.
+- **BarSlide (mobile)**: Sin aspect fijo. Altura total = altura del contenido (auto) + altura de la imagen (`aspect-video` = 16:9). El contenido se adapta al texto sin forzar alturas iguales.
+- **FullImageSlide**: `aspect-video` (16:9) tanto desktop como mobile.
 
 ## Fallback
 
