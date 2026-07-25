@@ -60,13 +60,15 @@ export default function NotificacionesPage() {
   // Realtime subscription — INSERT y UPDATE en vivo
   useEffect(() => {
     const supabase = createClient()
-    const channels: ReturnType<typeof supabase.channel>[] = []
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let cancelled = false
+    const channelId = `notificaciones-page-${crypto.randomUUID()}`
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+      if (cancelled || !user) return
 
-      const channel = supabase
-        .channel("notificaciones-page")
+      channel = supabase
+        .channel(channelId)
         .on<AppNotification>(
           "postgres_changes",
           {
@@ -100,12 +102,11 @@ export default function NotificacionesPage() {
           }
         )
         .subscribe()
-
-      channels.push(channel)
     })
 
     return () => {
-      channels.forEach((ch) => supabase.removeChannel(ch))
+      cancelled = true
+      if (channel) supabase.removeChannel(channel)
     }
   }, [])
 

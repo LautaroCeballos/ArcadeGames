@@ -44,8 +44,9 @@ export function useRealtimeNotifications(
     const supabase = createClient()
 
     console.log("[Notifications] subscribing for user:", userId)
+    const channelId = `notifications-realtime-${crypto.randomUUID()}`
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(channelId)
       .on<AppNotification>(
         "postgres_changes",
         {
