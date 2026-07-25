@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react"
 import { ImagePlus, Pencil, Trash2, AlertTriangle, Loader2, EyeOff } from "lucide-react"
 import { getBannerSlides, createBannerSlide, updateBannerSlide, deleteBannerSlide, reorderBannerSlides, uploadBannerImage } from "@/lib/actions/banner"
 import { cn } from "@/lib/utils"
+import { useDominantColors } from "@/hooks/use-dominant-colors"
 import type { BannerSlide } from "@/lib/definitions"
 
 interface SlideFormData {
@@ -23,8 +24,8 @@ const emptyForm: SlideFormData = {
 }
 
 const templates = [
-  { id: "bar-right", label: "Barra derecha", desc: "Imagen de fondo con barra vidriosa a la derecha" },
-  { id: "bar-left", label: "Barra izquierda", desc: "Imagen de fondo con barra vidriosa a la izquierda" },
+  { id: "bar-right", label: "Barra derecha", desc: "Texto a la izquierda, imagen a la derecha. Split 50/50." },
+  { id: "bar-left", label: "Barra izquierda", desc: "Imagen a la izquierda, texto a la derecha. Split 50/50." },
   { id: "full-image", label: "Imagen completa", desc: "Imagen 100%, sin texto visible. Todo el slide es clickeable." },
 ] as const
 
@@ -45,6 +46,7 @@ export function BannerAdminClient() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [keepImage, setKeepImage] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dominantColors = useDominantColors(imagePreview ?? "")
 
   const fetchSlides = useCallback(async () => {
     setLoading(true)
@@ -528,7 +530,10 @@ export function BannerAdminClient() {
             <div className="hidden border-l bg-muted/30 sm:flex sm:w-1/2 sm:flex-col">
               <div className="p-6">
                 <p className="mb-3 text-sm font-medium">Vista previa</p>
-                <div className="relative overflow-hidden rounded-[8px] bg-gradient-to-br from-arcade-dark to-arcade-red/80 h-[180px]">
+                <div
+                  className="relative overflow-hidden rounded-[8px] aspect-[3/1]"
+                  style={dominantColors ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` } : undefined}
+                >
                   {/* Image or placeholder */}
                   {imagePreview ? (
                     <img
@@ -537,7 +542,7 @@ export function BannerAdminClient() {
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0 opacity-10" style={dominantColors ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` } : undefined}>
                       <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
                     </div>
@@ -547,26 +552,33 @@ export function BannerAdminClient() {
                   {form.template === "full-image" ? (
                     <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   ) : (
-                    <div className={cn(
-                      "absolute z-10 backdrop-blur-sm bg-black/60 flex items-center justify-center gap-1 p-2",
-                      form.template === "bar-left"
-                        ? "left-0 inset-y-0 w-1/5"
-                        : "right-0 inset-y-0 w-1/5",
-                      "max-md:inset-x-0 max-md:bottom-0 max-md:w-full max-md:h-auto max-md:flex-row",
-                    )}>
-                      <div className="flex flex-col items-center gap-0.5 max-md:flex-1 max-md:items-start">
-                        <p className="text-center text-[9px] font-bold leading-tight text-white">
+                    <div className="flex h-full">
+                      <div className={cn(
+                        "flex w-[25%] flex-col justify-center gap-1 p-3",
+                        form.template === "bar-left" ? "order-2" : "order-1",
+                      )}>
+                        <p className="text-[9px] font-bold leading-tight text-white">
                           {form.title || "Título"}
                         </p>
                         {form.description && (
-                          <p className="text-center text-[7px] leading-tight text-white/80 max-md:max-w-none max-md:text-left">
+                          <p className="text-[7px] leading-tight text-white/80">
                             {form.description}
                           </p>
                         )}
+                        <span className="inline-flex w-fit items-center justify-center rounded-[6px] bg-arcade-red px-2 py-1 text-[7px] font-semibold text-white">
+                          {form.ctaText || "BOTÓN"}
+                        </span>
                       </div>
-                      <span className="inline-flex items-center justify-center rounded-[6px] bg-arcade-red px-2 py-1 text-[7px] font-semibold text-white shrink-0">
-                        {form.ctaText || "BOTÓN"}
-                      </span>
+                      <div className={cn(
+                        "flex w-[75%] items-center justify-center bg-gradient-to-br from-arcade-dark/60 to-arcade-red/60",
+                        form.template === "bar-left" ? "order-1" : "order-2",
+                      )}>
+                        <svg className="h-6 w-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="m21 15-5-5L5 21" />
+                        </svg>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -594,9 +606,25 @@ export function BannerAdminClient() {
                               <ImagePlus className="h-4 w-4 text-white/40" />
                             </div>
                           ) : (
-                            <div className="flex h-full items-center">
-                              <div className="flex-1" />
-                              <div className="h-full w-1/3 bg-black/50 backdrop-blur-sm" />
+                            <div className="flex h-full">
+                              <div className={cn(
+                                "flex w-1/2 items-center justify-center bg-gradient-to-br from-arcade-dark/40 to-arcade-red/40",
+                                t.id === "bar-left" && "order-2",
+                              )}>
+                                <svg className="h-3 w-3 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path d="M4 6h16M4 12h16M4 18h12" />
+                                </svg>
+                              </div>
+                              <div className={cn(
+                                "flex w-1/2 items-center justify-center bg-gradient-to-br from-arcade-dark/60 to-arcade-red/60",
+                                t.id === "bar-left" && "order-1",
+                              )}>
+                                <svg className="h-3 w-3 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <path d="m21 15-5-5L5 21" />
+                                </svg>
+                              </div>
                             </div>
                           )}
                         </div>
