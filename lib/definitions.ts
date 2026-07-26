@@ -196,3 +196,22 @@ export interface PlayerRankingEntry {
   gamesCount: number
   rankedGames: number
 }
+
+/** Minimal data for featured game cards (4-card grid on home) */
+export interface FeaturedGameData {
+  id: string
+  title: string
+  thumbnail_url: string | null
+  author: string | null
+  stars_count: number | null
+}
+
+/** Data for recent project cards (3 mini cards), includes author & platform */
+export interface RecentGameData {
+  id: string
+  title: string
+  thumbnail_url: string | null
+  author: string | null
+  stars_count: number | null
+  platform: "makecode" | "scratch"
+}

@@ -462,34 +462,113 @@ export async function getMyGames() {
 /** Minimal game data used in GameThumbnail / CuratedSection */
 export type GameThumbnailData = Pick<GameWithDetails, "id" | "title" | "thumbnail_url" | "stars_count">
 
-/** Get the most recently added games (for "Últimos Juegos") */
-export async function getRecentGames(limit = 8): Promise<GameThumbnailData[]> {
+/** Get featured games (top by stars, fallback to most viewed) */
+export async function getFeaturedGames(limit = 4): Promise<GameThumbnailData[]> {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data: games } = await supabase
     .from("games")
     .select("id, title, thumbnail_url")
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
-    .limit(limit)
+    .limit(50)
 
-  return (data ?? []).map((g) => ({ ...g, stars_count: null }))
-}
+  if (!games || games.length === 0) return []
 
-/** Get the most played games by view count (for "Más Jugados") */
-export async function getMostPlayed(limit = 8): Promise<GameThumbnailData[]> {
-  const supabase = await createClient()
+  const gameIds = games.map((g) => g.id)
 
-  const { data } = await supabase
+  const { data: ratings } = await supabase
+    .from("ratings")
+    .select("game_id")
+    .in("game_id", gameIds)
+
+  const starCounts = new Map<string, number>()
+  for (const r of ratings ?? []) {
+    starCounts.set(r.game_id, (starCounts.get(r.game_id) ?? 0) + 1)
+  }
+
+  const withStars = games
+    .map((g) => ({
+      id: g.id,
+      title: g.title,
+      thumbnail_url: g.thumbnail_url,
+      stars_count: starCounts.get(g.id) ?? null,
+    }))
+    .sort((a, b) => (b.stars_count ?? 0) - (a.stars_count ?? 0))
+
+  const starred = withStars.filter((g) => g.stars_count !== null && g.stars_count > 0)
+
+  if (starred.length >= limit) {
+    return starred.slice(0, limit)
+  }
+
+  const remaining = limit - starred.length
+  const { data: mostViewed } = await supabase
     .from("games")
     .select("id, title, thumbnail_url")
     .eq("status", "approved")
     .eq("hidden", false)
     .order("views", { ascending: false })
+    .limit(remaining + starred.length)
+
+  const starredIds = new Set(starred.map((g) => g.id))
+  const fallback = (mostViewed ?? [])
+    .filter((g) => !starredIds.has(g.id))
+    .slice(0, remaining)
+    .map((g) => ({ id: g.id, title: g.title, thumbnail_url: g.thumbnail_url, stars_count: null }))
+
+  return [...starred, ...fallback]
+}
+
+/** Get the most recently added games (enhanced: includes author + platform) */
+export async function getRecentGames(limit = 8): Promise<GameThumbnailData[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url, platform, profiles!games_user_id_fkey(username)")
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .order("created_at", { ascending: false })
     .limit(limit)
 
-  return (data ?? []).map((g) => ({ ...g, stars_count: null }))
+  return (data ?? []).map((g: Record<string, unknown>) => {
+    const profileData = g.profiles as { username?: string } | null
+    return {
+      id: g.id as string,
+      title: g.title as string,
+      thumbnail_url: (g.thumbnail_url as string) ?? null,
+      stars_count: null,
+      author: profileData?.username ?? null,
+      platform: g.platform as "makecode" | "scratch",
+    }
+  })
+}
+
+/** Get the most played games by view count (enhanced: includes author + platform) */
+export async function getMostPlayed(limit = 8): Promise<GameThumbnailData[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url, platform, profiles!games_user_id_fkey(username)")
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .order("views", { ascending: false })
+    .limit(limit)
+
+  return (data ?? []).map((g: Record<string, unknown>) => {
+    const profileData = g.profiles as { username?: string } | null
+    return {
+      id: g.id as string,
+      title: g.title as string,
+      thumbnail_url: (g.thumbnail_url as string) ?? null,
+      stars_count: null,
+      author: profileData?.username ?? null,
+      platform: g.platform as "makecode" | "scratch",
+    }
+  })
 }
 
 /** Get the most starred games (for "Mejor Valorados") */

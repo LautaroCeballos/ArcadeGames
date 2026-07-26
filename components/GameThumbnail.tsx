@@ -6,6 +6,8 @@ export interface GameThumbnailData {
   title: string
   thumbnail_url: string | null
   stars_count: number | null
+  author?: string | null
+  platform?: "makecode" | "scratch"
 }
 
 interface GameThumbnailProps {
