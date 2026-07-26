@@ -1,12 +1,13 @@
 ---
 title: "ArcadePlay — Visión General"
 tags: [concept]
-last_updated: "2026-07-20"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
+  - docs/raw/plans/2026-07-25-home-redesign-featured-sections.md
 ---
 
 # ArcadePlay — Visión General
@@ -51,7 +52,7 @@ Ver [[stack]] para detalle completo.
 
 ## Estado actual
 
-Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer). El formulario de subida soporta **MakeCode Arcade** y **Scratch** con toggle de plataforma, preview condicional y validación dual.
-Ver los planes en `docs/raw/plans/` (especialmente `2026-07-13-figma-adaptation.md`, `2026-07-20-submit-form-dual-platform.md` y `2026-07-20-submit-form-tags-redesign.md`).
+Proyecto en etapa de desarrollo activo. La homepage se rediseñó para adaptarse al diseño Figma (Hero Slider, secciones curadas, Ranking, Footer) y luego se mejoró con nuevas secciones basadas en el diseño Figma: Juegos Destacados (grid), Explorar por Categoría (iconos), Novedades (mini cards), sort dropdown y paginación numérica. El formulario de subida soporta **MakeCode Arcade** y **Scratch** con toggle de plataforma, preview condicional y validación dual.
+Ver los planes en `docs/raw/plans/` (especialmente `2026-07-13-figma-adaptation.md`, `2026-07-20-submit-form-dual-platform.md`, `2026-07-20-submit-form-tags-redesign.md` y `2026-07-25-home-redesign-featured-sections.md`).
 
 > [!done] Rediseño implementado: Step 1 selector de plataforma, layout 2 columnas, sistema de tags (plan `2026-07-20-submit-form-tags-redesign.md`).

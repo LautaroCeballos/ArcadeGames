@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Inventario de Componentes Frontend"
 tags: [frontend, architecture]
-last_updated: "2026-07-25"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
@@ -11,15 +11,20 @@ sources:
   - docs/raw/plans/2026-07-23-header-redesign-search.md
   - docs/raw/plans/2026-07-23-live-search-dropdown.md
   - docs/raw/plans/2026-07-23-admin-banner-content.md
+  - docs/raw/plans/2026-07-25-home-redesign-featured-sections.md
+  - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
   - components/
   - components/AccountForm.tsx
   - components/NavbarClient.tsx
   - components/FavoriteButton.tsx
+  - components/CategoryFilter.tsx
   - lib/actions/search.ts
   - lib/actions/ranking.ts
   - lib/actions/profile.ts
   - lib/actions/banner.ts
   - lib/actions/favorites.ts
+  - lib/tag-utils.ts
+  - lib/queries/games.ts
   - app/(public)/page.tsx
   - app/(public)/buscar/page.tsx
   - app/(protected)/cuenta/page.tsx
@@ -68,11 +73,15 @@ sources:
 
 > [!note] Footer: mismo componente en layouts público y protegido. Fondo `arcade-red`, links en beige, 2 columnas. Logo centrado. [[design-tokens]]
 
-### Juegos
+### Secciones del Home
 
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | HeroSlider | `components/HeroSlider.tsx` | Client | `slides: Slide[]` — auto-play 5s con fade `transition-all duration-500`. Todos los slides apilados con CSS Grid. Fallback a 3 defaults. `Slide` interface simplificada: solo `template` (`bar-right`, `bar-left`, `full-image`). BarSlide: split 25/75 con colores dominantes extractados vía `useDominantColors()`. Fondo con gradiente de 2 colores oscuros extraídos de la imagen (k-means, canvas 32×32). Desktop `md:aspect-[3/1]` flex-row. Mobile flex-col con altura auto para contenido + aspect-video para imagen. |
+| FeaturedSection | `components/FeaturedSection.tsx` | Server | `games: FeaturedGameData[]` — grid de 4 juegos destacados (top por estrellas, fallback a más vistos). `FeaturedCard` inline con thumbnail + overlay oscuro + título + `por {author}` + estrellas a la derecha (flex `justify-between`). Header con botón "Ver todos →" a `/buscar?sort=rated`. Grid `grid-cols-2 lg:grid-cols-4` gap-3. Skeleton con header + 4 placeholders. Se oculta si no hay juegos. |
+| CategoryExplorer | `components/CategoryExplorer.tsx` | Client | `tags: Tag[], showAll: boolean, onShowAll: () => void` — grid de categorías clickeables con íconos Lucide mapeados por `lib/tag-icons.ts`. Por defecto muestra 8 categorías + botón **"Ver más"** (9 items). Al hacer clic, llama a `onShowAll` y hace scroll suave. Navega a `/buscar?tag=<slug>`. Skeleton: `CategoryExplorerSkeleton` con 8 placeholders. Se oculta si no hay tags. |
+| RecentProjectsSection | `components/RecentProjectsSection.tsx` | Client | `games: RecentGameData[], showAll?: boolean` — proyectos recientes en cards mini con thumbnail 112px + autor + platform icon (Gamepad2/Puzzle). Sin expandir: 3 juegos. Con `showAll=true`: hasta 5 juegos. Encerrado en `border bg-card` con `divide-y`. Header con botón "Ver todos →" a `/buscar?sort=recent`. Skeleton con header + 3 placeholders. Se oculta si no hay juegos. |
+| CategoryRecentSection | `components/CategoryRecentSection.tsx` | Client | `tags: Tag[], recentGames: RecentGameData[]` — wrapper del grid 2-columnas que mantiene estado `showAll` compartido entre `CategoryExplorer` y `RecentProjectsSection`. Al hacer clic en "Ver más" en Categorías, también expande Novedades. Incluye `CategoryRecentSectionSkeleton` combinado. |
 | HeroSliderWrapper | `app/(public)/page.tsx` | Server | Wrapper que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`. Si no hay slides en DB, pasa `undefined` para que HeroSlider use defaults |
 | CuratedSection | `components/CuratedSection.tsx` | Server | `{ title, games[] }` — overflow-x scroll con snap |
 | CuratedSectionSkeleton | `components/CuratedSection.tsx` | Server | 4 placeholders animados |
@@ -90,6 +99,14 @@ sources:
 | ThumbnailPicker | `components/ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?` — 2 fuentes: auto MakeCode (vía API), subida manual. Para Scratch solo subida manual |
 | DashboardCard | `components/DashboardCard.tsx` | Client | `{ game: GameWithDetails }` — card horizontal con thumbnail, status badge, stats (vistas, rating, fecha), acciones (jugar, editar, ocultar, eliminar). Colores según estado: verde=publicado, ámbar=pendiente, gris=oculto, rojo=rechazado, gris claro=borrador. Si `game.status === "draft"`, muestra botón "Publicar" que llama a `publishGame` |
 | EditGameForm | `components/EditGameForm.tsx` | Client | `{ game, tags[] }` — formulario pre-cargado con preview (ArcadeEmbed o ScratchEmbed según platform), ThumbnailPicker, TagPicker con tags actuales precargadas. Server action `updateGame` con tags |
+
+### Paginación y Ordenamiento
+
+| Componente | Archivo | Tipo | Props clave |
+|-----------|---------|------|-------------|
+| NumericPagination | `components/NumericPagination.tsx` | Server | `currentPage, totalPages, basePath, searchParams?` — links de paginación numérica con `<Link>` (0 JS). Muestra páginas con elipsis, botones anterior/siguiente con ChevronLeft/ChevronRight. Página activa con `bg-primary`. 0-based internamente, 1-based display. |
+| SortSelect | `components/SortSelect.tsx` | Client | Sin props — dropdown que actualiza `?sort=` en URL. Opciones: "Más recientes" (recent), "Más jugados" (popular), "Mejor valorados" (rated). Resetea `?page=` al cambiar. **Bug**: al seleccionar "Más recientes" elimina `sort=recent` en vez de ponerlo — mitigado por `isBrowse = !q` en `/buscar`. Usa `useSearchParams()` + `usePathname()` para redirigir a la ruta actual — funciona en `/` y `/buscar`. Suspense boundary requerido. |
+| TagFilter | `components/CategoryFilter.tsx` | Client | `tags: Tag[]` — botones de filtro por categoría (`?tag=<slug>`). Botón "Todas" que navega a `/buscar?sort=recent`. Usa `keepBrowseMode()`: cuando se deselecciona el último tag sin sort presente, agrega `sort=recent` para mantener browse mode activo. Resetea `?page=` al cambiar de tag. |
 
 ### Server Actions (games / thumbnails)
 
@@ -149,6 +166,13 @@ sources:
 | use-toast | `hooks/use-toast.ts` | Estado global de toasts |
 | useRealtimeNotifications | `hooks/use-realtime-notifications.ts` | Suscripción Realtime a INSERT/UPDATE en `notifications` |
 | useDominantColors | `hooks/use-dominant-colors.ts` | Extrae 2 colores dominantes de una imagen vía k-means (k=2, 4 iteraciones, canvas 32×32). Oscurece colores a ≤35% luminosidad para fondos con texto blanco. Cachea resultados por URL. |
+
+## Rutas
+
+| Ruta | Archivo | Modos | Descripción |
+|------|---------|-------|-------------|
+| `/` | `app/(public)/page.tsx` | Home | HeroSlider + FeaturedSection + CategoryRecentSection (CategoryExplorer + RecentProjects limitado) + RankingSection + **Todos los juegos** (preview de 8 juegos + botón "Ver Más →" a `/buscar?sort=recent`). **Sin** TagFilter, SortSelect, SearchBar ni paginación. Sin search params. |
+| `/buscar` | `app/(public)/buscar/page.tsx` | Browse / Búsqueda textual | **Browse** — `?sort=rated` (Mejor valorados), `?sort=recent` (Novedades), `?sort=popular` (Más jugados) o `?tag=<slug>` (filtro por categoría). `isBrowse = !q` (cualquier combinación de sort/tag/page sin q activa browse mode). Incluye SortSelect + TagFilter + paginación numérica (12 juegos/pág). Los slugs de tags se resuelven a UUIDs internamente vía `resolveTagSlug()` en `lib/queries/games.ts`. **Búsqueda textual** — con `?q=`, busca juegos/usuarios/tags. Sin params: browse mode activo (no empty state). |
 
 ## Server Actions
 

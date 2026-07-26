@@ -1,11 +1,12 @@
 ---
 title: "ArcadePlay — Estado del Proyecto"
 tags: [state, checkpoint]
-last_updated: "2026-07-20"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - next.config.ts
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
+  - docs/raw/plans/2026-07-25-home-redesign-featured-sections.md
 ---
 
 # ArcadePlay — Estado del Proyecto
@@ -79,6 +80,8 @@ app/
 | `PodiumCard.tsx` | Server | Top 3 destacado con trofeos y cards individuales. 2° | 1° (featured) | 3°. Recibe `topPlayers: PlayerRankingEntry[]` |
 | `Rating.tsx` | Client | `gameId, avgRating, userRating` |
 | `SearchBar.tsx` | Client | Debounce 300ms, URL search params |
+| `SortSelect.tsx` | Client | Dropdown sort (reciente/popular/valorado). Usa `usePathname()` para mantener ruta actual |
+| `CategoryFilter.tsx` | Client | `TagFilter` — botones de categoría con `?tag=`. Usa `usePathname()` |
 | `CategoryFilter.tsx` (→ `TagFilter`) | Client | Pills de tags, URL param `?tag=` |
 | `SubmitGameForm.tsx` | Client | `tags[]` — Step 1 selector plataforma visual + Step 2 2 columnas (preview+tags izq, inputs der), TagPicker |
 | `TagPicker.tsx` | Client | `tags, selectedIds, onChange, lockedIds?, max?` — visual multi-select, 8 colores, locked tag |
@@ -102,6 +105,8 @@ app/
 |---------|-----------|
 | `supabase/client.ts` | Browser client (createBrowserClient) |
 | `supabase/server.ts` | Server client (cookies, RSC) |
+| `queries/games.ts` | Read-only queries para Server Components (sin `"use server"`): `getFeaturedGames`, `getRecentGames`, `getGameList` (sort/paginación/tags), `getTags`. Separado de mutations en `actions/games.ts`. |
+| `tag-icons.ts` | Mapping tag name → LucideIcon. 12 tags mapeados (MakeCode→Code2, Acción→Swords, etc.), fallback a `Gamepad2`. |
 | `supabase/middleware.ts` | Session refresh middleware (usado por proxy.ts) |
 | `actions/auth.ts` | signIn, signUp, resendVerificationEmail, signOut — sanitización de username, validación de password (mayúscula+minúscula+número+min8), confirmación de contraseña, campos birth_month/birth_year/country |
 | `actions/games.ts` | createGame, updateGame, toggleVisibility, deleteGame, getGames, getGameById, getUserGames, getMyGames, getRecentGames, getMostPlayed, getTopRated |
@@ -275,7 +280,7 @@ El diseño visual completo está definido en el archivo de Figma `ArcadePlay` (f
 | Design tokens | ✅ Aplicados en `globals.css` |
 | Navbar roja | ✅ Implementada con íconos lucide-react + menú mobile |
 | Hero Slider | ✅ Auto-play 5s, dots, mock data |
-| Secciones curadas | ✅ Últimos Juegos, Más Jugados, Mejor Valorados |
+| Secciones curadas | ✅ Reemplazadas por Juegos Destacados (4 grid), Explorar por Categoría (iconos), Novedades (3 mini cards con plataforma) |
 | Game Thumbnails con overlay | ✅ Overlay oscuro + rating + hover scale |
 | Ranking + Podio | ✅ Mock data para Ayer, Semana, Mes, Año |
 | Footer rojo | ✅ 2 columnas de links en beige |
@@ -294,6 +299,24 @@ Ver el plan completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.
 6. 🔵 Página 404 personalizada con search
 
 ## Implementado recientemente
+
+- ✅ **Rediseño secciones del home** (2026-07-26)
+  - Nuevas secciones: Juegos Destacados (grid 4 cards), Explorar por Categoría (grid con íconos Lucide), Novedades (3 mini cards con autor+plataforma)
+  - Sort dropdown (reciente/popular/valorado) + paginación numérica reemplazan "Cargar más"
+  - Layout 2-columnas en lg+ para Categorías|Novedades
+  - Queries de lectura separadas en `lib/queries/games.ts`
+  - Sistema de iconos por tag en `lib/tag-icons.ts`
+  - Botones "Ver todos" en Juegos Destacados y Novedades apuntan a `/buscar` con sort apropiado
+  - FeaturedCard: estrellas a la derecha, autor visible en overlay
+  - SortSelect y TagFilter ahora usan `usePathname()` — funcionan sin redirigir al home tanto en `/` como en `/buscar`
+  - `/buscar` ahora tiene modo **Browse**: con `?sort=rated`, `?sort=recent` o `?tag=X` muestra grid completo con paginación
+  - Ver plan: `docs/raw/plans/2026-07-25-home-redesign-featured-sections.md`
+- ✅ **Expansión compartida Categorías + Novedades** (2026-07-26)
+  - CategoryExplorer ahora es Client Component controlado, muestra 8 categorías + "Ver más" (9 items)
+  - RecentProjectsSection también es Client Component, muestra 3 juegos por defecto / 5 al expandir
+  - Nuevo wrapper `CategoryRecentSection` con estado `showAll` compartido entre ambas secciones
+  - Al hacer clic en "Ver más" en categorías, también se expande Novedades simultáneamente
+  - Scroll suave al expandir categorías
 
 - ✅ **Sistema de moderación** (2026-07-20)
   - Roles: `user`, `moderator`, `admin` en tabla `profiles`

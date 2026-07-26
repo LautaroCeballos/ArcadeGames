@@ -1,18 +1,21 @@
 ---
 title: "ArcadePlay — Sistema de Juegos"
 tags: [feature, games]
-last_updated: "2026-07-25"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
   - docs/raw/plans/2026-07-25-rating-to-star-toggle.md
   - docs/raw/plans/2026-07-25-fix-ranking-system.md
+  - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
   - supabase/migrations/00010_moderator_role.sql
   - supabase/migrations/00022_ratings_star_toggle.sql
   - lib/actions/games.ts
   - lib/actions/ratings.ts
   - lib/actions/ranking.ts
+  - lib/tag-utils.ts
+  - lib/queries/games.ts
   - components/Rating.tsx
 ---
 
@@ -75,6 +78,14 @@ Las tags se seedearon desde las categorías originales (10) más las tags de pla
 
 Ver `lib/actions/games.ts` — `createGame` acepta `tag_ids[]` y auto-inserta platform tag.
 Ver `components/TagPicker.tsx` — componente visual de selección múltiple.
+
+### Tags en URLs (slugs)
+
+Las tags se referencian en URLs mediante **slugs** (nombres normalizados) en vez de UUIDs:
+
+- `slugifyTagName()` en `lib/tag-utils.ts` — normaliza el nombre: quita acentos, espacios a guiones, solo a-z0-9 (ej. "Acción" → `accion`)
+- `resolveTagSlug()` en `lib/queries/games.ts` — resuelve slug → UUID de tag (fetch all + find en memoria, ~20 tags)
+- CategoryExplorer, TagFilter y search dropdown en Navbar usan `?tag=<slug>` en lugar de `?tag=<uuid>`
 
 ## Flujo de publicación
 
@@ -160,6 +171,7 @@ Implementada con ILIKE sobre `title` + filtro por tags:
 - Filtro por tags: acepta array de tag IDs (incluye platform tags)
 - Paginación via LIMIT/OFFSET
 - Orden por `created_at DESC` por defecto
+- Tags en URLs: se usan **slugs** en vez de UUIDs (`?tag=accion` en lugar de `?tag=<uuid>`). La resolución slug→ID ocurre en `BrowseGameList` vía `resolveTagSlug()` en `lib/queries/games.ts`.
 
 ## Rating (sistema de estrella única toggle)
 

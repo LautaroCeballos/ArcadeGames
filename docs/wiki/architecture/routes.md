@@ -1,11 +1,12 @@
 ---
 title: "ArcadePlay — Estructura de Rutas"
 tags: [architecture, routes]
-last_updated: "2026-07-23"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/makecode_arcade_platform_FULL.md
   - docs/raw/plans/2026-07-23-notification-system.md
   - docs/raw/plans/2026-07-23-header-redesign-search.md
+  - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
 ---
 
 # ArcadePlay — Estructura de Rutas
@@ -20,8 +21,8 @@ sources:
 
 | Ruta | Página | Descripción |
 |------|--------|-------------|
-| `/` | `page.tsx` | Home: grid de juegos con búsqueda y filtro de categorías |
-| `/buscar` | `buscar/page.tsx` | Resultados de búsqueda multi-entidad (juegos, usuarios, categorías). Recibe `?q=` desde el header |
+| `/` | `page.tsx` | Home: HeroSlider + secciones curadas (Destacados, Categorías, Novedades) + Ranking + **Todos los juegos** (preview de 8 juegos + "Ver Más" a `/buscar?sort=recent`). Sin búsqueda ni filtros inline. |
+| `/buscar` | `buscar/page.tsx` | Browse / Búsqueda. **Browse mode** (`?sort=` o `?tag=<slug>` sin `?q=`): grid completo con SortSelect + TagFilter + paginación (12 juegos/pág). Tags usan slugs en URL. **Búsqueda textual** (`?q=`): resultados multi-entidad (juegos, usuarios, tags). Sin params: browse mode activo (no empty state). |
 | `/juego/[id]` | `juego/[id]/page.tsx` | Detalle del juego: embed, info, rating |
 | `/perfil/[username]` | `perfil/[username]/page.tsx` | Perfil del usuario: header con stats (estrellas, juegos, seguidores/siguiendo), tabs Juegos (con gestión si es dueño) y Logros |
 | `/login` | `login/page.tsx` | Formulario de inicio de sesión |

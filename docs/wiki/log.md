@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-25"
+last_updated: "2026-07-26"
 sources:
   - lib/actions/ranking.ts
   - docs/raw/plans/2026-07-25-fix-ranking-system.md
@@ -29,6 +29,8 @@ sources:
   - app/(public)/buscar/page.tsx
   - app/(protected)/notificaciones/page.tsx
   - hooks/use-realtime-follow-counts.ts
+  - lib/tag-utils.ts
+  - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
@@ -521,6 +523,37 @@ sources:
 - `banner-admin-client.tsx`: preview y miniaturas de template actualizadas al split 50/50. Descripciones de templates actualizadas.
 - `docs/wiki/features/banner.md`: documentación actualizada al nuevo layout.
 - Páginas actualizadas: [[features/banner]], [[log]]
+
+## [2026-07-26] update | wiki-tags-slugs-home-preview-buscar-browse
+- Páginas actualizadas: [[frontend/components]], [[features/games]], [[architecture/routes]], [[log]]
+- **[[frontend/components]]**: CategoryExplorer href `/buscar?tag=<slug>`; TagFilter slugs + `keepBrowseMode()`; SortSelect bug documentado; rutas `/` y `/buscar` actualizadas (home sin TagFilter/Sort, buscar con browse mode + slug resolution)
+- **[[features/games]]**: nueva sub-sección "Tags en URLs (slugs)" documentando `slugifyTagName()` y `resolveTagSlug()`; Búsqueda actualizada con tags por slug
+- **[[architecture/routes]]**: rutas `/` y `/buscar` actualizadas (home preview + browse mode en buscar)
+
+## [2026-07-26] fix | sort-tag-navigation-buscar-browse
+- **SortSelect** y **TagFilter** (CategoryFilter) ahora usan `usePathname()` en vez de hardcodear `router.push("/?")` — los filtros funcionan tanto en `/` como en `/buscar` sin redirigir al home
+- **`/buscar/page.tsx` reescrita** con modo **Browse**: cuando recibe `?sort=` o `?tag=` sin `?q=`, muestra un grid completo con SortSelect, TagFilter y paginación numérica (12 juegos por página). Título dinámico según sort ("Mejor valorados", "Más jugados", "Novedades")
+- **FeaturedCard**: estrellas movidas a la derecha (flex row con `justify-between`), autor agregado debajo del título
+- **"Ver todos"** en Juegos Destacados → `/buscar?sort=rated` y en Novedades → `/buscar?sort=recent`
+- Build: 0 errores
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-26] implement | category-explorer-ver-mas-shared-expansion
+- **CategoryExplorer**: convertido a Client Component controlado, acepta `showAll`/`onShowAll`. Muestra 8 categorías + botón "Ver más" (9 items). Al hacer clic, expande a todas y hace scroll suave.
+- **RecentProjectsSection**: convertido a Client Component, acepta `showAll`. Muestra 3 juegos por defecto, 5 al expandir.
+- **CategoryRecentSection**: nuevo Client Component wrapper del grid 2-columnas. Mantiene estado `showAll` compartido — al hacer clic en "Ver más" en categorías, también se expande Novedades.
+- Build: 0 errores
+
+## [2026-07-26] implement | home-redesign-featured-sections
+- Rediseño completo de las secciones curadas del home según plan `docs/raw/plans/2026-07-25-home-redesign-featured-sections.md`
+- **Nuevas secciones**: Juegos Destacados (grid 4 cards), Explorar por Categoría (grid iconos), Novedades (3 mini cards con autor+plataforma)
+- **Nuevos componentes**: `FeaturedSection.tsx`, `CategoryExplorer.tsx`, `RecentProjectsSection.tsx`, `NumericPagination.tsx`, `SortSelect.tsx`
+- **Nuevos archivos**: `lib/queries/games.ts` (read queries separadas de mutations), `lib/tag-icons.ts` (mapping tag→LucideIcon)
+- **Nuevos tipos**: `FeaturedGameData`, `RecentGameData` en definitions
+- **Mejoras en listing**: sort dropdown (reciente/popular/valorado) + paginación numérica, reemplaza "Cargar más"
+- **Query refactor**: `getRecentGames`/`getMostPlayed` ahora incluyen author + platform. `getGames` → `getGameList` en queries con sort. Nueva `getFeaturedGames`
+- **Layout**: 5 Suspense boundaries individuales, 2-columnas (Categorías|Novedades) en lg+
+- Páginas actualizadas: [[frontend/components]], [[project-state]], [[overview]], [[log]]
 
 ## [2026-07-24] fix | slider-aspect-ratio-1725-910
 - `components/HeroSlider.tsx`: aspect ratio cambiado de `[1164/308]` a `[1725/910] max-md:aspect-[4/3]` — imágenes se ven menos cortadas gracias a una proporción más natural (~1.9:1 vs 3.78:1)
