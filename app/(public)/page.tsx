@@ -1,33 +1,54 @@
+import Link from "next/link"
 import { Suspense } from "react"
-import { createClient } from "@/lib/supabase/server"
-import { getGames, getRecentGames, getMostPlayed, getTopRated } from "@/lib/actions/games"
-import { getPlayerLeaderboard } from "@/lib/actions/ranking"
-import { getActiveBannerSlides } from "@/lib/actions/banner"
-import { GameGridSkeleton } from "@/components/GameGrid"
-import { LoadMoreGames } from "@/components/LoadMoreGames"
-import { SearchBar } from "@/components/SearchBar"
-import { TagFilter } from "@/components/CategoryFilter"
-import { CuratedSection } from "@/components/CuratedSection"
-import { CuratedSectionSkeleton } from "@/components/CuratedSection"
 import { HeroSlider } from "@/components/HeroSlider"
+import { FeaturedSection, FeaturedSectionSkeleton } from "@/components/FeaturedSection"
+import { CategoryRecentSection, CategoryRecentSectionSkeleton } from "@/components/CategoryRecentSection"
 import { RankingSection } from "@/components/RankingSection"
+import { GameGridSkeleton } from "@/components/GameGrid"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Tag } from "@/lib/definitions"
+import { getActiveBannerSlides } from "@/lib/actions/banner"
+import { getPlayerLeaderboard } from "@/lib/actions/ranking"
+import { getFeaturedGames, getRecentGames, getGameList, getTags } from "@/lib/queries/games"
+import { GameCard } from "@/components/GameCard"
 
-async function RecentGamesSection() {
-  const games = await getRecentGames(8)
-  return <CuratedSection title="Últimos Juegos" games={games} />
+/* ── Hero Slider wrapper ─────────────────────────────────── */
+
+async function HeroSliderWrapper() {
+  const slides = await getActiveBannerSlides()
+
+  const mappedSlides = slides.length > 0
+    ? slides.map((s) => ({
+        id: s.id,
+        imageUrl: s.image_url ?? "",
+        title: s.title,
+        description: s.description ?? "",
+        ctaText: s.cta_text,
+        ctaLink: s.cta_link,
+        template: s.template || "bar-right",
+      }))
+    : undefined
+
+  return <HeroSlider slides={mappedSlides} />
 }
 
-async function MostPlayedSection() {
-  const games = await getMostPlayed(8)
-  return <CuratedSection title="Más Jugados" games={games} />
+/* ── Featured games section ──────────────────────────────── */
+
+async function FeaturedSectionWrapper() {
+  const games = await getFeaturedGames(4)
+  return <FeaturedSection games={games} />
 }
 
-async function TopRatedSection() {
-  const games = await getTopRated(8)
-  return <CuratedSection title="Mejor Valorados" games={games} />
+/* ── Category + Recent 2-column section ──────────────────── */
+
+async function CategoryRecentWrapper() {
+  const [tags, recentGames] = await Promise.all([
+    getTags(),
+    getRecentGames(5),
+  ])
+  return <CategoryRecentSection tags={tags} recentGames={recentGames} />
 }
+
+/* ── Ranking section ─────────────────────────────────────── */
 
 function RankingSectionSkeleton() {
   return (
@@ -52,112 +73,77 @@ async function RankingSectionWrapper() {
   return <RankingSection players={players} />
 }
 
-async function GameList({ searchParams }: { searchParams: Awaited<HomeProps["searchParams"]> }) {
-  const tagIds = searchParams.tag ? [searchParams.tag] : undefined
-  const { games, total } = await getGames({
-    search: searchParams.q,
-    tagIds,
-    page: 0,
-  })
+/* ── All games listing (preview) ──────────────────────────── */
 
-  if (total === 0) {
-    return (
-      <div className="py-12 text-center text-muted-foreground">
-        <p className="text-lg">No hay juegos aún</p>
-        <p className="text-sm">¡Sé el primero en publicar uno!</p>
-      </div>
-    )
-  }
+async function GameListSection() {
+  const { games } = await getGameList({ limit: 8 })
 
   return (
-    <LoadMoreGames
-      initialGames={games}
-      total={total}
-      search={searchParams.q}
-      tagIds={tagIds}
-    />
+    <div className="space-y-6">
+      {games.length === 0 ? (
+        <div className="py-12 text-center text-muted-foreground">
+          <p className="text-lg">No hay juegos aún</p>
+          <p className="text-sm">¡Sé el primero en publicar uno!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {games.map((game) => (
+            <GameCard key={game.id} game={game} />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
-async function CategoryList() {
-  const supabase = await createClient()
-  const { data: tags } = await supabase.from("tags").select("*")
-  // Exclude platform tags from filter (they show as badges on game cards)
-  const displayTags = (tags ?? []).filter((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch')
-  return <TagFilter tags={displayTags as Tag[]} />
-}
-
-/* ── Hero Slider wrapper (fetches from DB) ────────────────── */
-
-async function HeroSliderWrapper() {
-  const slides = await getActiveBannerSlides()
-
-  const mappedSlides = slides.length > 0
-    ? slides.map((s) => ({
-        id: s.id,
-        imageUrl: s.image_url ?? "",
-        title: s.title,
-        description: s.description ?? "",
-        ctaText: s.cta_text,
-        ctaLink: s.cta_link,
-        template: s.template || "bar-right",
-      }))
-    : undefined // use defaults
-
-  return <HeroSlider slides={mappedSlides} />
-}
-
-/* ── Page ─────────────────────────────────────────────────── */
+/* ── Page ────────────────────────────────────────────────── */
 
 interface HomeProps {
-  searchParams: Promise<{ q?: string; tag?: string }>
+  searchParams: Promise<{ q?: string; tag?: string; sort?: string; page?: string }>
 }
 
-export default async function HomePage({ searchParams }: HomeProps) {
-  const params = await searchParams
-
+export default async function HomePage(_props: HomeProps) {
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-4 py-6">
-      {/* Hero Slider */}
-      <Suspense fallback={<div className="h-[250px] sm:h-[320px] md:h-[360px] lg:h-[400px] animate-pulse rounded-[10px] bg-muted" />}>
+    <div className="mx-auto max-w-7xl space-y-12 px-4 py-6">
+      {/* 1. Hero Slider */}
+      <Suspense fallback={<div className="h-[250px] animate-pulse rounded-[10px] bg-muted sm:h-[320px] md:h-[360px] lg:h-[400px]" />}>
         <HeroSliderWrapper />
       </Suspense>
 
-      {/* Curated sections */}
-      <Suspense fallback={<CuratedSectionSkeleton />}>
-        <RecentGamesSection />
+      {/* 2. Featured Games (4-card grid) */}
+      <Suspense fallback={<FeaturedSectionSkeleton />}>
+        <FeaturedSectionWrapper />
       </Suspense>
 
-      <Suspense fallback={<CuratedSectionSkeleton />}>
-        <MostPlayedSection />
+      {/* 3. Two-column: Categories | Recent Projects */}
+      <Suspense fallback={<CategoryRecentSectionSkeleton />}>
+        <CategoryRecentWrapper />
       </Suspense>
 
-      <Suspense fallback={<CuratedSectionSkeleton />}>
-        <TopRatedSection />
-      </Suspense>
-
-      {/* Ranking */}
+      {/* 4. Ranking */}
       <Suspense fallback={<RankingSectionSkeleton />}>
         <RankingSectionWrapper />
       </Suspense>
 
-      {/* Full game listing with search */}
-      <section className="space-y-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+      {/* 5. All games listing (preview + Ver Más) */}
+      <section className="scroll-mt-20 space-y-4" id="todos-los-juegos">
+        <div className="flex flex-row items-center justify-between">
           <h2 className="text-[25px] font-semibold text-arcade-dark">
             Todos los juegos
           </h2>
-          <Suspense fallback={null}>
-            <SearchBar />
-          </Suspense>
+          <Link
+            href="/buscar?sort=recent"
+            className="group flex items-center gap-1 text-sm font-medium text-arcade-dark/60 transition-colors hover:text-arcade-red"
+          >
+            Ver Más
+            <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+              →
+            </span>
+          </Link>
         </div>
 
-        <Suspense fallback={<div className="h-8" />}>
-          <CategoryList />
-        </Suspense>
-
         <Suspense fallback={<GameGridSkeleton />}>
-          <GameList searchParams={params} />
+          <GameListSection />
         </Suspense>
       </section>
     </div>
