@@ -10,6 +10,7 @@ import { markAsRead, markAllAsRead } from "@/lib/actions/notifications"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { slugifyTagName } from "@/lib/tag-utils"
 import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications"
 import { searchAll } from "@/lib/actions/search"
 import type { AppNotification } from "@/lib/definitions"
@@ -323,7 +324,7 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
                           {searchResults.tags.map((tag) => (
                             <Link
                               key={tag.id}
-                              href={`/?tag=${tag.id}`}
+                              href={`/buscar?tag=${slugifyTagName(tag.name)}`}
                               onClick={() => setSearchOpen(false)}
                               className="inline-block rounded-full border border-arcade-beige/20 px-3 py-1 text-xs text-arcade-beige/70 hover:text-arcade-beige hover:border-arcade-beige/40 transition-colors"
                             >
