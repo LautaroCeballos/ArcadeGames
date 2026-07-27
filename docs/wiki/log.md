@@ -19,7 +19,15 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
-## [2026-07-27] feat | bar-slide-mobile-clickable-image-openInNewTab-all-templates
+## [2026-07-27] update | mobile-ux-profile-header-game-viewer-navbar
+- **ProfileHeader**: layout móvil lado a lado (avatar + nombre + bio + follow button en `flex-row` siempre, sin apilado vertical)
+- **ProfileStats**: grid 4 columnas en una sola fila en todos los tamaños (`grid-cols-4`). Cards responsivas: layout vertical compacto (icono + número lado a lado, label debajo) en móvil, horizontal (icono + número + label en fila) en desktop
+- **ProfileTabs**: filtros de estado en pills `flex-wrap` con `rounded-full` — sin scroll horizontal en móvil. Activo usa `bg-primary text-primary-foreground`
+- **ProfileGameCard**: botones de acción compactos responsivos (`size-6 sm:size-8`). `GameActionsInline` actualizado con mismos tamaños responsivos
+- **NavbarClient**: menú móvil ahora es **flotante** (overlay). Panel con `absolute top-full` + backdrop `fixed inset-0 bg-black/50` + `animate-slide-down`. Body scroll lock cuando está abierto. Cierre al tocar backdrop. Nuevas animaciones en `globals.css`: `slide-down` y `fade-in`
+- **ArcadeEmbed + GameTabs**: aspect ratio responsivo `aspect-[3/4] sm:aspect-[4/3]` para mostrar la consola MakeCode completa en móvil. Botón toggle (Monitor/Smartphone) para alternar entre vista completa y solo pantalla
+- Archivos modificados: `components/ProfileHeader.tsx`, `components/ProfileStats.tsx`, `components/ProfileTabs.tsx`, `components/ProfileGameCard.tsx`, `components/GameActionsInline.tsx`, `components/NavbarClient.tsx`, `components/ArcadeEmbed.tsx`, `components/GameTabs.tsx`, `app/globals.css`
+- Páginas actualizadas: [[frontend/components]], [[features/games]], [[log]]
 - **BarSlide mobile**: el panel de texto ahora se oculta en mobile (`hidden md:flex`). La imagen ocupa el 100% del slide con un `<Link>` overlay invisible que navega al CTA link. El link respeta `open_in_new_tab` de la DB.
 - **BarSlide desktop**: sin cambios (panel 25% + imagen 75%), pero el botón CTA ahora respeta `open_in_new_tab` en vez de hardcodear `target="_blank"`.
 - **Admin panel**: checkbox "Abrir CTA en nueva pestaña" ahora visible para todos los templates (bar-right, bar-left, full-image). Para bar templates es un solo checkbox; para full-image solo aparece si "La imagen es un enlace cliqueable" está activo.

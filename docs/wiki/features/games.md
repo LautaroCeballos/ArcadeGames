@@ -121,6 +121,8 @@ La página del juego (`app/(public)/juego/[id]/page.tsx`) tiene dos columnas en 
 - **Izquierda** (sticky): componente `GameTabs` que se adapta según la plataforma:
   - **MakeCode**: dos tabs — **Juego** (default, embed `---run?id=`) y **Editor** (embed `#pub:` con sandbox)
   - **Scratch**: un solo tab — **Juego** con el embed de Scratch (`scratch.mit.edu/projects/{id}/embed`)
+  - **Aspect ratio responsivo**: `aspect-[3/4]` en móvil (consola completa con botones visibles), `sm:aspect-[4/3]` en desktop
+  - **Toggle de vista**: botón al final de la barra de tabs (Monitor/Smartphone) que alterna entre consola completa y solo pantalla (`aspect-[4/3]`)
   - Los tabs aparecen **debajo** del embed. El activo tiene indicador rojo (`bg-arcade-red`).
 - **Derecha** (`lg:self-center`): columna centrada verticalmente con contenido a la izquierda. Incluye título, autor (link a `/perfil/{username}`), badges, descripción, fila unificada de [⭐ N] [♥ N] [👁 N] [🔗 Abrir Proyecto], y juegos relacionados. `Rating` y `FavoriteButton` son botones toggle con contador; el botón "Abrir Proyecto" abre el editor de MakeCode (`https://makecode.com/{id}`) o la página del proyecto Scratch en nueva pestaña. `FavoriteButton` oculto si el usuario es el dueño del juego.
 - **Debajo del grid**: sección "Más juegos de [username]" con grid de `GameCard` (hasta 4 juegos del mismo desarrollador). Usa `getGamesByAuthor()` en `lib/queries/games.ts`. Solo visible si el autor tiene más juegos aprobados. Header con link "Ver más →" al perfil.

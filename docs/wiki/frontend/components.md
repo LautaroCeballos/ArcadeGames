@@ -3,6 +3,15 @@ title: "ArcadePlay — Inventario de Componentes Frontend"
 tags: [frontend, architecture]
 last_updated: "2026-07-27"
 sources:
+  - components/ProfileHeader.tsx
+  - components/ProfileStats.tsx
+  - components/ProfileTabs.tsx
+  - components/ProfileGameCard.tsx
+  - components/GameActionsInline.tsx
+  - components/NavbarClient.tsx
+  - components/ArcadeEmbed.tsx
+  - components/GameTabs.tsx
+  - app/globals.css
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
   - docs/raw/plans/2026-07-20-submit-form-tags-redesign.md
@@ -75,7 +84,7 @@ sources:
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | Navbar | `components/Navbar.tsx` | Server | Fetches `user` + `username` + `avatar_url` + `role` + `unreadCount` + `recentNotifications`, renderiza `NavbarClient` |
-| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, menú hamburguesa, **search input con live dropdown** (debounce 500ms, resultados en tiempo real), avatar con dropdown unificado (perfil, cuenta, moderar, admin, cerrar sesión), bell icon con badge + dropdown de notificaciones, **ThemeToggle visible en ambos estados** (logueado y no logueado, tanto desktop como mobile). Usa `useRealtimeNotifications` |
+| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, **menú hamburguesa flotante** (absolute overlay con backdrop `bg-black/50` + slide-down animation + body scroll lock), search input con live dropdown (debounce 500ms), avatar con dropdown unificado, bell icon con badge + dropdown de notificaciones, ThemeToggle visible en ambos estados. Usa `useRealtimeNotifications` |
 | AuthButton | `components/AuthButton.tsx` | Client | Form action `signOut` |
 | Footer | `components/Footer.tsx` | Server | Links estáticos en 2 columnas (makecode, subir, categorías, login, sobre, términos) |
 
@@ -99,9 +108,9 @@ sources:
 | GameCard | `components/GameCard.tsx` | Server | `game: GameWithDetails` — imagen en `aspect-video` con dos burbujas: `PlatformBadge`(logo SVG) en top-left + tag de categoría coloreado en top-right. Panel de info debajo con fondo `bg-[rgba(52,54,53,0.96)]`. Fila 1: título truncado + estrellas amarillas. Fila 2: `Por {username}` + visitas. Usa `getTagColor()` y `PlatformBadge`. |
 | GameGrid | `components/GameGrid.tsx` | Server | `games[]` — grid responsive 2-5 columnas |
 | LoadMoreGames | `components/LoadMoreGames.tsx` | Client | Paginación "Cargar más" vía server action |
-| ArcadeEmbed | `components/ArcadeEmbed.tsx` | Client | `url, title, sandbox?` — iframe 4:3 con loading/error state. Soporta `sandbox` opcional para restringir permisos del embed |
+| ArcadeEmbed | `components/ArcadeEmbed.tsx` | Client | `url, title, sandbox?, showFullConsole?` — iframe responsivo: `aspect-[3/4]` (móvil, consola completa) / `aspect-[4/3]` (desktop). Si `showFullConsole=false` usa `aspect-[4/3]` en todos los tamaños. Loading/error state |
 | ScratchEmbed | `components/ScratchEmbed.tsx` | Client | `url, title` — iframe con `allowtransparency`, aspect ratio 6:5, loading/error state. Sin sandbox (no necesario para Scratch) |
-| GameTabs | `components/GameTabs.tsx` | Client | `gameId, title, platform, embedUrl?` — tabs adaptativos. MakeCode: Juego + Editor. Scratch: solo Juego (embed directo) |
+| GameTabs | `components/GameTabs.tsx` | Client | `gameId, title, platform, embedUrl?` — tabs adaptativos. MakeCode: Juego + Editor. Scratch: solo Juego. **Botón toggle de vista** (Monitor/Smartphone) al final de la barra: alterna entre consola completa (`aspect-[3/4]`, default) y solo pantalla (`aspect-[4/3]`). Pasa `showFullConsole` a ArcadeEmbed |
 | TrackView | `components/TrackView.tsx` | Client | `{ gameId: string }` — componente invisible que incrementa contador de visitas del juego al montarse. Usa `useRef` guard para evitar doble disparo en Strict Mode. Renderiza `null`. |
 | RankingSection | `components/RankingSection.tsx` | Server | `{ players: PlayerRankingEntry[] }` — ranking real conectado a DB. Título con icono `Trophy` (🏆) en `text-arcade-red`. Podio (top 3) + lista (#4-#50). Diseño limpio con border bg-card shadow-sm. Empty state cuando no hay ratings |
 | PodiumCard | `components/PodiumCard.tsx` | Server | `{ topPlayers: PlayerRankingEntry[] }` — top 3 en layout tipo podio escalonado: 2° | 1° (featured) | 3°. Flexbox con superposición ligera vía márgenes negativos (`-mx-10px sm:-mx-16px`). 1° lugar con `z-10` por encima de los otros. Efecto escalón: spacer sobre 2° (`h-8 sm:h-10`) y 3° (`h-14 sm:h-20`). Progresión de tamaño: 1° más grande (padding, trofeo, texto), 2° mediano, 3° más chico. Badges con colores sólidos: 1° `bg-amber-400` (dorado), 2° `bg-gray-400` (plateado), 3° `bg-orange-500` (cobre) — matching borders. Nombre de usuario linkea a `/perfil/{username}` con hover `text-arcade-red`. |
@@ -135,13 +144,13 @@ sources:
 
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
-| ProfileHeader | `components/ProfileHeader.tsx` | Server | `{ profile: ProfileWithStats, isOwnProfile, isFollowing }` — avatar grande, username, bio, website, 4 stat cards (estrellas, juegos, seguidores, siguiendo), botón follow |
+| ProfileHeader | `components/ProfileHeader.tsx` | Server | `{ profile: ProfileWithStats, isOwnProfile, isFollowing }` — avatar, username, bio, website y botón follow en layout **lado a lado en todas las resoluciones** (`flex-row items-start`). Debajo: `ProfileStats` con 4 stat cards en grid responsivo |
 | ProfileBadges | `components/ProfileBadges.tsx` | Server | `{ badges: { badges: Badge }[] }` — grid de emblemas con hover tooltip. Se oculta si no hay badges |
-| ProfileGameCard | `components/ProfileGameCard.tsx` | Client | `{ game: GameWithDetails, isOwner, isModOrAdmin?, showAuthor?, hideBadge? }` — card con thumbnail + grid 2 columnas: izquierda (título + badge arriba, botones de acción abajo), derecha (descripción + metadata, `row-span-2`). Botones: jugar (siempre), editar/ocultar/eliminar (solo dueño), publicar borrador (solo drafts). `showAuthor` muestra "por @username" como link a `/perfil/{username}` (usado en favoritos). `hideBadge` oculta el badge de estado (usado en favoritos, donde todos son aprobados). |
+| ProfileGameCard | `components/ProfileGameCard.tsx` | Client | `{ game: GameWithDetails, isOwner, isModOrAdmin?, showAuthor?, hideBadge? }` — card con thumbnail + grid 2 columnas. Botones de acción **compactos responsivos** (`size-6 sm:size-8`, iconos `size-3 sm:size-3.5`) en una sola fila. Botones: jugar (siempre), editar/ocultar/eliminar (dueño), publicar borrador (drafts). `showAuthor` muestra "por @username". `hideBadge` oculta badge de estado |
 | ModeratorGameActions | `components/ModeratorGameActions.tsx` | Client | `{ game: GameWithDetails }` — botones Aprobar (pendiente), Rechazar (pendiente), Eliminar (aprobado/rechazado) para moderadores en perfiles ajenos |
-| ProfileTabs | `components/ProfileTabs.tsx` | Client | `{ games[], badges[], favoritedGames?, isOwner, isModOrAdmin? }` — tabs "Juegos" (default) y "Logros" (solo si tiene badges). Cuando `isOwner=true`: sub-tabs de filtro (Todos mis Juegos / Publicados / En moderación / Rechazados / Borradores / Favoritos) con conteo por status y botón "Logros" como toggle. "Favoritos" unificado como filtro (ex-pestaña separada). Cuando `isOwner=false`: solo Juegos (sin sub-filtros ni favoritos). Los juegos favoritos se renderizan con `ProfileGameCard` en modo vista (`isOwner={false}`, `showAuthor`, `hideBadge`). |
+| ProfileTabs | `components/ProfileTabs.tsx` | Client | `{ games[], badges[], favoritedGames?, isOwner, isModOrAdmin? }` — tabs "Juegos" (default) y "Logros" (solo si tiene badges). Cuando `isOwner=true`: **filtros de estado en pills** (`flex-wrap`, `rounded-full`, `bg-primary` el activo) — sin scroll horizontal. Filtros: Todos mis Juegos / Publicados / En moderación / Rechazados / Borradores / Favoritos. "Favoritos" unificado como filtro (ex-pestaña separada). Favoritos renderizados con `ProfileGameCard` en modo vista (`isOwner={false}`, `showAuthor`, `hideBadge`) |
 | FollowButton | `components/FollowButton.tsx` | Client | `{ targetUserId, isFollowing }` — botón Seguir/Siguiendo con useActionState |
-| GameActionsInline | `components/GameActionsInline.tsx` | Client | `ToggleVisibilityButton(gameId, hidden)` y `DeleteGameButton(gameId)` — wrappers useActionState para evitar inline "use server" en client components |
+| GameActionsInline | `components/GameActionsInline.tsx` | Client | `ToggleVisibilityButton(gameId, hidden)` y `DeleteGameButton(gameId)` — botones **responsivos** (`size-6 sm:size-8`, iconos `size-3 sm:size-3.5`). Wrappers useActionState |
 | FavoriteButton | `components/FavoriteButton.tsx` | Client | `{ gameId, isFavorited, isAuthenticated, favoriteCount }` — corazón toggle con contador. Muestra `(♥) N`. Tres estados: no autenticado (deshabilitado), sin favorito (outline), favoritado (relleno rojo `fill-red-500`). Usa `useState` con optimistic updates (incrementa/decrementa contador local antes de la server action, revierte en error). Se oculta si el usuario es el dueño del juego |
 
 ### Auth
