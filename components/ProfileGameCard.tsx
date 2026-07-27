@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Play, Pencil, Star, Send, Loader2 } from "lucide-react"
+import { Play, Pencil, Star, Send, Loader2, MoreVertical, Eye, EyeOff, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ToggleVisibilityButton, DeleteGameButton } from "@/components/GameActionsInline"
 import { ModeratorGameActions } from "@/components/ModeratorGameActions"
-import { publishGame } from "@/lib/actions/games"
+import { publishGame, toggleVisibility, deleteGame } from "@/lib/actions/games"
 import type { GameWithDetails } from "@/lib/definitions"
 
 interface ProfileGameCardProps {
@@ -47,6 +47,7 @@ function formatRelativeDate(dateStr: string) {
 export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAuthor = false, hideBadge = false }: ProfileGameCardProps) {
   const router = useRouter()
   const [publishing, setPublishing] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const badge = getStatusBadge(game)
 
   async function handlePublish() {
@@ -89,8 +90,8 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
           )}
         </div>
 
-        {/* Col 1, row 2: action buttons */}
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+        {/* Col 1, row 2: action buttons — desktop */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 flex-wrap">
           <Button asChild variant="ghost" size="icon" className="size-6 sm:size-8">
             <Link href={`/juego/${game.id}`}><Play className="size-3 sm:size-3.5" /></Link>
           </Button>
@@ -117,6 +118,76 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
           )}
           {!isOwner && isModOrAdmin && (
             <ModeratorGameActions game={game} />
+          )}
+        </div>
+
+        {/* Col 1, row 2: action buttons — mobile kebab menu */}
+        <div className="relative sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Acciones"
+          >
+            <MoreVertical className="size-3" />
+          </Button>
+          {menuOpen && (
+            <div className="absolute left-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border bg-card shadow-lg">
+              <Link
+                href={`/juego/${game.id}`}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+              >
+                <Play className="size-3.5" />
+                Jugar
+              </Link>
+              {isOwner && (
+                <>
+                  {game.status === "draft" && (
+                    <button
+                      onClick={() => { handlePublish(); setMenuOpen(false) }}
+                      disabled={publishing}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-arcade-green transition-colors hover:bg-muted"
+                    >
+                      {publishing ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+                      Publicar
+                    </button>
+                  )}
+                  <Link
+                    href={`/editar/${game.id}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                  >
+                    <Pencil className="size-3.5" />
+                    Editar
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      await toggleVisibility(game.id)
+                      setMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                  >
+                    {game.hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                    {game.hidden ? "Mostrar" : "Ocultar"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await deleteGame(game.id)
+                      setMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Eliminar
+                  </button>
+                </>
+              )}
+              {!isOwner && isModOrAdmin && (
+                <ModeratorGameActions game={game} />
+              )}
+            </div>
           )}
         </div>
 
