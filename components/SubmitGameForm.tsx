@@ -35,68 +35,68 @@ function PlatformSelector({
 
       <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
         {/* MakeCode Arcade */}
-        <button
-          type="button"
-          onClick={() => onSelect('makecode')}
-          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F76820] hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F76820] focus-visible:ring-offset-2"
-        >
-          <div className="flex size-16 items-center justify-center rounded-full bg-[#F76820]/10 text-[#F76820] transition-colors group-hover:bg-[#F76820] group-hover:text-white">
-            <MakeCodeLogo className="size-8" aria-hidden="true" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-arcade-dark">MakeCode Arcade</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Juegos retro estilo Game Boy, creados con bloques o JavaScript
-            </p>
-          </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F76820] opacity-0 transition-opacity group-hover:opacity-100">
-            <Sparkles className="size-3.5" />
-            Elegir MakeCode
-          </span>
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onSelect('makecode')}
+            className="group relative flex w-full flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F76820] hover:shadow-lg hover:-translate-y-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F76820] focus-visible:ring-offset-2"
+          >
+            <div className="flex size-16 items-center justify-center rounded-full bg-[#F76820]/10 text-[#F76820] transition-colors group-hover:bg-[#F76820] group-hover:text-white">
+              <MakeCodeLogo className="size-8" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-arcade-dark">MakeCode Arcade</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Juegos retro estilo Game Boy, creados con bloques o JavaScript
+              </p>
+            </div>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F76820] opacity-0 transition-opacity group-hover:opacity-100">
+              <Sparkles className="size-3.5" />
+              Elegir MakeCode
+            </span>
+          </button>
+          <a
+            href="https://arcade.makecode.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-[#F76820] hover:text-[#F76820]/80 transition-colors"
+          >
+            arcade.makecode.com
+            <ExternalLink className="size-3" />
+          </a>
+        </div>
 
         {/* Scratch */}
-        <button
-          type="button"
-          onClick={() => onSelect('scratch')}
-          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F9A83A] hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9A83A] focus-visible:ring-offset-2"
-        >
-          <div className="flex size-16 items-center justify-center rounded-full bg-[#F9A83A]/10 text-[#F9A83A] transition-colors group-hover:bg-[#F9A83A] group-hover:text-white">
-            <ScratchLogo className="size-8" aria-hidden="true" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-arcade-dark">Scratch</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Proyectos animados y juegos interactivos hechos con bloques
-            </p>
-          </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F9A83A] opacity-0 transition-opacity group-hover:opacity-100">
-            <Sparkles className="size-3.5" />
-            Elegir Scratch
-          </span>
-        </button>
-      </div>
-
-      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-        <a
-          href="https://arcade.makecode.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[#F76820]/70 hover:text-[#F76820] transition-colors"
-        >
-          arcade.makecode.com
-          <ExternalLink className="size-3" />
-        </a>
-        <span className="text-border">|</span>
-        <a
-          href="https://scratch.mit.edu"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[#F9A83A]/70 hover:text-[#F9A83A] transition-colors"
-        >
-          scratch.mit.edu
-          <ExternalLink className="size-3" />
-        </a>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onSelect('scratch')}
+            className="group relative flex w-full flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F9A83A] hover:shadow-lg hover:-translate-y-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9A83A] focus-visible:ring-offset-2"
+          >
+            <div className="flex size-16 items-center justify-center rounded-full bg-[#F9A83A]/10 text-[#F9A83A] transition-colors group-hover:bg-[#F9A83A] group-hover:text-white">
+              <ScratchLogo className="size-8" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-arcade-dark">Scratch</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Proyectos animados y juegos interactivos hechos con bloques
+              </p>
+            </div>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F9A83A] opacity-0 transition-opacity group-hover:opacity-100">
+              <Sparkles className="size-3.5" />
+              Elegir Scratch
+            </span>
+          </button>
+          <a
+            href="https://scratch.mit.edu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-[#F9A83A] hover:text-[#F9A83A]/80 transition-colors"
+          >
+            scratch.mit.edu
+            <ExternalLink className="size-3" />
+          </a>
+        </div>
       </div>
     </div>
   )
