@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Design Tokens y Sistema Visual"
 tags: [frontend, design, concept]
-last_updated: "2026-07-13"
+last_updated: "2026-07-26"
 sources:
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - app/globals.css
@@ -9,32 +9,36 @@ sources:
 
 # ArcadePlay — Design Tokens y Sistema Visual
 
-Sistema de diseño basado en la maqueta de Figma (Archivo: `ArcadePlay`, node `Desktop - 1`).
+Sistema de diseño basado en la maqueta de Figma (Archivo: `ArcadePlay`, node `Desktop - 1`), adaptado a una paleta púrpura moderna con soporte light/dark.
 
 ## Paleta de colores
 
 | Token | Hex | Uso |
 |-------|-----|-----|
-| `--arcade-red` | `#d90057` | Header, Footer, botones primarios, acentos, headers de ranking |
-| `--arcade-green` | `#77b8a6` | Fondos secundarios, fondos de ranking cards |
-| `--arcade-beige` | `#ffe2ba` | Texto sobre fondos oscuros, badges |
-| `--arcade-dark` | `#343635` | Texto principal sobre fondo claro, overlays |
+| `--arcade-red` | `#8b5cf6` | Header, Footer, botones primarios, acentos, links |
+| `--arcade-green` | `#34d399` | Éxito, badges de estado, anillos de avatar, acentos secundarios |
+| `--arcade-beige` | `#ffffff` (light) / `#f0f0f0` (dark) | Texto sobre fondos de color (navbar, footer) |
+| `--arcade-dark` | `#111827` (light) / `#f0f0f0` (dark) | Texto principal sobre fondos claros/oscuros, headings |
 
 ### Mapeo a shadcn/ui
 
-Los tokens de shadcn se re-mapean a la paleta arcade:
+Los tokens de shadcn se re-mapean a la paleta púrpura:
 
-| shadcn token | Color |
-|-------------|-------|
-| `--primary` | `#d90057` (rojo neón) |
-| `--primary-foreground` | `#ffe2ba` (beige) |
-| `--secondary` | `#77b8a6` (verde pastel) |
-| `--secondary-foreground` | `#ffffff` |
-| `--muted` | `#77b8a6` |
-| `--muted-foreground` | `#343635` |
-| `--background` | `#ffffff` |
-| `--foreground` | `#343635` |
-| `--border` | Derivado del contexto |
+| shadcn token | Light | Dark |
+|-------------|-------|------|
+| `--primary` | `#8b5cf6` (púrpura) | `#8b5cf6` (púrpura) |
+| `--primary-foreground` | `#ffffff` (blanco) | `#ffffff` (blanco) |
+| `--secondary` | `#f3f4f6` (gris claro) | `#16162a` (púrpura oscuro) |
+| `--secondary-foreground` | `#111827` (gris oscuro) | `#a78bfa` (púrpura claro) |
+| `--muted` | `#f3f4f6` | `#16162a` |
+| `--muted-foreground` | `#6b7280` | `#a0a0b0` |
+| `--accent` | `#ede9fe` (púrpura claro) | `#8b5cf6` |
+| `--accent-foreground` | `#8b5cf6` | `#ffffff` |
+| `--background` | `#ffffff` | `#0a0a0f` (azul/púrpura muy oscuro) |
+| `--foreground` | `#111827` | `#f0f0f0` |
+| `--card` | `#ffffff` | `#16162a` |
+| `--border` | `#e5e7eb` | `#2a2a4a` |
+| `--ring` | `#8b5cf6` | `#8b5cf6` |
 
 Implementado en `app/globals.css` mediante CSS variables con `@theme inline` de Tailwind v4.
 
@@ -62,50 +66,52 @@ Implementado en `app/globals.css` mediante CSS variables con `@theme inline` de 
 ## Componentes visuales del diseño Figma
 
 ### Header
-- Fondo: `#d90057` (rojo neón), altura 166px
+- Fondo: `#8b5cf6` (púrpura), altura 166px
 - Logo: rectangular, 274×142px
-- 3 botones ícono: búsqueda (fondo beige redondeado), subir, usuario
+- 3 botones ícono: búsqueda (fondo claro redondeado), subir, usuario
 - Implementado en [[frontend/components]] como `Navbar.tsx`
 
 ### Hero Slider
 - Contenedor con imagen destacada de 1725×910px (desktop) / 4:3 (mobile)
-- Botón "SABER MAS" rectangular rojo con border-radius 15px
+- Botón "SABER MAS" rectangular púrpura con border-radius 15px
 - Dots de navegación (elipses, 18×18px)
 - Altura total: 368px
 
 ### Miniatura de Juego (GameThumbnail)
 - Imagen 16:9 (251×179px en diseño)
 - Overlay oscuro `rgba(52,54,53,0.96)` cubriendo ~29% inferior
-- Título en beige, puntuación con icono estrella
+- Título en claro, puntuación con icono estrella
 - Border-radius 10px
 
 ### Secciones Curadas
-- Título en `#343635`, 25px SemiBold
+- Título en `#111827`, 25px SemiBold
 - 4 thumbnails en fila horizontal con scroll
 - Secciones: "Ultimos Juegos", "Mas Jugados", "Mejor Valorados"
 
 ### Ranking
-- Cards verdes sólidos (`bg-arcade-green`, `#77b8a6`) con header rojo (`#d90057`)
+- Cards oscuras (`bg-card`) con shadow suave
 - Layout:
   - Fila 1: Ayer (1/3) | Podio (1/3) | Semana (1/3)
   - Fila 2: Mes (doble, 2 columnas de 3 entries) | Año (doble)
-- Entries: avatar/trofeo circular (size-11 sm:size-12), nombre en beige, score en rojo + estrella amarilla
+- Entries: avatar/trofeo circular (size-11 sm:size-12), nombre en foreground, score con estrella amarilla
 - Períodos: Ayer, Semana (3 entries), Mes, Año (6 entries en 2 columnas)
 - Podio: top 3 global con trofeos oro/plata/bronce, mismo formato visual que las ranking cards
 - Sombras suaves en cards: `shadow-[0_2px_8px_rgba(0,0,0,0.07)]`
 
 ### Footer
-- Fondo: `#d90057` (rojo neón), altura 241px
+- Fondo: `#8b5cf6` (púrpura), altura 241px
 - Logo centrado (274×142px)
-- Dos columnas de links en beige (`#ffe2ba`)
+- Dos columnas de links en blanco (`#ffffff`)
 - Columna izquierda: MakeCode Arcade, Agregar juegos, Categorías
 - Columna derecha: Iniciar Sesión, Sobre ArcadePlay, Términos y Condiciones
 
 ## Dirección visual
 
-- **Inspiración**: Arcade retro / neón sobre fondos oscuros, versión web limpia
-- **Tono**: Juguetón pero no infantil. Colores vibrantes con intención
-- **Diferenciación**: Paleta rojo-verde-beige distintiva, lejos del diseño neutral genérico
+- **Inspiración**: Arcade retro / neón sobre fondos oscuros, versión web limpia con paleta púrpura moderna
+- **Tono**: Juguetón pero no infantil. Púrpura vibrante con acentos esmeralda
+- **Diferenciación**: Paleta púrpura-esmeralda distintiva, lejos del diseño neutral genérico
+- **Modo oscuro**: Fondo muy oscuro (`#0a0a0f`) con cards púrpura profundo (`#16162a`)
+- **Modo claro**: Fondo blanco con acentos púrpura y bordes gris claro
 - **Responsive**: Adaptación de 1440px (desktop) hasta 375px (mobile)
 
 Ver el plan de implementación completo en `docs/raw/plans/2026-07-13-figma-adaptation.md`.

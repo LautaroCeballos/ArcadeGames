@@ -3,6 +3,11 @@ title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
 last_updated: "2026-07-26"
 sources:
+  - components/PlatformBadge.tsx
+  - components/CategoryExplorer.tsx
+  - components/CategoryRecentSection.tsx
+  - lib/tag-colors.ts
+  - app/(public)/page.tsx
   - lib/actions/ranking.ts
   - docs/raw/plans/2026-07-25-fix-ranking-system.md
   - supabase/migrations/00023_favorites.sql
@@ -34,6 +39,44 @@ sources:
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-26] update | header-light-background-shadow
+
+- **Header ahora usa `bg-background border-b shadow-sm`** en vez de `bg-arcade-red`. En light mode: blanco con sombra tenue. En dark mode: `#0a0a0f` con borde sutil.
+- **NavbarClient.tsx**: reemplazo masivo de todas las referencias a colores arcade (`text-arcade-beige` → `text-foreground`, `bg-arcade-dark` → `bg-card`, `hover:bg-arcade-red/X` → `hover:bg-accent/X`, `border-arcade-beige/X` → `border-border`, `bg-arcade-beige/X` → `bg-muted`). 0 referencias arcade restantes.
+- **RankingSection**: círculos de posición cambiados de `bg-muted` (invisible en dark mode) a `bg-primary/10`.
+- **PodiumCard**: `text-arcade-dark` → `text-foreground`, `hover:text-arcade-red` → `hover:text-primary`.
+- **Notificaciones page**: `text-arcade-dark` → `text-foreground`, `bg-arcade-red/5` → `bg-primary/5`.
+- **ThemeToggle**: `text-arcade-beige` → `text-foreground`, `hover:bg-arcade-red/20` → `hover:bg-accent`.
+- Build: 0 errores.
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+- **Theme toggle**: nuevo botón Sol/Luna en el header (desktop + mobile). Usa `localStorage` para persistir preferencia.
+- **FOUC prevenido**: script inline en `layout.tsx` que aplica `.dark` al `<html>` antes del primer paint (lee `localStorage` + fallback a `prefers-color-scheme`).
+- **Componentes nuevos**: `components/ThemeToggle.tsx` — client component con `useState` + `useEffect` para hidratación segura. Iconos `Moon`/`Sun` de lucide-react. Placeholder `h-8 w-8` mientras no está mounted.
+- **NavbarClient**: botón agregado entre Upload y Notificaciones (desktop) y en menú mobile (antes de Cerrar sesión).
+- **layout.tsx**: `suppressHydrationWarning` en `<html>`, script anti-FOUC en `<head>`.
+- Paleta dark mode: `--background: #0a0a0f`, `--card: #16162a`, `--foreground: #f0f0f0`, bordes `#2a2a4a`.
+- Build: 0 errores.
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+- **Paleta de colores cambiada**: rojo → púrpura (`#8b5cf6`), verde → esmeralda (`#34d399`), beige → blanco (`#ffffff` light / `#f0f0f0` dark).
+- **Solo `app/globals.css` modificado** (variables CSS en `:root` + `.dark`). Cero cambios en componentes `.tsx`: todos usan `bg-arcade-red`, `text-arcade-beige`, etc. que referencian las variables.
+- **Light mode**: fondo blanco, texto `#111827`, primario púrpura, acentos `#ede9fe`.
+- **Dark mode**: fondo `#0a0a0f` (azul/púrpura muy oscuro), cards `#16162a`, texto `#f0f0f0`. Fix de bug: `--arcade-dark` en dark mode cambiado de `#343635` (ilegible) a `#f0f0f0`.
+- **Wiki**: [[frontend/design-tokens]] actualizada con nueva paleta y mapeo shadcn light/dark.
+- Build: 0 errores.
+- Páginas actualizadas: [[frontend/design-tokens]], [[log]]
+
+## [2026-07-26] update | categorias-plataforma-svg-logo-explorer
+- **CategoryExplorer**: ahora usa `getAllTags()` (incluye MakeCode Arcade + Scratch al inicio). Las tarjetas de plataforma renderizan los logos SVG oficiales (`MakeCodeLogo`, `ScratchLogo`) en vez de Lucide icons. Fondo del icono atenuado (10% opacity) para mezclarse con otras categorías.
+- **PlatformBadge**: `MakeCodeLogo` cambiado a `fill="currentColor"` para heredar color del contexto. `ScratchLogo` conserva colores hardcodeados (`#fff`, `#F9A83A`, `#fff`) para mantener el logo multi-color. Span agrega `text-white` para que ambos SVGs se vean blancos sobre fondo sólido.
+- **`lib/tag-colors.ts`**: MakeCode Arcade → `#F76820` (naranja oficial), Scratch → `#F9A83A` (naranja Scratch). Ambos con `bg` al 10%.
+- **`app/(public)/page.tsx`**: `CategoryRecentWrapper` usa `getAllTags()` y ordena (MakeCode Arcade primero, Scratch segundo, resto alfabético).
+- **Botones Ver más/Mostrar menos**: misma estructura visual que `CategoryCard` (misma altura, padding, icon circle). El botón cuenta como un ítem del grid → 8 categorías + 1 botón = 9 visibles.
+- **`CategoryRecentSection`**: `onShowAll` ahora alterna (toggle) para que "Mostrar menos" funcione.
+- Build: 0 errores.
+- Páginas actualizadas: [[frontend/components]], [[log]]
 
 ## [2026-07-25] fix | realtime-channel-static-name-strict-mode
 - **Bug**: Error `cannot add postgres_changes callbacks for realtime:notificaciones-page after subscribe()` en desarrollo con React Strict Mode.
@@ -524,6 +567,19 @@ sources:
 - `docs/wiki/features/banner.md`: documentación actualizada al nuevo layout.
 - Páginas actualizadas: [[features/banner]], [[log]]
 
+## [2026-07-26] update | wiki-layout-estrellas-vistas-novedades-trackview
+- Páginas actualizadas: [[frontend/components]], [[log]]
+- **[[frontend/components]]**: FeaturedSection y GameCard: overlay cambia a `flex flex-col justify-center`, estrellas en fila título (`★` derecha), visitas en fila autor (`👁` derecha). RecentProjectsSection: mismo layout con estrellas en título + visitas en autor, `getRecentGames` ahora fetcha `views` y cuenta estrellas reales. TrackView agregado (componente invisible para incrementar visitas). `incrementGameView` agregado en server actions. `/juego/[id]` ahora usa TrackView.
+
+## [2026-07-26] update | podio-escalonado-superpuesto-colores-metal
+- **Páginas actualizadas**: [[frontend/components]], [[log]]
+- **[[frontend/components]]**: PodiumCard actualizado — layout pasa de `grid grid-cols-3` a `flex justify-center items-end` con `flex-1` por columna. Superposición ligera con márgenes negativos (`mx-[-10px] sm:mx-[-16px]`). 1° lugar con `z-10` por encima. Efecto escalón: spacers en 2° (`h-8 sm:h-10`) y 3° (`h-14 sm:h-20`). Progresión de tamaño (padding, trofeo, texto decreciente). Badges cambian de `bg-arcade-red`/`bg-muted-foreground/60` a colores sólidos: 1° `bg-amber-400`, 2° `bg-gray-400`, 3° `bg-orange-500`. Nombre de usuario pasa de `<p>` a `<Link href="/perfil/{username}">` con hover `text-arcade-red`.
+
+## [2026-07-26] update | wiki-tarjetas-normalizadas-tag-burbuja-estrellas-visitas
+- Páginas actualizadas: [[frontend/components]], [[features/games]], [[log]]
+- **[[frontend/components]]**: FeaturedSection registra tag bubble top-right + estrellas+visitas en overlay; GameCard tag movido a burbuja flotante sobre imagen con estrellas+visitas en overlay
+- **[[features/games]]**: Búsqueda actualizada: `getGameList` siempre cuenta estrellas; referencia a `lib/queries/games.ts`
+
 ## [2026-07-26] update | wiki-tags-slugs-home-preview-buscar-browse
 - Páginas actualizadas: [[frontend/components]], [[features/games]], [[architecture/routes]], [[log]]
 - **[[frontend/components]]**: CategoryExplorer href `/buscar?tag=<slug>`; TagFilter slugs + `keepBrowseMode()`; SortSelect bug documentado; rutas `/` y `/buscar` actualizadas (home sin TagFilter/Sort, buscar con browse mode + slug resolution)
@@ -536,6 +592,58 @@ sources:
 - **FeaturedCard**: estrellas movidas a la derecha (flex row con `justify-between`), autor agregado debajo del título
 - **"Ver todos"** en Juegos Destacados → `/buscar?sort=rated` y en Novedades → `/buscar?sort=recent`
 - Build: 0 errores
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-26] implement | favoritos-unificado-filtro-perfil
+- **Unificación**: "Favoritos" movido de pestaña superior a filtro en barra de "Juegos" del dueño.
+- **ProfileTabs**: nuevo `GameFilter "favoritos"`, label "Favoritos", botón en sub-filtros (solo si hay favoritos). Al seleccionar, renderiza `favoritedGames` con `ProfileGameCard` en modo vista.
+- **ProfileGameCard**: nuevo prop `showAuthor` — cuando está activo, muestra "por @username" en la metadata (usado en favoritos para indicar el desarrollador del juego).
+- **Labels**: "Todos los Juegos" renombrado a "Todos mis Juegos".
+- Páginas actualizadas: [[frontend/components]], [[features/games]], [[log]]
+
+## [2026-07-26] add | platform-badge-logos-gamecard
+- **`components/PlatformBadge.tsx`**: nuevo componente. Renderiza una burbuja flotante en la esquina **top-left** de la miniatura con el logo oficial SVG de la plataforma. MakeCode usa su logo azul (`#59C7EB`), Scratch usa su logo naranja (`#F9A83A`). Los SVGs se integraron inline desde las fuentes oficiales.
+- **GameCard**: ahora muestra dos burbujas — `PlatformBadge` en top-left + categoría coloreada en top-right.
+- **FeaturedSection**: misma estructura — `PlatformBadge` en top-left + categoría coloreada en top-right.
+- **`FeaturedGameData`**: se agregó el campo `platform: "makecode" | "scratch"`.
+- **`getFeaturedGames()`**: ahora selecciona `platform` desde la BD y lo incluye en el retorno (tanto en el path de estrellas como en el fallback de más vistos).
+- Build compila sin errores.
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-26] fix | categorias-colores-iconos
+- **`lib/tag-icons.ts`**: Scratch ahora usa `Cat` (antes usaba `Puzzle`, que entraba en conflicto con la categoría Puzzle). Se agregaron íconos para las categorías faltantes: `Sword` (RPG), `Cpu` (Simulación), `Music` (Música), `Ghost` (Terror), `Shield` (Supervivencia), `BookOpen` (Educativo), `Map` (Laberinto), `Palette` (Creativo).
+- **`lib/tag-colors.ts`**: Nuevo archivo. Mapea cada tag (plataforma y categoría) a un color único con valores `bg`, `icon`, `badge` y `badgeBorder`. 18 colores distintos (uno por categoría + 2 plataformas).
+- **CategoryExplorer**: el círculo del icono ahora usa `style` con el color de la categoría (`bg` 10% + `icon` sólido) en vez de `bg-primary/10 text-primary`.
+- **Badges en `/juego/[id]`**: todos los badges (plataforma y categoría) ahora usan `style` con el color de la categoría (`badge` como fondo, `#fff` texto, `badgeBorder` como borde). Se eliminó la lógica `isPlatform` que daba tratamiento diferente.
+- **GameCard / FeaturedCard**: el tag bubble flotante sobre la imagen ahora usa `backgroundColor` + `opacity: 0.92` del color de la categoría, en vez de `bg-black/50 backdrop-blur-sm`.
+- **TagFilter en `/buscar`**: los botones de filtro activos se colorean con `backgroundColor` + `borderColor` del tag correspondiente.
+- Build compila sin errores.
+- Páginas actualizadas: [[frontend/components]] (para actualizar), [[log]]
+
+## [2026-07-26] fix | gamecard-featuredcard-no-overlay
+- **GameCard**: el panel de título/autor/estrellas/visitas ahora está **debajo** de la imagen, no superpuesto. Usa `aspect-video` para la imagen y un panel separado abajo con fondo `bg-[rgba(52,54,53,0.96)]`.
+- **FeaturedCard** (Juegos Destacados): misma refactorización — imagen en `aspect-video` + panel debajo.
+- **Estrellas amarillas**: todas las estrellas en GameCard, FeaturedCard y RecentProjectCard ahora usan `fill-yellow-400 text-yellow-400`.
+- **Novedades**: también actualizado con estrellas amarillas.
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-26] implement | rating-favorites-views-unified-row
+- **Rating**: botón unificado `(⭐) N` — siempre muestra el contador. Sin texto "Dar estrella"/"Estrella dada" separado.
+- **FavoriteButton**: refactor a `useState` + optimistic update (mismo patrón que Rating). Muestra `(♥) N` con contador de favoritos.
+- **getGameById**: ahora retorna `favorites_count` (cantidad total de favoritos del juego, `lib/actions/games.ts:377`).
+- **buildProjectUrl()**: nueva utilidad en `lib/game-utils.ts` — construye la URL del proyecto original (MakeCode editor o Scratch project page).
+- Página `/juego/[id]`: fila horizontal unificada `[⭐ N] [♥ N] [👁 N] [🔗 Abrir Proyecto]`. Columna derecha centrada verticalmente con `lg:self-center`.
+- Páginas actualizadas: [[features/games]], [[frontend/components]], [[log]]
+
+## [2026-07-26] implement | mas-juegos-del-desarrollador
+- **`getGamesByAuthor()`** en `lib/queries/games.ts` — query que retorna juegos aprobados+visibles de un autor (excluyendo el actual), con tags, views, y perfil para renderizar con `GameCard`.
+- Página `/juego/[id]`: nueva sección "Más juegos de [username]" debajo del embed+metadata con grid responsivo de `GameCard` (2 cols mobile, 4 cols desktop).
+- Paginas actualizadas: [[features/games]], [[log]]
+
+## [2026-07-26] update | profile-gamecard-layout-restructure
+- **ProfileGameCard**: contenido rediseñado a grid 2 columnas. Izquierda: título + badge (fila 1), botones de acción (fila 2). Derecha: descripción + metadata (`row-span-2`). Sin gap entre filas.
+- `showAuthor` ahora renderiza el username como `<Link href="/perfil/{username}">` con hover `text-arcade-red`.
+- Nuevo prop `hideBadge` para ocultar badge de estado (usado en favoritos).
 - Páginas actualizadas: [[frontend/components]], [[log]]
 
 ## [2026-07-26] implement | category-explorer-ver-mas-shared-expansion

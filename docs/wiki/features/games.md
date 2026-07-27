@@ -9,6 +9,8 @@ sources:
   - docs/raw/plans/2026-07-25-rating-to-star-toggle.md
   - docs/raw/plans/2026-07-25-fix-ranking-system.md
   - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
+  - docs/raw/plans/2026-07-26-unificar-favoritos-en-perfil.md
+  - docs/raw/plans/2026-07-26-mas-juegos-del-desarrollador.md
   - supabase/migrations/00010_moderator_role.sql
   - supabase/migrations/00022_ratings_star_toggle.sql
   - lib/actions/games.ts
@@ -16,7 +18,12 @@ sources:
   - lib/actions/ranking.ts
   - lib/tag-utils.ts
   - lib/queries/games.ts
+  - lib/definitions.ts
+  - lib/game-utils.ts
   - components/Rating.tsx
+  - components/FavoriteButton.tsx
+  - components/FeaturedSection.tsx
+  - components/GameCard.tsx
 ---
 
 # ArcadePlay — Sistema de Juegos
@@ -115,7 +122,8 @@ La página del juego (`app/(public)/juego/[id]/page.tsx`) tiene dos columnas en 
   - **MakeCode**: dos tabs — **Juego** (default, embed `---run?id=`) y **Editor** (embed `#pub:` con sandbox)
   - **Scratch**: un solo tab — **Juego** con el embed de Scratch (`scratch.mit.edu/projects/{id}/embed`)
   - Los tabs aparecen **debajo** del embed. El activo tiene indicador rojo (`bg-arcade-red`).
-- **Derecha**: metadata (título, autor, badges, descripción, rating + FavoriteButton oculto si el usuario es el dueño del juego, juegos relacionados)
+- **Derecha** (`lg:self-center`): columna centrada verticalmente con contenido a la izquierda. Incluye título, autor (link a `/perfil/{username}`), badges, descripción, fila unificada de [⭐ N] [♥ N] [👁 N] [🔗 Abrir Proyecto], y juegos relacionados. `Rating` y `FavoriteButton` son botones toggle con contador; el botón "Abrir Proyecto" abre el editor de MakeCode (`https://makecode.com/{id}`) o la página del proyecto Scratch en nueva pestaña. `FavoriteButton` oculto si el usuario es el dueño del juego.
+- **Debajo del grid**: sección "Más juegos de [username]" con grid de `GameCard` (hasta 4 juegos del mismo desarrollador). Usa `getGamesByAuthor()` en `lib/queries/games.ts`. Solo visible si el autor tiene más juegos aprobados. Header con link "Ver más →" al perfil.
 
 Ver [[frontend/components#GameTabs]] para detalles del componente.
 
@@ -126,7 +134,7 @@ Reemplaza al antiguo dashboard. La ruta `/dashboard` ahora redirige a `/perfil/{
 El perfil propio incluye gestión completa de juegos:
 
 - **Header**: avatar, username, bio, website, stats bar (estrellas totales, cantidad de juegos, seguidores, siguiendo)
-- **Tabs**: "Juegos" (grid de `ProfileGameCard`), "Logros" (grid de badges ganados), y "Favoritos" (solo dueño, si tiene juegos favoritos)
+- **Tabs**: "Juegos" (grid de `ProfileGameCard` con sub-filtros: Todos mis Juegos, Publicados, En moderación, Rechazados, Borradores, Favoritos) y "Logros" (grid de badges ganados). "Favoritos" unificado como filtro dentro de Juegos (sin pestaña separada).
 - **ProfileGameCard**: cada juego con thumbnail, badge de estado, métricas (vistas, rating), y acciones:
   - **Editar**: redirige a `/editar/[id]`
   - **Ocultar/Mostrar**: toggle vía `ToggleVisibilityButton`
@@ -167,11 +175,12 @@ Formulario pre-cargado con los datos actuales del juego:
 
 Implementada con ILIKE sobre `title` + filtro por tags:
 
-- `lib/actions/games.ts` — `getGames({ search, tagIds?, page, limit })`
+- `lib/queries/games.ts` — `getGameList({ search, tagIds?, sort?, page?, limit? })` (read queries separadas de mutations)
 - Filtro por tags: acepta array de tag IDs (incluye platform tags)
 - Paginación via LIMIT/OFFSET
-- Orden por `created_at DESC` por defecto
+- Orden por `created_at DESC`, `views DESC` o por estrellas
 - Tags en URLs: se usan **slugs** en vez de UUIDs (`?tag=accion` en lugar de `?tag=<uuid>`). La resolución slug→ID ocurre en `BrowseGameList` vía `resolveTagSlug()` en `lib/queries/games.ts`.
+- `getGameList` siempre cuenta estrellas para cada juego devuelto (no solo con sort=rated), para que todas las cards muestren el contador de estrellas consistente.
 
 ## Rating (sistema de estrella única toggle)
 
@@ -184,18 +193,20 @@ Implementada con ILIKE sobre `title` + filtro por tags:
 - **Notificaciones**: solo se disparan cuando se AGREGA una estrella (no al quitarla).
 - **Badges**: `checkAndAwardBadges` se ejecuta tanto para el dueño del juego como para el votante al agregar estrella.
 
-### Estados del botón
+### Estados del botón (unificado con contador)
+
+El botón siempre muestra `(⭐) N` donde N es la cantidad de estrellas actual:
 
 | Estado | Apariencia | Comportamiento |
 |--------|-----------|----------------|
-| Sin estrella | Borde gris, icono Star sin relleno, texto "Dar estrella" | Al clic: optimistic add + server INSERT |
-| Con estrella | Borde amarillo, fondo amarillo claro, Star rellena, texto "Estrella dada" | Al clic: optimistic remove + server DELETE |
+| Sin estrella | Borde gris, icono Star sin relleno, texto con contador | Al clic: optimistic add + server INSERT |
+| Con estrella | Borde amarillo, fondo amarillo claro, Star rellena amarilla, texto con contador | Al clic: optimistic remove + server DELETE |
 | Cargando | Opacidad reducida, pointer-events none | No responde a clics |
 | No autenticado | Opacidad reducida, cursor not-allowed | No responde a clics (botón deshabilitado) |
 
 ### Componentes
 
-- `components/Rating.tsx` — Client Component "use client", recibe `gameId`, `starsCount` (número de estrellas actual), `hasStarred` (booleano o null si no autenticado).
+- `components/Rating.tsx` — Client Component "use client", recibe `gameId`, `starsCount` (número de estrellas actual), `hasStarred` (booleano o null si no autenticado). Muestra botón unificado `(⭐) N`.
 - `lib/actions/ratings.ts` — Server action `toggleStar()`.
 
 ### Migración
