@@ -118,7 +118,7 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
       </div>
 
       {slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Navegación de slides">
+        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Navegación de slides">
           {slides.map((s, i) => (
             <button
               key={s.id}
@@ -258,7 +258,7 @@ function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
         {hasContent && (
           <Link
             {...linkProps}
-            className="absolute inset-0 z-10 md:hidden"
+            className="absolute inset-0 md:hidden"
             aria-label={slide.title || slide.ctaText}
           />
         )}
