@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { slugifyTagName } from "@/lib/tag-utils"
+import { getTagColor } from "@/lib/tag-colors"
 import type { Tag } from "@/lib/definitions"
 
 interface TagFilterProps {
@@ -57,16 +58,17 @@ export function TagFilter({ tags }: TagFilterProps) {
       </button>
       {tags.map((tag) => {
         const slug = slugifyTagName(tag.name)
+        const tc = getTagColor(tag.name)
+        const isActive = activeSlug === slug
         return (
           <button
             key={tag.id}
             type="button"
             className={cn(
               "px-3 py-1 text-sm rounded-full border transition-colors",
-              activeSlug === slug
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background hover:bg-accent"
+              isActive ? "text-white" : "bg-background hover:bg-accent"
             )}
+            style={isActive ? { backgroundColor: tc.badge, borderColor: tc.badge } : {}}
             onClick={() => handleClick(tag)}
           >
             {tag.name}

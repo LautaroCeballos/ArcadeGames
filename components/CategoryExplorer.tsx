@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { useRef } from "react"
-import { Plus } from "lucide-react"
+import { Minus, Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getTagIcon } from "@/lib/tag-icons"
+import { getTagColor } from "@/lib/tag-colors"
 import { slugifyTagName } from "@/lib/tag-utils"
+import { MakeCodeLogo, ScratchLogo } from "@/components/PlatformBadge"
 import type { Tag } from "@/lib/definitions"
 
 /* ─── CategoryCard (inline) ──────────────────────────────── */
@@ -15,15 +17,31 @@ interface CategoryCardProps {
 }
 
 function CategoryCard({ tag }: CategoryCardProps) {
-  const Icon = getTagIcon(tag.name)
+  const color = getTagColor(tag.name)
+  const isMakeCode = tag.name === "MakeCode Arcade"
+  const isScratch = tag.name === "Scratch"
+
+  const iconContent = isMakeCode ? (
+    <MakeCodeLogo className="h-5 w-5" />
+  ) : isScratch ? (
+    <ScratchLogo className="h-5 w-5" />
+  ) : (
+    (() => {
+      const Icon = getTagIcon(tag.name)
+      return <Icon className="h-5 w-5" />
+    })()
+  )
 
   return (
     <Link
       href={`/buscar?tag=${slugifyTagName(tag.name)}`}
       className="flex items-center gap-3 rounded-[10px] border bg-card px-4 py-3 transition-colors hover:bg-accent hover:text-accent-foreground"
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
+      <div
+        className="flex h-9 w-9 items-center justify-center rounded-[8px]"
+        style={{ backgroundColor: color.bg, color: color.icon }}
+      >
+        {iconContent}
       </div>
       <span className="text-sm font-medium">{tag.name}</span>
     </Link>
@@ -43,6 +61,24 @@ function ShowAllButton({ onClick }: { onClick: () => void }) {
       </div>
       <span className="text-sm font-medium text-muted-foreground">
         Ver más
+      </span>
+    </button>
+  )
+}
+
+/* ─── "Mostrar menos" button ──────────────────────────────── */
+
+function ShowLessButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-[10px] border border-dashed border-muted-foreground/30 bg-card px-4 py-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+    >
+      <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-muted text-muted-foreground">
+        <Minus className="h-5 w-5" />
+      </div>
+      <span className="text-sm font-medium text-muted-foreground">
+        Mostrar menos
       </span>
     </button>
   )
@@ -74,6 +110,10 @@ export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerP
     })
   }
 
+  function handleShowLess() {
+    onShowAll()
+  }
+
   return (
     <section ref={sectionRef}>
       <h2 className="mb-4 text-[25px] font-semibold text-arcade-dark">
@@ -84,6 +124,7 @@ export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerP
           <CategoryCard key={tag.id} tag={tag} />
         ))}
         {!showAll && hasMore && <ShowAllButton onClick={handleShowAll} />}
+        {showAll && <ShowLessButton onClick={handleShowLess} />}
       </div>
     </section>
   )
