@@ -154,10 +154,9 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
           alt=""
           key={`fi-${slide.id}-${isActive ? "a" : "i"}`}
           className={cn(
-            "absolute inset-0 h-full w-full object-cover",
-            isActive && "animate-ken-burns",
+            "absolute inset-0 h-full w-full object-cover animate-ken-burns",
           )}
-          style={isActive ? { animationDuration: `${dur}s` } : undefined}
+          style={isActive ? { animationDuration: `${dur}s`, animationPlayState: "running" as const } : { animationPlayState: "paused" as const }}
         />
       ) : (
         <div className="absolute inset-0 opacity-10">
