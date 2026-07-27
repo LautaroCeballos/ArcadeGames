@@ -4,65 +4,65 @@
 
 :root {
   /* ── Arcade brand colors ── */
-  --arcade-red: #d90057;
-  --arcade-green: #77b8a6;
-  --arcade-beige: #ffe2ba;
-  --arcade-dark: #343635;
+  --arcade-red: #6b4dff;
+  --arcade-green: #34d399;
+  --arcade-beige: #ffffff;
+  --arcade-dark: #111827;
 
-  /* ── shadcn/ui light theme — arcade palette ── */
+  /* ── shadcn/ui light theme — indigo-violet palette ── */
   --background: #ffffff;
-  --foreground: #343635;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-foreground: #343635;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #343635;
-  --primary: #d90057;
-  --primary-foreground: #ffe2ba;
-  --secondary: #77b8a6;
-  --secondary-foreground: #ffffff;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #77b8a6;
-  --accent-foreground: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #6b4dff;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #ede9fe;
+  --accent-foreground: #6b4dff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #d90057;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #6b4dff;
   --radius: 0.625rem;
 }
 
 .dark {
-  /* ── Arcade brand colors (kept consistent) ── */
-  --arcade-red: #d90057;
-  --arcade-green: #77b8a6;
-  --arcade-beige: #ffe2ba;
-  --arcade-dark: #343635;
+  /* ── Arcade brand colors ── */
+  --arcade-red: #6b4dff;
+  --arcade-green: #34d399;
+  --arcade-beige: #f0f0f0;
+  --arcade-dark: #f0f0f0;
 
   /* ── shadcn/ui dark theme ── */
-  --background: #1a1a1a;
-  --foreground: #ffe2ba;
-  --card: #2a2a2a;
-  --card-foreground: #ffe2ba;
-  --popover: #2a2a2a;
-  --popover-foreground: #ffe2ba;
-  --primary: #d90057;
-  --primary-foreground: #ffe2ba;
-  --secondary: #2a2a2a;
-  --secondary-foreground: #77b8a6;
-  --muted: #2a2a2a;
-  --muted-foreground: #a0a0a0;
-  --accent: #d90057;
-  --accent-foreground: #ffe2ba;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #ffe2ba;
-  --border: #333333;
-  --input: #333333;
-  --ring: #d90057;
+  --background: #0a0a0f;
+  --foreground: #f0f0f0;
+  --card: #16162a;
+  --card-foreground: #f0f0f0;
+  --popover: #16162a;
+  --popover-foreground: #f0f0f0;
+  --primary: #6b4dff;
+  --primary-foreground: #ffffff;
+  --secondary: #16162a;
+  --secondary-foreground: #a78bfa;
+  --muted: #16162a;
+  --muted-foreground: #a0a0b0;
+  --accent: #6b4dff;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a4a;
+  --input: #2a2a4a;
+  --ring: #6b4dff;
 }
 
 @theme inline {
-  /* ── Arcade brand tokens (usable as text-arcade-red, bg-arcade-green, etc.) ── */
+  /* ── Arcade brand tokens (usable as text-arcade-red → purple, bg-arcade-green → emerald, etc.) ── */
   --color-arcade-red: var(--arcade-red);
   --color-arcade-green: var(--arcade-green);
   --color-arcade-beige: var(--arcade-beige);
@@ -91,6 +91,12 @@
   --radius: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@layer utilities {
+  .bg-primary {
+    background: linear-gradient(90deg, #4b7bff 0%, #6b4dff 55%, #a64dff 100%);
+  }
 }
 
 @layer base {
