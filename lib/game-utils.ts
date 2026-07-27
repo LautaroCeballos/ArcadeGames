@@ -121,8 +121,20 @@ export function isValidScratchUrl(url: string): boolean {
 }
 
 /**
+ * Builds the original project URL to open in a new tab.
+ * For MakeCode: opens the editor with the project loaded.
+ * For Scratch: opens the project page.
+ */
+export function buildProjectUrl(gameId: string, platform: "makecode" | "scratch"): string {
+  if (platform === "scratch") {
+    const numericId = gameId.replace("scratch_", "")
+    return `https://scratch.mit.edu/projects/${numericId}`
+  }
+  return `https://makecode.com/${gameId}`
+}
+
+/**
  * Detects the game platform from a URL.
- * Returns 'makecode', 'scratch', or null if unrecognized.
  */
 export function extractGamePlatform(url: string): 'makecode' | 'scratch' | null {
   if (isValidMakeCodeUrl(url)) return 'makecode'

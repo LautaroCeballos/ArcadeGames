@@ -360,6 +360,12 @@ export async function getGameById(id: string) {
     ? ratingsData.length
     : null
 
+  // Count favorites
+  const { count: favoritesCount } = await supabase
+    .from("favorites")
+    .select("game_id", { count: "exact", head: true })
+    .eq("game_id", id)
+
   const { data: { user } } = await supabase.auth.getUser()
   let hasStarred: boolean | null = null
 
@@ -372,6 +378,7 @@ export async function getGameById(id: string) {
     tags: tags?.map((t: { tags: unknown }) => t.tags) ?? [],
     stars_count: starsCount,
     has_starred: hasStarred,
+    favorites_count: favoritesCount ?? 0,
   } as unknown as GameWithDetails
 }
 

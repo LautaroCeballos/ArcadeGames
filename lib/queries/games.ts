@@ -23,7 +23,7 @@ export async function getFeaturedGames(limit = 4): Promise<FeaturedGameData[]> {
   // 1. Get approved + visible games
   const { data: games } = await supabase
     .from("games")
-    .select("id, title, thumbnail_url, profiles!games_user_id_fkey(username)")
+    .select("id, title, thumbnail_url, views, platform, profiles!games_user_id_fkey(username)")
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
@@ -52,6 +52,8 @@ export async function getFeaturedGames(limit = 4): Promise<FeaturedGameData[]> {
         id: g.id as string,
         title: g.title as string,
         thumbnail_url: (g.thumbnail_url as string) ?? null,
+        platform: (g.platform as "makecode" | "scratch") ?? "makecode",
+        views: (g.views as number) ?? 0,
         author: profileData?.username ?? null,
         stars_count: starCounts.get(g.id as string) ?? null,
       }
@@ -61,36 +63,50 @@ export async function getFeaturedGames(limit = 4): Promise<FeaturedGameData[]> {
   // 4. Filter to only games with stars, pad with most viewed if needed
   const starred = withStars.filter((g) => g.stars_count !== null && g.stars_count > 0)
 
+  let final: typeof withStars
   if (starred.length >= limit) {
-    return starred.slice(0, limit)
+    final = starred.slice(0, limit)
+  } else {
+    // Fallback: fill remaining with most viewed
+    const remaining = limit - starred.length
+    const { data: mostViewed } = await supabase
+      .from("games")
+      .select("id, title, thumbnail_url, views, platform, profiles!games_user_id_fkey(username)")
+      .eq("status", "approved")
+      .eq("hidden", false)
+      .order("views", { ascending: false })
+      .limit(remaining + starred.length)
+
+    const starredIds = new Set(starred.map((g) => g.id))
+    const fallback = (mostViewed ?? [])
+      .filter((g) => !starredIds.has(g.id))
+      .slice(0, remaining)
+      .map((g: Record<string, unknown>) => {
+        const profileData = g.profiles as { username?: string } | null
+        return {
+          id: g.id as string,
+          title: g.title as string,
+          thumbnail_url: (g.thumbnail_url as string) ?? null,
+          platform: (g.platform as "makecode" | "scratch") ?? "makecode",
+          views: (g.views as number) ?? 0,
+          author: profileData?.username ?? null,
+          stars_count: null,
+        }
+      })
+
+    final = [...starred, ...fallback]
   }
 
-  // Fallback: fill remaining with most viewed
-  const remaining = limit - starred.length
-  const { data: mostViewed } = await supabase
-    .from("games")
-    .select("id, title, thumbnail_url, profiles!games_user_id_fkey(username)")
-    .eq("status", "approved")
-    .eq("hidden", false)
-    .order("views", { ascending: false })
-    .limit(remaining + starred.length)
+  // 6. Fetch tags for the selected games
+  const tagsMap = await fetchTagsForGames(
+    final.map((g) => g.id),
+    supabase,
+  )
 
-  const starredIds = new Set(starred.map((g) => g.id))
-  const fallback = (mostViewed ?? [])
-    .filter((g) => !starredIds.has(g.id))
-    .slice(0, remaining)
-    .map((g: Record<string, unknown>) => {
-      const profileData = g.profiles as { username?: string } | null
-      return {
-        id: g.id as string,
-        title: g.title as string,
-        thumbnail_url: (g.thumbnail_url as string) ?? null,
-        author: profileData?.username ?? null,
-        stars_count: null,
-      }
-    })
-
-  return [...starred, ...fallback]
+  return final.map((g) => ({
+    ...g,
+    tags: tagsMap.get(g.id) ?? [],
+  }))
 }
 
 /* ─── Recent / new games ─────────────────────────────────── */
@@ -103,7 +119,7 @@ export async function getRecentGames(limit = 3): Promise<RecentGameData[]> {
 
   const { data } = await supabase
     .from("games")
-    .select("id, title, thumbnail_url, platform, profiles!games_user_id_fkey(username)")
+    .select("id, title, thumbnail_url, views, platform, profiles!games_user_id_fkey(username)")
     .eq("status", "approved")
     .eq("hidden", false)
     .order("created_at", { ascending: false })
@@ -111,14 +127,29 @@ export async function getRecentGames(limit = 3): Promise<RecentGameData[]> {
 
   if (!data) return []
 
+  const gameIds = data.map((g: { id: string }) => g.id)
+
+  // Count stars for these games
+  const { data: ratings } = await supabase
+    .from("ratings")
+    .select("game_id")
+    .in("game_id", gameIds)
+
+  const starCounts = new Map<string, number>()
+  for (const r of ratings ?? []) {
+    starCounts.set(r.game_id, (starCounts.get(r.game_id) ?? 0) + 1)
+  }
+
   return data.map((g: Record<string, unknown>) => {
     const profileData = g.profiles as { username?: string } | null
+    const id = g.id as string
     return {
-      id: g.id as string,
+      id,
       title: g.title as string,
       thumbnail_url: (g.thumbnail_url as string) ?? null,
       author: profileData?.username ?? null,
-      stars_count: null,
+      stars_count: starCounts.get(id) ?? null,
+      views: (g.views as number) ?? 0,
       platform: g.platform as "makecode" | "scratch",
     }
   })
@@ -216,8 +247,8 @@ export async function getGameList(options: GameListOptions = {}) {
     is_favorited: null as boolean | null,
   }))
 
-  // For "rated" sort, count stars and sort
-  if (sort === "rated" && result.length > 0) {
+  // Always count stars for every result
+  if (result.length > 0) {
     const gameIds = result.map((g) => g.id)
     const { data: ratings } = await supabase
       .from("ratings")
@@ -229,15 +260,180 @@ export async function getGameList(options: GameListOptions = {}) {
       starCounts.set(r.game_id, (starCounts.get(r.game_id) ?? 0) + 1)
     }
 
-    result = result
-      .map((g) => ({
-        ...g,
-        stars_count: starCounts.get(g.id) ?? null,
-      }))
-      .sort((a, b) => (b.stars_count ?? 0) - (a.stars_count ?? 0))
+    result = result.map((g) => ({
+      ...g,
+      stars_count: starCounts.get(g.id) ?? null,
+    }))
+
+    if (sort === "rated") {
+      result.sort((a, b) => (b.stars_count ?? 0) - (a.stars_count ?? 0))
+    }
   }
 
   return { games: result, total: count ?? 0 }
+}
+
+/* ─── Games by author (for detail page) ──────────────────── */
+
+/**
+ * Returns approved, visible games by a specific user, excluding a given game.
+ * Used in the "Más juegos de [username]" section on the game detail page.
+ * Returns data compatible with GameCard (tags, views, profiles).
+ */
+export async function getGamesByAuthor(
+  userId: string,
+  excludeGameId: string,
+  limit = 6,
+): Promise<
+  {
+    id: string
+    title: string
+    thumbnail_url: string | null
+    stars_count: number | null
+    views: number
+    tags: { id: string; name: string }[]
+    profiles: { username: string | null } | null
+  }[]
+> {
+  const supabase = await createClient()
+
+  const { data: games } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url, views, profiles!games_user_id_fkey(username)")
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .neq("id", excludeGameId)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  if (!games || games.length === 0) return []
+
+  const gameIds = games.map((g: { id: string }) => g.id)
+
+  // Count stars for these games
+  const { data: ratings } = await supabase
+    .from("ratings")
+    .select("game_id")
+    .in("game_id", gameIds)
+
+  const starCounts = new Map<string, number>()
+  for (const r of ratings ?? []) {
+    starCounts.set(r.game_id, (starCounts.get(r.game_id) ?? 0) + 1)
+  }
+
+  // Fetch tags per game
+  const tagsMap = new Map<string, { id: string; name: string }[]>()
+  const { data: gameTags } = await supabase
+    .from("game_tags")
+    .select("game_id, tags(id, name)")
+    .in("game_id", gameIds)
+
+  for (const gt of gameTags ?? []) {
+    const existing = tagsMap.get(gt.game_id) ?? []
+    existing.push((gt as unknown as { tags: { id: string; name: string } }).tags)
+    tagsMap.set(gt.game_id, existing)
+  }
+
+  return (games as Record<string, unknown>[]).map((g) => {
+    const profileData = g.profiles as { username?: string } | null
+    return {
+      id: g.id as string,
+      title: g.title as string,
+      thumbnail_url: (g.thumbnail_url as string) ?? null,
+      views: (g.views as number) ?? 0,
+      stars_count: starCounts.get(g.id as string) ?? null,
+      tags: tagsMap.get(g.id as string) ?? [],
+      profiles: profileData ? { username: profileData.username ?? null } : null,
+    }
+  })
+}
+
+/* ─── Related games (by tag, for detail page) ────────────── */
+
+/**
+ * Returns approved, visible games that share a given tag.
+ * Used in the "Juegos relacionados" section on the game detail page.
+ * Returns data compatible with GameCard (tags, views, profiles).
+ */
+export async function getRelatedGames(
+  tagId: string,
+  excludeGameId: string,
+  limit = 6,
+): Promise<
+  {
+    id: string
+    title: string
+    thumbnail_url: string | null
+    stars_count: number | null
+    views: number
+    tags: { id: string; name: string }[]
+    profiles: { username: string | null } | null
+  }[]
+> {
+  const supabase = await createClient()
+
+  // 1. Get game IDs that have this tag
+  const { data: gameTags } = await supabase
+    .from("game_tags")
+    .select("game_id")
+    .eq("tag_id", tagId)
+    .neq("game_id", excludeGameId)
+    .limit(limit)
+
+  if (!gameTags || gameTags.length === 0) return []
+
+  const gameIds = gameTags.map((gt) => gt.game_id)
+
+  // 2. Fetch only approved + visible games
+  const { data: games } = await supabase
+    .from("games")
+    .select("id, title, thumbnail_url, views, profiles!games_user_id_fkey(username)")
+    .in("id", gameIds)
+    .eq("status", "approved")
+    .eq("hidden", false)
+    .limit(limit)
+
+  if (!games || games.length === 0) return []
+
+  const filteredIds = games.map((g: { id: string }) => g.id)
+
+  // 3. Count stars
+  const { data: ratings } = await supabase
+    .from("ratings")
+    .select("game_id")
+    .in("game_id", filteredIds)
+
+  const starCounts = new Map<string, number>()
+  for (const r of ratings ?? []) {
+    starCounts.set(r.game_id, (starCounts.get(r.game_id) ?? 0) + 1)
+  }
+
+  // 4. Fetch tags per game
+  const tagsMap = new Map<string, { id: string; name: string }[]>()
+  const { data: gameTagsData } = await supabase
+    .from("game_tags")
+    .select("game_id, tags(id, name)")
+    .in("game_id", filteredIds)
+
+  for (const gt of gameTagsData ?? []) {
+    const existing = tagsMap.get(gt.game_id) ?? []
+    existing.push((gt as unknown as { tags: { id: string; name: string } }).tags)
+    tagsMap.set(gt.game_id, existing)
+  }
+
+  return (games as Record<string, unknown>[]).map((g) => {
+    const profileData = g.profiles as { username?: string } | null
+    return {
+      id: g.id as string,
+      title: g.title as string,
+      thumbnail_url: (g.thumbnail_url as string) ?? null,
+      views: (g.views as number) ?? 0,
+      stars_count: starCounts.get(g.id as string) ?? null,
+      tags: tagsMap.get(g.id as string) ?? [],
+      profiles: profileData ? { username: profileData.username ?? null } : null,
+    }
+  })
 }
 
 /* ─── Tags ───────────────────────────────────────────────── */

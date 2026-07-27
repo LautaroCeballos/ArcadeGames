@@ -147,6 +147,7 @@ export type GameWithDetails = Game & {
   stars_count: number | null
   has_starred: boolean | null
   is_favorited: boolean | null
+  favorites_count?: number
 }
 
 export interface Favorite {
@@ -202,8 +203,11 @@ export interface FeaturedGameData {
   id: string
   title: string
   thumbnail_url: string | null
+  platform: "makecode" | "scratch"
   author: string | null
   stars_count: number | null
+  views: number
+  tags: Tag[]
 }
 
 /** Data for recent project cards (3 mini cards), includes author & platform */
@@ -213,5 +217,6 @@ export interface RecentGameData {
   thumbnail_url: string | null
   author: string | null
   stars_count: number | null
+  views: number
   platform: "makecode" | "scratch"
 }
