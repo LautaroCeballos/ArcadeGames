@@ -19,7 +19,12 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
-## [2026-07-27] update | mobile-ux-profile-header-game-viewer-navbar
+## [2026-07-27] update | mobile-theme-toggle-header-sort-select
+- **ThemeToggle sincronizado**: las instancias mobile y desktop ahora comparten estado vía evento custom `themechange`. Al hacer toggle en una, la otra se actualiza automáticamente — sin desincronización al redimensionar
+- **ThemeToggle móvil siempre visible**: movido del interior del menú hamburguesa al header (`flex sm:hidden`), junto al botón de menú. Ya no se oculta dentro del menú
+- **SortSelect en /buscar**: título y dropdown de orden ahora comparten la misma fila en móvil (`flex items-center justify-between` en vez de `flex-col`)
+- Archivos modificados: `components/ThemeToggle.tsx`, `components/NavbarClient.tsx`, `app/(public)/buscar/page.tsx`
+- Páginas actualizadas: [[log]]
 - **ProfileHeader**: layout móvil lado a lado (avatar + nombre + bio + follow button en `flex-row` siempre, sin apilado vertical)
 - **ProfileStats**: grid 4 columnas en una sola fila en todos los tamaños (`grid-cols-4`). Cards responsivas: layout vertical compacto (icono + número lado a lado, label debajo) en móvil, horizontal (icono + número + label en fila) en desktop
 - **ProfileTabs**: filtros de estado en pills `flex-wrap` con `rounded-full` — sin scroll horizontal en móvil. Activo usa `bg-primary text-primary-foreground`
