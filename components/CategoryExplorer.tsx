@@ -1,12 +1,13 @@
 "use client"
 
+import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
-import { useRef } from "react"
-import { Minus, Plus, Grid3X3 } from "lucide-react"
+import { Grid3X3, ChevronDown, ChevronUp, Plus, Minus } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getTagIcon } from "@/lib/tag-icons"
-import { getTagColor } from "@/lib/tag-colors"
 import { slugifyTagName } from "@/lib/tag-utils"
+import { getTagColor } from "@/lib/tag-colors"
+import { getTagIcon } from "@/lib/tag-icons"
 import { MakeCodeLogo, ScratchLogo } from "@/components/PlatformBadge"
 import type { Tag } from "@/lib/definitions"
 
@@ -92,15 +93,26 @@ interface CategoryExplorerProps {
   onShowAll: () => void
 }
 
-const INITIAL_COUNT = 7
+function useInitialCount() {
+  const [count, setCount] = useState(7) // mobile default
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)")
+    const update = () => setCount(mq.matches ? 8 : 7)
+    update()
+    mq.addEventListener("change", update)
+    return () => mq.removeEventListener("change", update)
+  }, [])
+  return count
+}
 
 export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerProps) {
   const sectionRef = useRef<HTMLElement>(null)
+  const initialCount = useInitialCount()
 
   if (tags.length === 0) return null
 
-  const visibleTags = showAll ? tags : tags.slice(0, INITIAL_COUNT)
-  const hasMore = tags.length > INITIAL_COUNT
+  const visibleTags = showAll ? tags : tags.slice(0, initialCount)
+  const hasMore = tags.length > initialCount
 
   function handleShowAll() {
     onShowAll()

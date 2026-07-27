@@ -19,7 +19,12 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
-## [2026-07-27] update | mobile-theme-toggle-header-sort-select
+## [2026-07-27] update | mobile-auth-header-categories-initial-count
+- **Header mobile sin sesión**: hamburguesa oculta, botones "Iniciar sesión" y "Registrarse" visibles directamente en el header junto al ThemeToggle. El menú mobile ahora solo se muestra para usuarios logueados
+- **CategoryExplorer**: conteo inicial responsivo — 7 categorías en móvil + "Ver más", 8 en desktop (`sm:`). Usa `matchMedia("(min-width: 640px)")` en un hook `useInitialCount()`
+- **Fix**: agregados imports faltantes `Plus`, `Minus` (lucide-react) y `Skeleton` (shadcn/ui) en CategoryExplorer
+- Archivos modificados: `components/NavbarClient.tsx`, `components/CategoryExplorer.tsx`
+- Páginas actualizadas: [[log]]
 - **ThemeToggle sincronizado**: las instancias mobile y desktop ahora comparten estado vía evento custom `themechange`. Al hacer toggle en una, la otra se actualiza automáticamente — sin desincronización al redimensionar
 - **ThemeToggle móvil siempre visible**: movido del interior del menú hamburguesa al header (`flex sm:hidden`), junto al botón de menú. Ya no se oculta dentro del menú
 - **SortSelect en /buscar**: título y dropdown de orden ahora comparten la misma fila en móvil (`flex items-center justify-between` en vez de `flex-col`)
