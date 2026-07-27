@@ -238,7 +238,7 @@ export function BannerAdminClient() {
         <div className="flex items-center gap-3">
           <ImagePlus className="h-8 w-8 text-arcade-red" />
           <div>
-            <h1 className="text-2xl font-bold">Banner Principal</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Banner Principal</h1>
             <p className="text-sm text-muted-foreground">
               Gestioná los slides del banner del home
             </p>
@@ -246,9 +246,9 @@ export function BannerAdminClient() {
         </div>
         <button
           onClick={openCreateDialog}
-          className="inline-flex items-center gap-2 rounded-lg bg-arcade-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-arcade-red/90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-arcade-red px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-arcade-red/90 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
         >
-          <ImagePlus className="h-4 w-4" />
+          <ImagePlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           Nuevo Slide
         </button>
       </div>
@@ -274,7 +274,7 @@ export function BannerAdminClient() {
       {!loading && slides.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-20 text-muted-foreground">
           <ImagePlus className="h-16 w-16" />
-          <p className="text-lg font-medium">No hay slides</p>
+          <p className="text-base font-medium sm:text-lg">No hay slides</p>
           <p className="text-sm">Creá el primer slide del banner del home.</p>
           <button
             onClick={openCreateDialog}
@@ -291,7 +291,7 @@ export function BannerAdminClient() {
           {slides.map((slide, index) => (
             <div
               key={slide.id}
-              className="flex items-start gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
+              className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/30 sm:gap-4 sm:p-4"
             >
               {/* Reorder buttons */}
               <div className="flex flex-col gap-1 pt-1">
@@ -321,7 +321,7 @@ export function BannerAdminClient() {
               </div>
 
               {/* Preview thumbnail */}
-              <div className="relative h-24 w-48 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+              <div className="relative size-24 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-arcade-dark to-arcade-red/80 sm:h-24 sm:w-48">
                 {slide.image_url ? (
                   <img
                     src={slide.image_url}
@@ -343,23 +343,25 @@ export function BannerAdminClient() {
               </div>
 
               {/* Info */}
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 space-y-1">
                 <h3 className="truncate text-sm font-semibold">{slide.title}</h3>
                 {slide.description && (
-                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
                     {slide.description}
                   </p>
                 )}
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-arcade-red/10 px-2 py-0.5 text-[11px] font-medium text-arcade-red">
-                    {slide.cta_text}
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                  <span><span className="text-foreground/60">Botón:</span> <span className="font-medium text-foreground">{slide.cta_text}</span></span>
+                  <span><span className="text-foreground/60">Link:</span> {slide.cta_link}</span>
+                  <span><span className="text-foreground/60">Plantilla:</span> {templateLabel(slide.template || "bar-right")}</span>
+                  <span>
+                    <span className="text-foreground/60">Enlace:</span>{" "}
+                    {slide.template === "full-image"
+                      ? (slide.clickable ? "Clickable" : "No clickable")
+                      : (slide.open_in_new_tab ? "Nueva pestaña" : "Misma pestaña")}
+                    {slide.template === "full-image" && slide.clickable && slide.open_in_new_tab && " + Nueva pestaña"}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                    {slide.cta_link}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] text-blue-700">
-                    {templateLabel(slide.template || "bar-right")}
-                  </span>
+                  <span><span className="text-foreground/60">Duración:</span> {slide.duration ?? 5}s</span>
                 </div>
               </div>
 
@@ -435,7 +437,7 @@ export function BannerAdminClient() {
             {/* ── Form side ── */}
             <div className="flex w-full flex-col sm:max-h-[90vh] sm:overflow-y-auto sm:w-1/2">
               <div className="px-6 pt-6 pb-3 sm:p-6">
-                <h2 className="flex items-center gap-2 text-lg font-semibold">
+                <h2 className="flex items-center gap-2 text-base font-semibold sm:text-lg">
                   {editingId ? (
                     <><Pencil className="h-5 w-5 text-arcade-red" /> Editar Slide</>
                   ) : (

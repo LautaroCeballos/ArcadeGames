@@ -140,13 +140,18 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 - Cabecera con título + botón "Nuevo Slide"
 - Cards de slides con preview de imagen, info, botones de acción + badge de plantilla
+- La información de cada slide se muestra con etiquetas: **Botón**, **Link**, **Plantilla**, **Enlace**, **Duración** — sin cápsulas de colores
 - Modal de creación/edición con diseño de dos columnas: formulario a la izquierda, configuración (plantilla, enlace, duración) a la derecha
 - En mobile el diálogo es scrolleable con ambas columnas apiladas verticalmente
+- **Thumbnail en lista**: recorte 1:1 (`size-24`) en mobile, 2:1 (`sm:w-48`) en desktop. Padding y gap reducidos en mobile
+- **Botón "Nuevo Slide"**: adaptado con `text-xs px-3 py-1.5` en mobile, `sm:text-sm sm:px-4 sm:py-2` en desktop
 - **Selector de plantilla**: 3 cards con miniatura visual del layout, nombre y descripción corta. Estilo unificado con inputs del form (`border bg-background`, seleccionado `border-arcade-red bg-arcade-red/5 shadow-sm`)
 - **Opciones de enlace**: checkboxes con estilo card, sección con label "Enlace"
 - **Duración**: input de 2-30s debajo de Enlaces
 - **Botones**: Cancelar/Guardar al final de la columna derecha, submit vinculado con `form="slide-form"`
 - **Acciones en lista**: iconos individuales en desktop, menú kebab (⋮) en mobile
+- **Info de slides**: etiquetas con formato `Botón: texto | Link: url | Plantilla: tipo | Enlace: config | Duración: Xs` en vez de badges de colores
+- **Tamaños de título**: `text-xl` en mobile, `sm:text-2xl` en desktop para "Banner Principal"
 - Botón X en esquina superior derecha del diálogo para cerrar
 - Body scroll bloqueado al abrir el diálogo
 
