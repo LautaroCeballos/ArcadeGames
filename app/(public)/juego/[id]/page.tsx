@@ -7,8 +7,17 @@ import { isFavorited } from "@/lib/actions/favorites"
 import { GameTabs } from "@/components/GameTabs"
 import { Rating } from "@/components/Rating"
 import { FavoriteButton } from "@/components/FavoriteButton"
+import { Eye, ExternalLink } from "lucide-react"
+import { formatCount } from "@/lib/utils"
+import { buildProjectUrl } from "@/lib/game-utils"
+import { getTagColor } from "@/lib/tag-colors"
+import { slugifyTagName } from "@/lib/tag-utils"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { TrackView } from "@/components/TrackView"
+import { getGamesByAuthor, getRelatedGames } from "@/lib/queries/games"
+import { GameCard } from "@/components/GameCard"
+import type { GameWithDetails } from "@/lib/definitions"
 
 interface GamePageProps {
   params: Promise<{ id: string }>
@@ -42,21 +51,18 @@ export default async function GamePage({ params }: GamePageProps) {
 
   // Related games: match first non-platform tag
   const primaryTag = game.tags?.find((t) => t.name !== 'MakeCode Arcade' && t.name !== 'Scratch')
-  const { data: related } = primaryTag
-    ? await supabase
-        .from("game_tags")
-        .select("games(id, title)")
-        .eq("tag_id", primaryTag.id)
-        .neq("game_id", game.id)
-        .limit(4)
-    : { data: [] }
+  const relatedGames = primaryTag
+    ? await getRelatedGames(primaryTag.id, game.id, 6)
+    : []
+  const primaryTagSlug = primaryTag ? slugifyTagName(primaryTag.name) : null
 
-  const relatedGames = (related ?? [])
-    .map((r: { games: unknown }) => (r as { games: { id: string; title: string } }).games)
-    .filter(Boolean) as { id: string; title: string }[]
+  // More games from the same developer
+  const authorGames = game.user_id ? await getGamesByAuthor(game.user_id, game.id, 6) : []
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <>
+      <TrackView gameId={game.id} />
+      <div className="mx-auto max-w-6xl px-4 py-6">
       <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-12">
         {/* Left column — game embed, sticky */}
         <div className="lg:sticky lg:top-6 lg:self-start">
@@ -69,7 +75,7 @@ export default async function GamePage({ params }: GamePageProps) {
         </div>
 
         {/* Right column — metadata */}
-        <div className="mt-6 space-y-6 lg:mt-0">
+        <div className="mt-6 space-y-6 lg:mt-0 lg:self-center">
           {/* Title & author */}
           <div>
             <h1 className="text-2xl font-bold text-arcade-dark">{game.title}</h1>
@@ -88,23 +94,24 @@ export default async function GamePage({ params }: GamePageProps) {
             </p>
           </div>
 
-          {/* Badges (platform + tags) */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Badges (platform + tags) with category colors */}
+          <div className="-mt-3 flex flex-wrap items-center gap-2">
             {game.tags.map((tag: { id: string; name: string }) => {
-              const isPlatform = tag.name === 'MakeCode Arcade' || tag.name === 'Scratch'
+              const tc = getTagColor(tag.name)
               return (
-                <Badge
-                  key={tag.id}
-                  className={isPlatform
-                    ? (tag.name === 'Scratch'
-                      ? 'bg-arcade-green text-white hover:bg-arcade-green/90'
-                      : 'bg-arcade-red text-arcade-beige hover:bg-arcade-red/90')
-                    : ''
-                  }
-                  variant={isPlatform ? 'default' : 'secondary'}
-                >
-                  {tag.name}
-                </Badge>
+                <Link key={tag.id} href={`/buscar?tag=${slugifyTagName(tag.name)}`}>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer font-medium transition-opacity hover:opacity-80"
+                    style={{
+                      backgroundColor: tc.bg,
+                      color: tc.icon,
+                      borderColor: tc.badgeBorder,
+                    }}
+                  >
+                    {tag.name}
+                  </Badge>
+                </Link>
               )
             })}
           </div>
@@ -114,54 +121,104 @@ export default async function GamePage({ params }: GamePageProps) {
             <p className="text-muted-foreground">{game.description}</p>
           )}
 
-          <Separator className="bg-border" />
+          {/* Publication date */}
+          <p className="text-xs text-muted-foreground/60">
+            Publicado el{" "}
+            {new Date(game.created_at).toLocaleDateString("es-AR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
 
-          {/* Rating & Favorites */}
-          <div className="flex flex-wrap items-start gap-4">
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-arcade-dark">Calificar</h3>
-              <Rating
-                gameId={game.id}
-                starsCount={game.stars_count}
-                hasStarred={game.has_starred}
-              />
-            </div>
+          {/* Views, Rating & Favorites — single row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Rating
+              gameId={game.id}
+              starsCount={game.stars_count}
+              hasStarred={game.has_starred}
+            />
             {!isOwner && (
-              <div>
-                <h3 className="mb-2 text-sm font-medium text-arcade-dark">Favoritos</h3>
-                <FavoriteButton
-                  gameId={game.id}
-                  isFavorited={favorited}
-                  isAuthenticated={!!user}
-                />
-              </div>
+              <FavoriteButton
+                gameId={game.id}
+                isFavorited={favorited}
+                isAuthenticated={!!user}
+                favoriteCount={game.favorites_count ?? 0}
+              />
             )}
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground">
+              <Eye className="size-4" />
+              {formatCount(game.views)}
+            </div>
+            <a
+              href={buildProjectUrl(game.id, game.platform)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <ExternalLink className="size-4" />
+              Abrir Proyecto
+            </a>
           </div>
-
-          {/* Related games */}
-          {relatedGames.length > 0 && (
-            <>
-              <Separator className="bg-border" />
-              <div>
-                <h3 className="mb-3 text-sm font-medium text-arcade-dark">
-                  Juegos relacionados
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {relatedGames.map((r: { id: string; title: string }) => (
-                    <Link
-                      key={r.id}
-                      href={`/juego/${r.id}`}
-                      className="rounded-[10px] bg-arcade-green/20 px-3 py-2 text-sm text-arcade-dark transition-colors hover:bg-arcade-green/40"
-                    >
-                      {r.title}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </div>
+
+      {/* More games from developer */}
+      {authorGames.length > 0 && (
+        <section className="mt-10">
+          <Separator className="mb-6 bg-border" />
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-arcade-dark">
+              Más juegos de{" "}
+              <Link
+                href={`/perfil/${game.profiles?.username ?? ""}`}
+                className="underline-offset-2 hover:text-arcade-red hover:underline"
+              >
+                {game.profiles?.username ?? "Anónimo"}
+              </Link>
+            </h2>
+            <Link
+              href={`/perfil/${game.profiles?.username ?? ""}`}
+              className="group flex items-center gap-1 text-sm font-medium text-arcade-dark/60 transition-colors hover:text-arcade-red"
+            >
+              Ver más
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {authorGames.slice(0, 4).map((g) => (
+              <GameCard key={g.id} game={g as GameWithDetails} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Related games */}
+      {relatedGames.length > 0 && (
+        <section className="mt-10">
+          <Separator className="mb-6 bg-border" />
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-arcade-dark">
+              Juegos relacionados
+            </h2>
+            {primaryTagSlug && (
+              <Link
+                href={`/buscar?tag=${primaryTagSlug}`}
+                className="group flex items-center gap-1 text-sm font-medium text-arcade-dark/60 transition-colors hover:text-arcade-red"
+              >
+                Ver más
+                <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {relatedGames.slice(0, 4).map((g) => (
+              <GameCard key={g.id} game={g as GameWithDetails} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
+    </>
   )
 }
