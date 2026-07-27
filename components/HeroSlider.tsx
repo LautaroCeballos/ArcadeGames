@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useDominantColors } from "@/hooks/use-dominant-colors"
@@ -145,44 +145,21 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
   const isClickable = slide.clickable !== false
   const newTab = slide.openInNewTab !== false
   const dur = slide.duration ?? 5
-  const imgRef = useRef<HTMLImageElement>(null)
+  const [tick, setTick] = useState(0)
 
-  useLayoutEffect(() => {
-    if (!isActive) return
-    const img = imgRef.current
-    if (!img) return
-
-    const start = () => {
-      img.animate(
-        [
-          { objectPosition: "0% 50%" },
-          { objectPosition: "100% 50%" },
-        ],
-        {
-          duration: dur * 1000,
-          easing: "ease-in-out",
-          fill: "forwards",
-        }
-      )
-    }
-
-    if (img.complete) {
-      start()
-    } else {
-      img.addEventListener("load", start, { once: true })
-      return () => img.removeEventListener("load", start)
-    }
-  }, [isActive, dur])
+  useEffect(() => {
+    if (isActive) setTick((t) => t + 1)
+  }, [isActive])
 
   const image = (
     <div className="relative flex h-[420px] w-full md:h-auto md:aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
       {slide.imageUrl ? (
         <img
-          ref={imgRef}
           src={slide.imageUrl}
           alt=""
           key={`fi-${slide.id}`}
           className="absolute inset-0 h-full w-full object-cover"
+          style={{ animation: `ken-burns-${tick % 2} ${dur}s ease-in-out forwards` }}
         />
       ) : (
         <div className="absolute inset-0 opacity-10">
