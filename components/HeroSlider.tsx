@@ -152,7 +152,7 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
         <img
           src={slide.imageUrl}
           alt=""
-          key={`fi-${slide.id}-${isActive ? "a" : "i"}`}
+          key={`fi-${slide.id}`}
           className={cn(
             "absolute inset-0 h-full w-full object-cover animate-ken-burns",
           )}
@@ -258,7 +258,7 @@ function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
           <img
             src={slide.imageUrl}
             alt=""
-            key={`bs-${slide.id}-${isActive ? "a" : "i"}`}
+            key={`bs-${slide.id}`}
             className={cn(
               hasContent
                 ? "absolute inset-0 h-full w-full object-cover"
