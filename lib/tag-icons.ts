@@ -16,13 +16,22 @@ import {
   Crosshair,
   Users,
   Code2,
+  Cat,
+  Sword,
+  Cpu,
+  Music,
+  Ghost,
+  Shield,
+  BookOpen,
+  Palette,
+  Map,
   type LucideIcon,
 } from "lucide-react"
 
 const iconMap: Record<string, LucideIcon> = {
   // Platform tags
   "MakeCode Arcade": Code2,
-  Scratch: Puzzle,
+  Scratch: Cat,
 
   // Category tags
   Acción: Swords,
@@ -35,6 +44,14 @@ const iconMap: Record<string, LucideIcon> = {
   Arcade: Joystick,
   Disparos: Crosshair,
   Multijugador: Users,
+  RPG: Sword,
+  Simulación: Cpu,
+  Música: Music,
+  Terror: Ghost,
+  Supervivencia: Shield,
+  Educativo: BookOpen,
+  Laberinto: Map,
+  Creativo: Palette,
 }
 
 /**
