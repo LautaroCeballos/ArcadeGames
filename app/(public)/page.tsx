@@ -26,6 +26,7 @@ async function HeroSliderWrapper() {
         ctaText: s.cta_text,
         ctaLink: s.cta_link,
         template: s.template || "bar-right",
+        duration: s.duration ?? 5,
         clickable: s.clickable ?? true,
         openInNewTab: s.open_in_new_tab ?? true,
       }))

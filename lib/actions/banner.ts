@@ -72,6 +72,8 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
   const template = (formData.get("template") as string) || "bar-right"
   const clickable = formData.get("clickable") !== "off"
   const openInNewTab = formData.get("openInNewTab") !== "off"
+  const durationRaw = parseInt(formData.get("duration") as string || "5", 10)
+  const duration = Number.isFinite(durationRaw) ? Math.max(2, Math.min(30, durationRaw)) : 5
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -104,6 +106,7 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
       template,
       clickable,
       open_in_new_tab: openInNewTab,
+      duration,
       sort_order: nextOrder,
       active: true,
     })
@@ -129,6 +132,8 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   const template = (formData.get("template") as string) || "bar-right"
   const clickable = formData.get("clickable") !== "off"
   const openInNewTab = formData.get("openInNewTab") !== "off"
+  const durationRaw = parseInt(formData.get("duration") as string || "5", 10)
+  const duration = Number.isFinite(durationRaw) ? Math.max(2, Math.min(30, durationRaw)) : 5
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -148,6 +153,7 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
     template,
     clickable,
     open_in_new_tab: openInNewTab,
+    duration,
     updated_at: new Date().toISOString(),
   }
 

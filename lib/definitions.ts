@@ -186,6 +186,7 @@ export interface BannerSlide {
   sort_order: number
   active: boolean
   template: string
+  duration: number
   clickable: boolean
   open_in_new_tab: boolean
   created_at: string
