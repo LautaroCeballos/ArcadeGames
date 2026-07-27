@@ -49,6 +49,7 @@ export function BannerAdminClient() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<SlideFormData>(emptyForm)
+  const [durationText, setDurationText] = useState(String(emptyForm.duration))
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [keepImage, setKeepImage] = useState(true)
@@ -87,6 +88,7 @@ export function BannerAdminClient() {
   const openCreateDialog = () => {
     setEditingId(null)
     setForm(emptyForm)
+    setDurationText(String(emptyForm.duration))
     setImageFile(null)
     setImagePreview(null)
     setKeepImage(true)
@@ -105,6 +107,7 @@ export function BannerAdminClient() {
       openInNewTab: slide.open_in_new_tab ?? true,
       duration: slide.duration ?? 5,
     })
+    setDurationText(String(slide.duration ?? 5))
     setImageFile(null)
     setImagePreview(slide.image_url)
     setKeepImage(!!slide.image_url)
@@ -115,6 +118,7 @@ export function BannerAdminClient() {
     setDialogOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setDurationText(String(emptyForm.duration))
     setImageFile(null)
     setImagePreview(null)
     setKeepImage(true)
@@ -174,6 +178,7 @@ export function BannerAdminClient() {
       submitFormData.set("template", form.template)
       submitFormData.set("clickable", form.clickable ? "on" : "off")
       submitFormData.set("openInNewTab", form.openInNewTab ? "on" : "off")
+      submitFormData.set("duration", String(form.duration))
       if (finalImageUrl !== null) {
         submitFormData.set("imageUrl", finalImageUrl)
       }
@@ -683,22 +688,19 @@ export function BannerAdminClient() {
                   <p className="mb-1.5 text-sm font-medium">Duración</p>
                   <div className="flex items-center gap-2">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       name="duration"
                       form="slide-form"
-                      min={2}
-                      max={30}
-                      value={form.duration ?? 5}
-                      onChange={(e) => {
-                        const v = parseInt(e.target.value, 10)
-                        setForm({ ...form, duration: isNaN(v) ? 5 : v })
-                      }}
-                      onBlur={(e) => {
-                        const v = parseInt(e.target.value, 10)
-                        const clamped = isNaN(v) ? 5 : Math.max(2, Math.min(30, v))
+                      value={durationText}
+                      onChange={(e) => setDurationText(e.target.value)}
+                      onBlur={() => {
+                        const v = parseInt(durationText, 10)
+                        const clamped = Number.isFinite(v) ? Math.max(2, Math.min(30, v)) : 5
                         setForm({ ...form, duration: clamped })
+                        setDurationText(String(clamped))
                       }}
-                      className="w-20 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                      className="w-16 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
                     />
                     <span className="text-sm text-muted-foreground">segundos (2–30)</span>
                   </div>

@@ -78,7 +78,7 @@ export function AdminUsersClient() {
       <div className="mb-8 flex items-center gap-3">
         <Shield className="h-8 w-8 text-arcade-red" />
         <div>
-          <h1 className="text-2xl font-bold">Administración de Usuarios</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Administración de Usuarios</h1>
           <p className="text-sm text-muted-foreground">
             {total} usuario{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}
           </p>
@@ -135,8 +135,8 @@ export function AdminUsersClient() {
 
       {/* Users table */}
       {!loading && users.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[560px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">

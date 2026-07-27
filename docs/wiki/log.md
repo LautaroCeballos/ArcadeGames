@@ -20,6 +20,11 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] fix | banner-duration-save-input-scroll-admin-table
+- **Banner Admin**: corregido bug donde `duration` no se guardaba (faltaba en `FormData`). Input de duración mejorado: `type="text"` con `durationText` state para permitir borrar y reescribir sin forzar a 5
+- **Admin Usuarios**: tabla con scroll horizontal (`overflow-x-auto`, `min-w-[560px]`). Título reducido en mobile (`text-xl sm:text-2xl`)
+- **Archivos modificados**: `banner-admin-client.tsx`, `admin-users-client.tsx`
+
 ## [2026-07-27] style | banner-mobile-button-subtitle
 - **Banner Admin**: botón "Nuevo Slide" → "Nuevo" en mobile, subtítulo oculto en mobile (`hidden sm:block`)
 - **Archivos modificados**: `banner-admin-client.tsx`
