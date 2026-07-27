@@ -35,12 +35,12 @@ export function GameThumbnail({ game }: GameThumbnailProps) {
       )}
 
       {/* Dark overlay — bottom ~30% */}
-      <div className="absolute bottom-0 left-0 right-0 bg-[rgba(52,54,53,0.96)] px-3 py-2">
-        <p className="truncate text-sm font-semibold text-arcade-beige">
+      <div className="absolute bottom-0 left-0 right-0 bg-[#1a1a2e]/95 px-3 py-2">
+        <p className="truncate text-sm font-semibold text-white">
           {game.title}
         </p>
         {game.stars_count !== null && (
-          <span className="mt-0.5 flex items-center gap-1 text-xs text-arcade-beige/80">
+          <span className="mt-0.5 flex items-center gap-1 text-xs text-white/80">
             <Star className="h-3 w-3 fill-current" />
             {game.stars_count}
           </span>

@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Star, Gamepad2, Puzzle } from "lucide-react"
+import { Star, Eye, Gamepad2, Puzzle } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { formatCount } from "@/lib/utils"
 import type { RecentGameData } from "@/lib/definitions"
 
 /* ─── RecentProjectCard (inline) ─────────────────────────── */
@@ -22,7 +23,7 @@ function RecentProjectCard({ game }: RecentProjectCardProps) {
   return (
     <Link
       href={`/juego/${game.id}`}
-      className="group flex items-start gap-3 rounded-[10px] p-2 transition-colors hover:bg-accent/50"
+      className="group flex items-center gap-3 rounded-[10px] p-2 pr-5 transition-colors hover:bg-accent/50"
     >
       {/* Thumbnail */}
       <div className="relative h-16 w-28 flex-shrink-0 overflow-hidden rounded-[8px]">
@@ -41,26 +42,32 @@ function RecentProjectCard({ game }: RecentProjectCardProps) {
       </div>
 
       {/* Info */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
-        <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
-          {game.title}
-        </p>
-        {game.author && (
-          <p className="truncate text-xs text-muted-foreground">
-            por {game.author}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+        {/* Row 1: title + stars */}
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
+            {game.title}
           </p>
-        )}
-        <div className="mt-auto flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <PlatformIcon platform={game.platform} />
-            {game.platform === "makecode" ? "MakeCode" : "Scratch"}
-          </span>
           {game.stars_count !== null && (
-            <span className="flex items-center gap-1">
-              <Star className="h-3 w-3 fill-current" />
+            <span className="flex flex-shrink-0 items-center gap-1 text-xs text-muted-foreground">
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
               {game.stars_count}
             </span>
           )}
+        </div>
+        {/* Row 2: author + platform + views */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 truncate text-xs text-muted-foreground">
+            {game.author && <span className="truncate">por {game.author}</span>}
+            <span className="flex flex-shrink-0 items-center gap-1">
+              <PlatformIcon platform={game.platform} />
+              {game.platform === "makecode" ? "MakeCode" : "Scratch"}
+            </span>
+          </div>
+          <span className="flex flex-shrink-0 items-center gap-1 text-xs text-muted-foreground">
+            <Eye className="h-3 w-3" />
+            {formatCount(game.views)}
+          </span>
         </div>
       </div>
     </Link>

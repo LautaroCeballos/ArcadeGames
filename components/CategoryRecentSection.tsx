@@ -57,7 +57,7 @@ export function CategoryRecentSection({
       <CategoryExplorer
         tags={tags}
         showAll={showAll}
-        onShowAll={() => setShowAll(true)}
+        onShowAll={() => setShowAll((v) => !v)}
       />
       <RecentProjectsSection games={recentGames} showAll={showAll} />
     </div>

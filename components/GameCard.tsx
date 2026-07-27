@@ -1,7 +1,9 @@
 import Link from "next/link"
-import { Star } from "lucide-react"
+import { Star, Eye } from "lucide-react"
+import { formatCount } from "@/lib/utils"
+import { getTagColor } from "@/lib/tag-colors"
+import { PlatformBadge } from "@/components/PlatformBadge"
 import type { GameWithDetails } from "@/lib/definitions"
-import { Badge } from "@/components/ui/badge"
 
 interface GameCardProps {
   game: GameWithDetails
@@ -9,53 +11,69 @@ interface GameCardProps {
 
 export function GameCard({ game }: GameCardProps) {
   const starsCount = game.stars_count
+  const categoryTag = game.tags?.find(
+    (t) => t.name !== "MakeCode Arcade" && t.name !== "Scratch",
+  )
 
   return (
     <Link
       href={`/juego/${game.id}`}
-      className="group relative block aspect-video overflow-hidden rounded-[10px] transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+      className="group block overflow-hidden rounded-[10px] transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
     >
-      {/* Background image */}
-      {game.thumbnail_url ? (
-        <img
-          src={game.thumbnail_url}
-          alt={game.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-muted text-4xl text-muted-foreground/30">
-          🎮
-        </div>
-      )}
+      {/* Image area */}
+      <div className="relative aspect-video">
+        {game.thumbnail_url ? (
+          <img
+            src={game.thumbnail_url}
+            alt={game.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-muted text-4xl text-muted-foreground/30">
+            🎮
+          </div>
+        )}
 
-      {/* Dark overlay — bottom ~30% */}
-      <div className="absolute bottom-0 left-0 right-0 bg-[rgba(52,54,53,0.96)] px-3 py-2">
-        <p className="truncate text-sm font-semibold text-arcade-beige">
-          {game.title}
-        </p>
+        {/* Platform badge — floating top-left */}
+        <PlatformBadge platform={game.platform} />
 
-        <div className="mt-0.5 flex items-center justify-between">
-          <span className="text-xs text-arcade-beige/60">
-            {game.profiles?.username ?? "Anónimo"}
+        {/* Category tag bubble — floating top-right on image */}
+        {categoryTag && (
+          <span
+            className="absolute right-2 top-2 z-10 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
+            style={{
+              backgroundColor: getTagColor(categoryTag.name).badge,
+              opacity: 0.92,
+            }}
+          >
+            {categoryTag.name}
           </span>
+        )}
+      </div>
 
+      {/* Info panel — below image */}
+      <div className="flex flex-col gap-0.5 bg-[#1a1a2e] px-3 py-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-semibold text-white">
+            {game.title}
+          </p>
           {starsCount !== null && (
-            <span className="flex items-center gap-1 text-xs text-arcade-beige/80">
-              <Star className="h-3 w-3 fill-current" />
+            <span className="flex flex-shrink-0 items-center gap-1 text-xs text-white/80">
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
               {starsCount}
             </span>
           )}
         </div>
-
-        {game.tags && game.tags.length > 0 && (
-          <Badge
-            variant="secondary"
-            className="absolute right-2 top-2 bg-arcade-beige/20 text-[10px] text-arcade-beige"
-          >
-            {game.tags[0].name}
-          </Badge>
-        )}
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate text-xs text-white/60">
+            {game.profiles?.username ? `Por ${game.profiles.username}` : "Anónimo"}
+          </span>
+          <span className="flex flex-shrink-0 items-center gap-1 text-xs text-white/80">
+            <Eye className="h-3 w-3" />
+            {formatCount(game.views)}
+          </span>
+        </div>
       </div>
     </Link>
   )
