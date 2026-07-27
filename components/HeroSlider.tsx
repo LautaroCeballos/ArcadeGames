@@ -266,9 +266,9 @@ function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
               hasContent
                 ? "absolute inset-0 h-full w-full object-cover"
                 : "max-h-full max-w-full object-contain",
-              hasContent && isActive && "animate-ken-burns",
+              isActive && "animate-ken-burns",
             )}
-            style={hasContent && isActive ? { animationDuration: `${dur}s` } : undefined}
+            style={isActive ? { animationDuration: `${dur}s` } : undefined}
           />
         ) : (
           <div className="absolute inset-0 opacity-10">
