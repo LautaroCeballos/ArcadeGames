@@ -8,7 +8,10 @@ import { ScratchEmbed } from "@/components/ScratchEmbed"
 import { MakeCodeLogo, ScratchLogo } from "@/components/PlatformBadge"
 import { ThumbnailPicker } from "@/components/ThumbnailPicker"
 import { TagPicker } from "@/components/TagPicker"
-import { Gamepad2, Puzzle, ArrowLeft, Sparkles } from "lucide-react"
+import { ArrowLeft, Sparkles, ExternalLink } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import type { Tag } from "@/lib/definitions"
 
 interface SubmitGameFormProps {
@@ -72,6 +75,28 @@ function PlatformSelector({
             Elegir Scratch
           </span>
         </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <a
+          href="https://arcade.makecode.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[#F76820]/70 hover:text-[#F76820] transition-colors"
+        >
+          arcade.makecode.com
+          <ExternalLink className="size-3" />
+        </a>
+        <span className="text-border">|</span>
+        <a
+          href="https://scratch.mit.edu"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[#F9A83A]/70 hover:text-[#F9A83A] transition-colors"
+        >
+          scratch.mit.edu
+          <ExternalLink className="size-3" />
+        </a>
       </div>
     </div>
   )
