@@ -93,6 +93,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@utility animate-ken-burns {
+  animation: ken-burns 5s ease-in-out forwards;
+}
+
+@keyframes ken-burns {
+  0%   { object-position: 0% 50%; }
+  100% { object-position: 100% 50%; }
+}
+
 @keyframes ken-burns-0 {
   0%   { object-position: 0% 50%; }
   100% { object-position: 100% 50%; }
