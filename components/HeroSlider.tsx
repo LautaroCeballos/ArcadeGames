@@ -150,47 +150,62 @@ function BarSlide({ slide }: { slide: Slide }) {
     ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` }
     : undefined
 
+  const hasContent = !!(slide.title || slide.description || slide.ctaText)
+  const imageWidth = hasContent ? "md:w-[75%]" : "md:w-full"
+
   return (
     <div className={cn(
       "flex flex-col md:aspect-[3/1] md:flex-row",
     )}>
-      {/* Content */}
-      <div
-        style={bgStyle}
-        className={cn(
-          "flex flex-col items-center justify-center gap-3 p-6 text-center md:w-[25%] md:p-8 lg:gap-4",
-          !dominantColors && "bg-gradient-to-br from-arcade-dark to-arcade-red/80",
-          isLeft ? "md:order-2" : "md:order-1",
-        )}
-      >
-        <h2 className="text-xl font-bold text-white sm:text-2xl md:text-3xl">
-          {slide.title}
-        </h2>
-        {slide.description && (
-          <p className="text-sm text-white/80 sm:text-base">
-            {slide.description}
-          </p>
-        )}
-        <Link
-          href={slide.ctaLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-[10px] bg-arcade-red px-5 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:brightness-110 sm:px-6 sm:py-2.5 sm:text-base"
+      {/* Content panel — only when there's something to show */}
+      {hasContent && (
+        <div
+          style={bgStyle}
+          className={cn(
+            "flex flex-col items-center justify-center gap-3 p-6 text-center md:w-[25%] md:p-8 lg:gap-4",
+            !dominantColors && "bg-gradient-to-br from-arcade-dark to-arcade-red/80",
+            isLeft ? "md:order-2" : "md:order-1",
+          )}
         >
-          {slide.ctaText}
-        </Link>
-      </div>
+          {slide.title && (
+            <h2 className="text-xl font-bold text-white sm:text-2xl md:text-3xl">
+              {slide.title}
+            </h2>
+          )}
+          {slide.description && (
+            <p className="text-sm text-white/80 sm:text-base">
+              {slide.description}
+            </p>
+          )}
+          {slide.ctaText && (
+            <Link
+              href={slide.ctaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-flex items-center justify-center rounded-[10px] bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl sm:px-6 sm:py-2.5 sm:text-base"
+            >
+              <span className="absolute inset-0 rounded-[10px] bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+              <span className="relative">{slide.ctaText}</span>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Image */}
       <div className={cn(
-        "relative aspect-video w-full md:aspect-auto md:w-[75%]",
-        isLeft ? "md:order-1" : "md:order-2",
+        "relative aspect-video w-full md:aspect-auto",
+        imageWidth,
+        isLeft ? "md:order-1" : hasContent ? "md:order-2" : "md:order-1",
+        !hasContent && "flex items-center justify-center bg-gradient-to-br from-arcade-dark to-arcade-red/80",
       )}>
         {slide.imageUrl ? (
           <img
             src={slide.imageUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            className={hasContent
+              ? "absolute inset-0 h-full w-full object-cover"
+              : "max-h-full max-w-full object-contain"
+            }
           />
         ) : (
           <div className="absolute inset-0 opacity-10">
