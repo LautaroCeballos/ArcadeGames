@@ -17,8 +17,8 @@ export async function uploadThumbnail(formData: FormData): Promise<{ url: string
     return { error: "El archivo debe ser una imagen" }
   }
 
-  if (file.size > 2 * 1024 * 1024) {
-    return { error: "La imagen no puede superar los 2 MB" }
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "La imagen no puede superar los 5 MB" }
   }
 
   const ext = file.name.split(".").pop() ?? "png"

@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { fetchProjectThumbnailUrl } from "@/lib/game-utils"
 import { uploadThumbnail } from "@/lib/actions/thumbnails"
-import { Camera, Loader2, Check, X, ImageUp } from "lucide-react"
+import { Camera, Loader2, Check, X, ImageUp, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/hooks/use-toast"
 
 interface ThumbnailPickerProps {
   shortId: string | null
@@ -94,7 +95,11 @@ export function ThumbnailPicker({ shortId, embedUrl, onThumbnailChange, platform
       const result = await uploadThumbnail(fd)
 
       if ("error" in result) {
-        console.error(result.error)
+        toast({
+          title: "Error al subir la imagen",
+          description: result.error,
+          variant: "destructive",
+        })
         return
       }
 
