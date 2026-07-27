@@ -32,6 +32,14 @@ sources:
 - **Plantillas de email**: nuevo doc `docs/raw/email-templates.md` con HTML mejorado (gradiente azul-violeta, diseño responsive).
 - Páginas actualizadas: [[auth/flow]], [[log]]
 
+## [2026-07-27] update | submit-form-platform-icons-links-cursor-pointer
+
+- **SubmitGameForm**: selector de plataforma ahora usa logos SVG oficiales (`MakeCodeLogo`, `ScratchLogo`) con colores de marca (`#F76820` / `#F9A83A`). Links externos a `arcade.makecode.com` y `scratch.mit.edu` centrados debajo de cada tarjeta. Colores sólidos sin opacidad para visibilidad en light/dark mode.
+- **Botón "Publicar Proyecto"**: responsive — "Publicar" en `< md`, "Publicar Proyecto" en `≥ md`. Icono consistente 16px, `whitespace-nowrap`.
+- **Cursor pointer global**: `button`, `[role="button"]`, `input[type="submit"]` tienen `cursor: pointer` vía `globals.css`. Deshabilitados usan `cursor: not-allowed`. Un solo cambio, toda la web.
+- Build: 0 errores.
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
 ## [2026-07-26] update | header-light-background-shadow
 
 - **Header ahora usa `bg-background border-b shadow-sm`** en vez de `bg-arcade-red`. En light mode: blanco con sombra tenue. En dark mode: `#0a0a0f` con borde sutil.
