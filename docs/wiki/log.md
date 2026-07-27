@@ -63,6 +63,11 @@ sources:
 - **CSS limpiado**: eliminadas `@utility animate-ken-burns` y `@keyframes ken-burns` (single). Solo quedan `ken-burns-0` y `ken-burns-1`.
 - Páginas actualizadas: [[features/banner]], [[log]]
 
+## [2026-07-27] fix | hero-mobile-bar-slide-link-z-index
+
+- **Link mobile del bar-slide**: restaurado `z-[1]` para que la imagen sea clickeable. Los dots de navegación usan `z-10` para quedar siempre arriba.
+- **Stacking**: imagen (z natural) → link overlay (`z-[1]`) → dots (`z-10`). El slide funciona como link en mobile igual que el template `full-image`.
+
 ## [2026-07-27] update | submit-form-platform-icons-links-cursor-pointer
 
 - **SubmitGameForm**: selector de plataforma ahora usa logos SVG oficiales (`MakeCodeLogo`, `ScratchLogo`) con colores de marca (`#F76820` / `#F9A83A`). Links externos a `arcade.makecode.com` y `scratch.mit.edu` centrados debajo de cada tarjeta. Colores sólidos sin opacidad para visibilidad en light/dark mode.
