@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { ImagePlus, Pencil, Trash2, AlertTriangle, Loader2, EyeOff } from "lucide-react"
+import { ImagePlus, Pencil, Trash2, AlertTriangle, Loader2, EyeOff, X, MoreVertical } from "lucide-react"
 import { getBannerSlides, createBannerSlide, updateBannerSlide, deleteBannerSlide, reorderBannerSlides, uploadBannerImage } from "@/lib/actions/banner"
 import { cn } from "@/lib/utils"
 import { useDominantColors } from "@/hooks/use-dominant-colors"
@@ -15,6 +15,7 @@ interface SlideFormData {
   template: string
   clickable: boolean
   openInNewTab: boolean
+  duration: number
 }
 
 const emptyForm: SlideFormData = {
@@ -25,6 +26,7 @@ const emptyForm: SlideFormData = {
   template: "bar-right",
   clickable: true,
   openInNewTab: true,
+  duration: 5,
 }
 
 const templates = [
@@ -42,6 +44,7 @@ export function BannerAdminClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,6 +54,18 @@ export function BannerAdminClient() {
   const [keepImage, setKeepImage] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dominantColors = useDominantColors(imagePreview ?? "")
+
+  // Lock body scroll when dialog is open
+  useEffect(() => {
+    if (dialogOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [dialogOpen])
 
   const fetchSlides = useCallback(async () => {
     setLoading(true)
@@ -88,6 +103,7 @@ export function BannerAdminClient() {
       template: slide.template || "bar-right",
       clickable: slide.clickable ?? true,
       openInNewTab: slide.open_in_new_tab ?? true,
+      duration: slide.duration ?? 5,
     })
     setImageFile(null)
     setImagePreview(slide.image_url)
@@ -347,8 +363,8 @@ export function BannerAdminClient() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex shrink-0 gap-2">
+              {/* Actions — desktop */}
+              <div className="hidden shrink-0 gap-2 sm:flex">
                 <button
                   type="button"
                   onClick={() => openEditDialog(slide)}
@@ -366,6 +382,38 @@ export function BannerAdminClient() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+
+              {/* Actions — mobile kebab menu */}
+              <div className="relative shrink-0 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenMenuId(openMenuId === slide.id ? null : slide.id)}
+                  className="rounded-md border p-2 text-muted-foreground transition-colors hover:bg-muted"
+                  aria-label="Acciones"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+                {openMenuId === slide.id && (
+                  <div className="absolute right-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border bg-card shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { setOpenMenuId(null); openEditDialog(slide) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setOpenMenuId(null); handleDelete(slide.id) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -374,12 +422,25 @@ export function BannerAdminClient() {
       {/* Create/Edit Dialog */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-xl border bg-card shadow-lg sm:flex-row">
+          <div className="relative flex w-full max-w-4xl max-h-[90vh] flex-col gap-0 overflow-y-auto rounded-xl border bg-card shadow-lg sm:max-h-none sm:flex-row sm:overflow-hidden">
+            {/* ── Close button ── */}
+            <button
+              type="button"
+              onClick={closeDialog}
+              className="absolute top-3 right-3 z-10 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
             {/* ── Form side ── */}
-            <div className="flex max-h-[90vh] w-full flex-col overflow-y-auto sm:w-1/2">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold">
-                  {editingId ? "Editar Slide" : "Nuevo Slide"}
+            <div className="flex w-full flex-col sm:max-h-[90vh] sm:overflow-y-auto sm:w-1/2">
+              <div className="px-6 pt-6 pb-3 sm:p-6">
+                <h2 className="flex items-center gap-2 text-lg font-semibold">
+                  {editingId ? (
+                    <><Pencil className="h-5 w-5 text-arcade-red" /> Editar Slide</>
+                  ) : (
+                    <><ImagePlus className="h-5 w-5 text-arcade-red" /> Nuevo Slide</>
+                  )}
                 </h2>
                 <p className="mb-6 text-sm text-muted-foreground">
                   {editingId
@@ -387,7 +448,7 @@ export function BannerAdminClient() {
                     : "Agregá un nuevo slide al banner del home."}
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form id="slide-form" onSubmit={handleSubmit} className="space-y-5">
                   {/* Image upload */}
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">Imagen de fondo</label>
@@ -510,90 +571,16 @@ export function BannerAdminClient() {
                       />
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={closeDialog}
-                      className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                      disabled={saving}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={saving || !form.title.trim() || !form.ctaText.trim() || !form.ctaLink.trim()}
-                      className="inline-flex items-center gap-2 rounded-lg bg-arcade-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-arcade-red/90 disabled:opacity-50"
-                    >
-                      {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {editingId ? "Guardar cambios" : "Crear slide"}
-                    </button>
-                  </div>
                 </form>
               </div>
             </div>
 
             {/* ── Preview side ── */}
-            <div className="hidden border-l bg-muted/30 sm:flex sm:w-1/2 sm:flex-col">
-              <div className="p-6">
-                <p className="mb-3 text-sm font-medium">Vista previa</p>
-                <div
-                  className="relative overflow-hidden rounded-[8px] aspect-[3/1]"
-                  style={dominantColors ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` } : undefined}
-                >
-                  {/* Image or placeholder */}
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 opacity-10" style={dominantColors ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` } : undefined}>
-                      <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
-                    </div>
-                  )}
-
-                  {/* Render according to template */}
-                  {form.template === "full-image" ? (
-                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-                  ) : (
-                    <div className="flex h-full">
-                      <div className={cn(
-                        "flex w-[25%] flex-col justify-center gap-1 p-3",
-                        form.template === "bar-left" ? "order-2" : "order-1",
-                      )}>
-                        <p className="text-[9px] font-bold leading-tight text-white">
-                          {form.title || "Título"}
-                        </p>
-                        {form.description && (
-                          <p className="text-[7px] leading-tight text-white/80">
-                            {form.description}
-                          </p>
-                        )}
-                        <span className="inline-flex w-fit items-center justify-center rounded-[6px] bg-arcade-red px-2 py-1 text-[7px] font-semibold text-white">
-                          {form.ctaText || "BOTÓN"}
-                        </span>
-                      </div>
-                      <div className={cn(
-                        "flex w-[75%] items-center justify-center bg-gradient-to-br from-arcade-dark/60 to-arcade-red/60",
-                        form.template === "bar-left" ? "order-1" : "order-2",
-                      )}>
-                        <svg className="h-6 w-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <path d="m21 15-5-5L5 21" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
+            <div className="flex flex-col bg-muted/30 sm:border-l sm:w-1/2">
+              <div className="px-6 pt-3 pb-6 sm:p-6 space-y-4">
                 {/* ── Template selector ── */}
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">Plantilla</p>
+                <div>
+                  <p className="mb-1.5 text-sm font-medium">Plantilla</p>
                   <div className="grid grid-cols-3 gap-2">
                     {templates.map((t) => (
                       <button
@@ -601,10 +588,10 @@ export function BannerAdminClient() {
                         type="button"
                         onClick={() => setForm({ ...form, template: t.id })}
                         className={cn(
-                          "rounded-lg border-2 p-2 text-left transition-colors",
+                          "cursor-pointer rounded-lg border p-2 text-left transition-all",
                           form.template === t.id
-                            ? "border-arcade-red bg-arcade-red/5"
-                            : "border-transparent bg-muted/50 hover:bg-muted",
+                            ? "border-arcade-red bg-arcade-red/5 shadow-sm"
+                            : "border-border bg-background hover:border-arcade-red/40",
                         )}
                       >
                         {/* Mini visual representation */}
@@ -643,35 +630,97 @@ export function BannerAdminClient() {
                   </div>
                 </div>
 
-                {/* ── Full-image options ── */}
-                {form.template === "full-image" && (
-                  <div className="mt-3 space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={form.clickable}
-                        onChange={(e) => setForm({ ...form, clickable: e.target.checked })}
-                        className="h-4 w-4 rounded border-border accent-primary"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        La imagen es un enlace cliqueable
-                      </span>
-                    </label>
-                    {form.clickable && (
-                      <label className="flex items-center gap-2 cursor-pointer pl-6">
+                {/* ── Link options ── */}
+                <div>
+                  <p className="mb-1.5 text-sm font-medium">Enlace</p>
+                  {form.template === "full-image" ? (
+                    <div className="space-y-2.5">
+                      <label className="flex items-center gap-2.5 cursor-pointer rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:border-arcade-red/30">
                         <input
                           type="checkbox"
-                          checked={form.openInNewTab}
-                          onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })}
-                          className="h-4 w-4 rounded border-border accent-primary"
+                          checked={form.clickable}
+                          onChange={(e) => setForm({ ...form, clickable: e.target.checked })}
+                          className="h-4 w-4 rounded accent-arcade-red"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          Abrir en una nueva pestaña
+                        <span className="text-sm">
+                          La imagen es un enlace cliqueable
                         </span>
                       </label>
-                    )}
+                      {form.clickable && (
+                        <label className="flex items-center gap-2.5 cursor-pointer rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:border-arcade-red/30">
+                          <input
+                            type="checkbox"
+                            checked={form.openInNewTab}
+                            onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })}
+                            className="h-4 w-4 rounded accent-arcade-red"
+                          />
+                          <span className="text-sm">
+                            Abrir en una nueva pestaña
+                          </span>
+                        </label>
+                      )}
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2.5 cursor-pointer rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:border-arcade-red/30">
+                      <input
+                        type="checkbox"
+                        checked={form.openInNewTab}
+                        onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })}
+                        className="h-4 w-4 rounded accent-arcade-red"
+                      />
+                      <span className="text-sm">
+                        Abrir CTA en nueva pestaña
+                      </span>
+                    </label>
+                  )}
+                </div>
+
+                {/* ── Duration ── */}
+                <div>
+                  <p className="mb-1.5 text-sm font-medium">Duración</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      name="duration"
+                      form="slide-form"
+                      min={2}
+                      max={30}
+                      value={form.duration ?? 5}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10)
+                        setForm({ ...form, duration: isNaN(v) ? 5 : v })
+                      }}
+                      onBlur={(e) => {
+                        const v = parseInt(e.target.value, 10)
+                        const clamped = isNaN(v) ? 5 : Math.max(2, Math.min(30, v))
+                        setForm({ ...form, duration: clamped })
+                      }}
+                      className="w-20 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-arcade-red focus:ring-1 focus:ring-arcade-red"
+                    />
+                    <span className="text-sm text-muted-foreground">segundos (2–30)</span>
                   </div>
-                )}
+                </div>
+
+                {/* ── Actions ── */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t">
+                  <button
+                    type="button"
+                    onClick={closeDialog}
+                    className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                    disabled={saving}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    form="slide-form"
+                    disabled={saving || !form.title.trim() || !form.ctaText.trim() || !form.ctaLink.trim()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-arcade-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-arcade-red/90 disabled:opacity-50"
+                  >
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {editingId ? "Guardar cambios" : "Crear slide"}
+                  </button>
+                </div>
               </div>
             </div>
             </div>
