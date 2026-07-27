@@ -135,9 +135,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold text-arcade-dark">{title}</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Suspense fallback={null}>
               <SortSelect />
             </Suspense>

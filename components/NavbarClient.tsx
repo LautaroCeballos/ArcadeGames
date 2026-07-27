@@ -586,16 +586,19 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
           )}
         </div>
 
-        {/* Mobile: hamburger */}
-        <button
-          type="button"
-          className="flex sm:hidden p-2 text-foreground"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        {/* Mobile: theme toggle + hamburger */}
+        <div className="flex sm:hidden items-center gap-1">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="p-2 text-foreground"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu — floating overlay */}
@@ -642,10 +645,7 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
                       <MobileNavLink href="/admin/usuarios" label="Admin" icon={<Shield className="h-4 w-4" />} />
                     )}
                     <MobileNavLink href="/cuenta" label="Cuenta" icon={<Settings className="h-4 w-4" />} />
-                    <div className="mt-2 border-t border-border pt-2">
-                      <ThemeToggle />
-                    </div>
-                    <form action={signOut} className="mt-1">
+                    <form action={signOut} className="mt-2 border-t border-border pt-2">
                       <button
                         type="submit"
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors hover:bg-accent/80"
@@ -657,10 +657,6 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-                      <span className="text-sm text-foreground">Tema</span>
-                      <ThemeToggle />
-                    </div>
                     <MobileNavLink href="/login" label="Iniciar sesión" />
                     <MobileNavLink href="/signup" label="Registrarse" />
                   </>
