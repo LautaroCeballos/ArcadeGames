@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Star, Eye, Gamepad2, Puzzle } from "lucide-react"
+import { Star, Eye, Gamepad2, Puzzle, Sparkles } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCount } from "@/lib/utils"
 import type { RecentGameData } from "@/lib/definitions"
@@ -91,6 +91,7 @@ export function RecentProjectsSection({ games, showAll = false }: RecentProjects
     <section>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-[25px] font-semibold text-arcade-dark">
+          <Sparkles className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Novedades
         </h2>
         <Link

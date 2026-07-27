@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Eye } from "lucide-react"
+import { Star, Eye, Flame } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCount } from "@/lib/utils"
 import { getTagColor } from "@/lib/tag-colors"
@@ -94,6 +94,7 @@ export function FeaturedSection({ games }: FeaturedSectionProps) {
     <section>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-[25px] font-semibold text-arcade-dark">
+          <Flame className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Juegos Destacados
         </h2>
         <Link

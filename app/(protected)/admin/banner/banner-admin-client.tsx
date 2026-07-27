@@ -13,6 +13,8 @@ interface SlideFormData {
   ctaText: string
   ctaLink: string
   template: string
+  clickable: boolean
+  openInNewTab: boolean
 }
 
 const emptyForm: SlideFormData = {
@@ -21,6 +23,8 @@ const emptyForm: SlideFormData = {
   ctaText: "",
   ctaLink: "/",
   template: "bar-right",
+  clickable: true,
+  openInNewTab: true,
 }
 
 const templates = [
@@ -82,6 +86,8 @@ export function BannerAdminClient() {
       ctaText: slide.cta_text,
       ctaLink: slide.cta_link,
       template: slide.template || "bar-right",
+      clickable: slide.clickable ?? true,
+      openInNewTab: slide.open_in_new_tab ?? true,
     })
     setImageFile(null)
     setImagePreview(slide.image_url)
@@ -150,6 +156,8 @@ export function BannerAdminClient() {
       submitFormData.set("ctaText", form.ctaText)
       submitFormData.set("ctaLink", form.ctaLink)
       submitFormData.set("template", form.template)
+      submitFormData.set("clickable", form.clickable ? "on" : "off")
+      submitFormData.set("openInNewTab", form.openInNewTab ? "on" : "off")
       if (finalImageUrl !== null) {
         submitFormData.set("imageUrl", finalImageUrl)
       }
@@ -634,10 +642,40 @@ export function BannerAdminClient() {
                     ))}
                   </div>
                 </div>
+
+                {/* ── Full-image options ── */}
+                {form.template === "full-image" && (
+                  <div className="mt-3 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.clickable}
+                        onChange={(e) => setForm({ ...form, clickable: e.target.checked })}
+                        className="h-4 w-4 rounded border-border accent-primary"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        La imagen es un enlace cliqueable
+                      </span>
+                    </label>
+                    {form.clickable && (
+                      <label className="flex items-center gap-2 cursor-pointer pl-6">
+                        <input
+                          type="checkbox"
+                          checked={form.openInNewTab}
+                          onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })}
+                          className="h-4 w-4 rounded border-border accent-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          Abrir en una nueva pestaña
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
+            </div>
           </div>
-        </div>
       )}
 
       {/* Info */}

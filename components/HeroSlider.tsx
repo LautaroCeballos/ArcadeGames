@@ -13,6 +13,8 @@ interface Slide {
   ctaText: string
   ctaLink: string
   template?: string
+  clickable?: boolean
+  openInNewTab?: boolean
 }
 
 const defaultSlides: Slide[] = [
@@ -117,28 +119,39 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
 }
 
 function FullImageSlide({ slide }: { slide: Slide }) {
+  const isClickable = slide.clickable !== false
+  const newTab = slide.openInNewTab !== false
+
+  const image = (
+    <div className="relative flex aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+      {slide.imageUrl ? (
+        <img
+          src={slide.imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 opacity-10">
+          <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+    </div>
+  )
+
+  if (!isClickable) {
+    return <div>{image}</div>
+  }
+
   return (
     <Link
       href={slide.ctaLink}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noopener noreferrer" : undefined}
       className="block"
     >
-      <div className="relative flex aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
-        {slide.imageUrl ? (
-          <img
-            src={slide.imageUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 opacity-10">
-            <div className="h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--arcade-red)_0%,_transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--arcade-green)_0%,_transparent_60%)]" />
-          </div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-      </div>
+      {image}
     </Link>
   )
 }

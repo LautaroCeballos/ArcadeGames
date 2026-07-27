@@ -1,4 +1,4 @@
-import { Star, Gamepad2 } from "lucide-react"
+import { Star, Gamepad2, Trophy } from "lucide-react"
 import { PodiumCard } from "@/components/PodiumCard"
 import type { PlayerRankingEntry } from "@/lib/definitions"
 
@@ -79,6 +79,7 @@ export function RankingSection({ players }: RankingSectionProps) {
     return (
       <section className="space-y-4">
         <h2 className="text-[25px] font-semibold text-foreground">
+          <Trophy className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Top de Jugadores
         </h2>
         <div className="flex flex-col items-center gap-2 rounded-[10px] border bg-card py-12 text-center text-muted-foreground shadow-sm">
@@ -93,6 +94,7 @@ export function RankingSection({ players }: RankingSectionProps) {
   return (
     <section className="space-y-4">
       <h2 className="text-[25px] font-semibold text-foreground">
+        <Trophy className="mr-2 inline-block h-6 w-6 text-arcade-red" />
         Top de Jugadores
       </h2>
 

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Suspense } from "react"
+import { Gamepad2 } from "lucide-react"
 import { HeroSlider } from "@/components/HeroSlider"
 import { FeaturedSection, FeaturedSectionSkeleton } from "@/components/FeaturedSection"
 import { CategoryRecentSection, CategoryRecentSectionSkeleton } from "@/components/CategoryRecentSection"
@@ -25,6 +26,8 @@ async function HeroSliderWrapper() {
         ctaText: s.cta_text,
         ctaLink: s.cta_link,
         template: s.template || "bar-right",
+        clickable: s.clickable ?? true,
+        openInNewTab: s.open_in_new_tab ?? true,
       }))
     : undefined
 
@@ -141,6 +144,7 @@ export default async function HomePage(_props: HomeProps) {
       <section className="scroll-mt-20 space-y-4" id="todos-los-juegos">
         <div className="flex flex-row items-center justify-between">
           <h2 className="text-[25px] font-semibold text-arcade-dark">
+            <Gamepad2 className="mr-2 inline-block h-6 w-6 text-arcade-red" />
             Todos los juegos
           </h2>
           <Link

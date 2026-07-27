@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRef } from "react"
-import { Minus, Plus } from "lucide-react"
+import { Minus, Plus, Grid3X3 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getTagIcon } from "@/lib/tag-icons"
 import { getTagColor } from "@/lib/tag-colors"
@@ -117,6 +117,7 @@ export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerP
   return (
     <section ref={sectionRef}>
       <h2 className="mb-4 text-[25px] font-semibold text-arcade-dark">
+        <Grid3X3 className="mr-2 inline-block h-6 w-6 text-arcade-red" />
         Explorar por Categoría
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

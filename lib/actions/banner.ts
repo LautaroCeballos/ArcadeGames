@@ -70,6 +70,8 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
   const ctaLink = formData.get("ctaLink") as string
   const imageUrl = formData.get("imageUrl") as string | null
   const template = (formData.get("template") as string) || "bar-right"
+  const clickable = formData.get("clickable") !== "off"
+  const openInNewTab = formData.get("openInNewTab") !== "off"
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -100,6 +102,8 @@ export async function createBannerSlide(formData: FormData): Promise<ActionResul
       cta_link: ctaLink.trim(),
       image_url: imageUrl || null,
       template,
+      clickable,
+      open_in_new_tab: openInNewTab,
       sort_order: nextOrder,
       active: true,
     })
@@ -123,6 +127,8 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
   const ctaLink = formData.get("ctaLink") as string
   const imageUrl = formData.get("imageUrl") as string | null
   const template = (formData.get("template") as string) || "bar-right"
+  const clickable = formData.get("clickable") !== "off"
+  const openInNewTab = formData.get("openInNewTab") !== "off"
 
   if (!title || !title.trim()) {
     return { error: "El título es obligatorio" }
@@ -140,6 +146,8 @@ export async function updateBannerSlide(id: string, formData: FormData): Promise
     cta_text: ctaText.trim(),
     cta_link: ctaLink.trim(),
     template,
+    clickable,
+    open_in_new_tab: openInNewTab,
     updated_at: new Date().toISOString(),
   }
 
