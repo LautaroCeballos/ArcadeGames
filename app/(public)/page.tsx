@@ -144,7 +144,7 @@ export default async function HomePage(_props: HomeProps) {
       {/* 5. All games listing (preview + Ver Más) */}
       <section className="scroll-mt-20 space-y-4" id="todos-los-juegos">
         <div className="flex flex-row items-center justify-between">
-          <h2 className="text-[25px] font-semibold text-arcade-dark">
+          <h2 className="text-xl font-semibold text-arcade-dark sm:text-[25px]">
             <Gamepad2 className="mr-2 inline-block h-6 w-6 text-arcade-red" />
             Todos los juegos
           </h2>

@@ -90,7 +90,7 @@ export function RecentProjectsSection({ games, showAll = false }: RecentProjects
   return (
     <section>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[25px] font-semibold text-arcade-dark">
+        <h2 className="text-xl font-semibold text-arcade-dark sm:text-[25px]">
           <Sparkles className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Novedades
         </h2>

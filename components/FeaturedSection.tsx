@@ -93,7 +93,7 @@ export function FeaturedSection({ games }: FeaturedSectionProps) {
   return (
     <section>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[25px] font-semibold text-arcade-dark">
+        <h2 className="text-xl font-semibold text-arcade-dark sm:text-[25px]">
           <Flame className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Juegos Destacados
         </h2>

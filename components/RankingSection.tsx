@@ -78,7 +78,7 @@ export function RankingSection({ players }: RankingSectionProps) {
   if (players.length === 0) {
     return (
       <section className="space-y-4">
-        <h2 className="text-[25px] font-semibold text-foreground">
+      <h2 className="text-xl font-semibold text-foreground sm:text-[25px]">
           <Trophy className="mr-2 inline-block h-6 w-6 text-arcade-red" />
           Top de Jugadores
         </h2>
@@ -93,7 +93,7 @@ export function RankingSection({ players }: RankingSectionProps) {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-[25px] font-semibold text-foreground">
+      <h2 className="text-xl font-semibold text-foreground sm:text-[25px]">
         <Trophy className="mr-2 inline-block h-6 w-6 text-arcade-red" />
         Top de Jugadores
       </h2>

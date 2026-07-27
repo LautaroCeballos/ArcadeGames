@@ -128,7 +128,7 @@ export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerP
 
   return (
     <section ref={sectionRef}>
-      <h2 className="mb-4 text-[25px] font-semibold text-arcade-dark">
+      <h2 className="mb-4 text-xl font-semibold text-arcade-dark sm:text-[25px]">
         <Grid3X3 className="mr-2 inline-block h-6 w-6 text-arcade-red" />
         Explorar por Categoría
       </h2>
