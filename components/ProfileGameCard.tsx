@@ -15,6 +15,8 @@ interface ProfileGameCardProps {
   game: GameWithDetails
   isOwner: boolean
   isModOrAdmin?: boolean
+  showAuthor?: boolean
+  hideBadge?: boolean
 }
 
 const statusConfig: Record<string, { label: string; class: string }> = {
@@ -42,7 +44,7 @@ function formatRelativeDate(dateStr: string) {
   return `Hace ${Math.floor(days / 365)} años`
 }
 
-export function ProfileGameCard({ game, isOwner, isModOrAdmin = false }: ProfileGameCardProps) {
+export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAuthor = false, hideBadge = false }: ProfileGameCardProps) {
   const router = useRouter()
   const [publishing, setPublishing] = useState(false)
   const badge = getStatusBadge(game)
@@ -74,37 +76,21 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false }: Profile
         </div>
       </Link>
 
-      <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Link href={`/juego/${game.id}`} className="hover:underline">
-              <h3 className="font-semibold truncate">{game.title}</h3>
-            </Link>
+      <div className="flex-1 min-w-0 grid grid-cols-[1fr_auto] gap-x-3">
+        {/* Col 1, row 1: title + badge */}
+        <div className="flex items-center gap-2 min-w-0">
+          <Link href={`/juego/${game.id}`} className="hover:underline min-w-0">
+            <h3 className="font-semibold truncate">{game.title}</h3>
+          </Link>
+          {!hideBadge && (
             <Badge variant="outline" className={`text-xs font-normal shrink-0 ${badge.class}`}>
               {badge.label}
             </Badge>
-          </div>
-          {game.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
-          )}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{game.views} vistas</span>
-            {(game.stars_count ?? 0) > 0 && (
-              <span className="flex items-center gap-0.5">
-                <Star className="size-3 fill-amber-400 text-amber-400" />
-                {game.stars_count}
-              </span>
-            )}
-            <span>{formatRelativeDate(game.created_at)}</span>
-          </div>
-          {game.status === "rejected" && game.rejection_reason && (
-            <p className="text-xs text-red-600 mt-1">
-              <span className="font-medium">Motivo del rechazo:</span> {game.rejection_reason}
-            </p>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        {/* Col 1, row 2: action buttons */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Button asChild variant="ghost" size="icon" className="size-8">
             <Link href={`/juego/${game.id}`}><Play className="size-3.5" /></Link>
           </Button>
@@ -131,6 +117,39 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false }: Profile
           )}
           {!isOwner && isModOrAdmin && (
             <ModeratorGameActions game={game} />
+          )}
+        </div>
+
+        {/* Col 2, row 1+2: description + metadata */}
+        <div className="space-y-1 row-span-2">
+          {game.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
+          )}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+            {showAuthor && game.profiles?.username && (
+              <span>
+                por{" "}
+                <Link
+                  href={`/perfil/${game.profiles.username}`}
+                  className="font-medium hover:text-arcade-red transition-colors"
+                >
+                  {game.profiles.username}
+                </Link>
+              </span>
+            )}
+            <span>{game.views} vistas</span>
+            {(game.stars_count ?? 0) > 0 && (
+              <span className="flex items-center gap-0.5">
+                <Star className="size-3 fill-amber-400 text-amber-400" />
+                {game.stars_count}
+              </span>
+            )}
+            <span>{formatRelativeDate(game.created_at)}</span>
+          </div>
+          {game.status === "rejected" && game.rejection_reason && (
+            <p className="text-xs text-red-600 mt-1">
+              <span className="font-medium">Motivo del rechazo:</span> {game.rejection_reason}
+            </p>
           )}
         </div>
       </div>
