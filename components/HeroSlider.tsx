@@ -258,7 +258,7 @@ function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
         {hasContent && (
           <Link
             {...linkProps}
-            className="absolute inset-0 md:hidden"
+            className="absolute inset-0 z-[1] md:hidden"
             aria-label={slide.title || slide.ctaText}
           />
         )}
