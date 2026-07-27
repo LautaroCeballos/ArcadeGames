@@ -190,7 +190,12 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
 function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
   const isLeft = slide.template === "bar-left"
   const openInNewTab = slide.openInNewTab !== false
-  const dur = slide.duration ?? 5
+  const dur = Number(slide.duration) || 5
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (isActive) setTick((t) => t + 1)
+  }, [isActive])
   const dominantColors = useDominantColors(slide.imageUrl)
   const bgStyle = dominantColors
     ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` }
@@ -266,9 +271,8 @@ function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
               hasContent
                 ? "absolute inset-0 h-full w-full object-cover"
                 : "max-h-full max-w-full object-contain",
-              isActive && "animate-ken-burns",
             )}
-            style={isActive ? { animationDuration: `${dur}s` } : undefined}
+            style={{ animation: `ken-burns-${tick % 2} ${dur}s ease-in-out forwards` }}
           />
         ) : (
           <div className="absolute inset-0 opacity-10">

@@ -93,11 +93,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@keyframes ken-burns {
-  0%   { object-position: 0% 50%; }
-  100% { object-position: 100% 50%; }
-}
-
 @keyframes ken-burns-0 {
   0%   { object-position: 0% 50%; }
   100% { object-position: 100% 50%; }
@@ -110,9 +105,6 @@
 @layer utilities {
   .bg-primary {
     background: linear-gradient(90deg, #4b7bff 0%, #6b4dff 55%, #a64dff 100%);
-  }
-  .animate-ken-burns {
-    animation: ken-burns 5s ease-in-out forwards;
   }
 }
 
