@@ -94,7 +94,7 @@
 }
 
 @utility animate-ken-burns {
-  animation: ken-burns 5s ease-in-out infinite;
+  animation: ken-burns 5s ease-in-out forwards;
 }
 
 @keyframes ken-burns {

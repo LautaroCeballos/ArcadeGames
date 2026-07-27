@@ -145,11 +145,27 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
   const isClickable = slide.clickable !== false
   const newTab = slide.openInNewTab !== false
   const dur = slide.duration ?? 5
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [restart, setRestart] = useState(0)
+
+  useEffect(() => {
+    if (isActive) {
+      // Force animation restart: remove → reflow → re-add
+      const img = imgRef.current
+      if (img) {
+        img.style.animation = "none"
+        void img.offsetHeight // force reflow
+        img.style.animation = ""
+        img.style.animationDuration = `${dur}s`
+      }
+    }
+  }, [isActive, dur])
 
   const image = (
     <div className="relative flex h-[420px] w-full md:h-auto md:aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
       {slide.imageUrl ? (
         <img
+          ref={imgRef}
           src={slide.imageUrl}
           alt=""
           key={`fi-${slide.id}`}
