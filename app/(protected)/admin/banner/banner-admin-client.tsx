@@ -239,7 +239,7 @@ export function BannerAdminClient() {
           <ImagePlus className="h-8 w-8 text-arcade-red" />
           <div>
             <h1 className="text-xl font-bold sm:text-2xl">Banner Principal</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="hidden text-sm text-muted-foreground sm:block">
               Gestioná los slides del banner del home
             </p>
           </div>
@@ -249,7 +249,8 @@ export function BannerAdminClient() {
           className="inline-flex items-center gap-1.5 rounded-lg bg-arcade-red px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-arcade-red/90 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
         >
           <ImagePlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          Nuevo Slide
+          <span className="sm:hidden">Nuevo</span>
+          <span className="hidden sm:inline">Nuevo Slide</span>
         </button>
       </div>
 

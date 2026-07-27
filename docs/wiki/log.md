@@ -20,6 +20,10 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] style | banner-mobile-button-subtitle
+- **Banner Admin**: botón "Nuevo Slide" → "Nuevo" en mobile, subtítulo oculto en mobile (`hidden sm:block`)
+- **Archivos modificados**: `banner-admin-client.tsx`
+
 ## [2026-07-27] update | banner-list-info-labels-mobile-tweaks
 - **Banner Admin**: información de slides reorganizada con etiquetas (Botón/Link/Plantilla/Enlace/Duración) en vez de badges de colores. Thumbnails con crop 1:1 en mobile (`size-24`). Botón "Nuevo Slide" adaptado (`text-xs px-3 py-1.5` mobile). Tamaños de título reducidos en mobile (`text-xl` → `sm:text-2xl`)
 - **Home**: títulos de secciones (Juegos Destacados, Categorías, Novedades, Top Jugadores, Todos los juegos) reducidos a `text-xl sm:text-[25px]`
