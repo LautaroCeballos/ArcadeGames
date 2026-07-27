@@ -210,8 +210,8 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
           href="/"
           className="shrink-0"
         >
-          <img src="/logo-claro.png" alt="ArcadePlay" className="h-10 w-auto dark:hidden" />
-          <img src="/logo-oscuro.png" alt="ArcadePlay" className="h-10 w-auto hidden dark:block" />
+          <img src="/logo-claro.png" alt="ArcadePlay" className="h-7 w-auto dark:hidden sm:h-10" />
+          <img src="/logo-oscuro.png" alt="ArcadePlay" className="h-7 w-auto hidden dark:block sm:h-10" />
         </Link>
 
         {/* Desktop: search + icons + avatar */}
