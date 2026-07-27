@@ -40,6 +40,15 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] implement | auto-confirm-trusted-domain
+
+- **Auto-confirmación para `@creativos-digitales.com`**: al registrarse con un email de ese dominio, la cuenta se valida automáticamente (no se requiere verificación por email).
+- **`lib/supabase/admin.ts`**: nuevo cliente admin con `service_role` key para operaciones privilegiadas.
+- **`lib/actions/auth.ts:signUp`**: después del `signUp`, detecta el dominio y usa `auth.admin.updateUserById` para confirmar el email.
+- **Requiere**: `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`.
+- **Plantillas de email**: nuevo doc `docs/raw/email-templates.md` con HTML mejorado (gradiente azul-violeta, diseño responsive).
+- Páginas actualizadas: [[auth/flow]], [[log]]
+
 ## [2026-07-26] update | header-light-background-shadow
 
 - **Header ahora usa `bg-background border-b shadow-sm`** en vez de `bg-arcade-red`. En light mode: blanco con sombra tenue. En dark mode: `#0a0a0f` con borde sutil.

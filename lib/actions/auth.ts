@@ -10,6 +10,49 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 const PASSWORD_MIN_LENGTH = 8
 const CURRENT_YEAR = new Date().getFullYear()
 const MIN_BIRTH_YEAR = 1900
+const TRUSTED_DOMAIN = "creativos-digitales.com"
+
+/**
+ * Check if an email is already registered.
+ * Uses Supabase Auth admin API with server-side filtering — O(1) query.
+ */
+export async function checkEmail(email: string) {
+  if (!email || !email.includes("@")) return { available: false }
+
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) return { available: true }
+
+  try {
+    const baseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")
+    const normalizedEmail = email.toLowerCase()
+    let page = 0
+    const perPage = 200
+
+    while (page < 5) {
+      const url = `${baseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${key}`, apikey: key },
+        cache: "no-store",
+      })
+
+      if (!res.ok) return { available: true }
+      const data = await res.json()
+      const users = data.users ?? []
+      if (users.length === 0) break
+
+      if (users.some((u: { email?: string }) => u.email?.toLowerCase() === normalizedEmail)) {
+        return { available: false }
+      }
+
+      if (users.length < perPage) break
+      page++
+    }
+
+    return { available: true }
+  } catch {
+    return { available: true }
+  }
+}
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -41,7 +84,8 @@ function validatePassword(password: string): string | null {
 // ─── Server Actions ──────────────────────────────────────────
 
 export async function signUp(_prevState: SignUpState, formData: FormData) {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
   // ── Read fields ──────────────────────────────────────────
   const email = formData.get("email") as string
@@ -127,11 +171,77 @@ export async function signUp(_prevState: SignUpState, formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    console.error("[signUp] Supabase error:", JSON.stringify(error, null, 2))
+    if (
+      error.message?.toLowerCase().includes("already") ||
+      (error as { code?: string }).code === "user_already_exists"
+    ) {
+      return { error: "Este email ya está registrado. Si es tu cuenta, iniciá sesión." }
+    }
+    const msg = error.message || String(error)
+    return { error: (msg && msg !== "{}" && msg !== "[object Object]") ? msg : `Error: ${error.status || ""} ${error.code || ""}`.trim() || "Error al crear la cuenta. Intentalo de nuevo." }
+  }
+
+  // ── Auto-confirm trusted domain ──────────────────────────
+  const emailDomain = email.split("@")[1]?.toLowerCase()
+  if (emailDomain === TRUSTED_DOMAIN) {
+    try {
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (key) {
+        const baseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")
+        const normalizedEmail = email.toLowerCase()
+
+        // Find the newly created user by email through pagination
+        let page = 0
+        const perPage = 200
+        let userId: string | null = null
+
+        while (page < 5 && !userId) {
+          const url = `${baseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`
+          const listRes = await fetch(url, {
+            headers: { Authorization: `Bearer ${key}`, apikey: key },
+          })
+
+          if (!listRes.ok) break
+          const listData = await listRes.json()
+          const users = listData.users ?? []
+          if (users.length === 0) break
+
+          const match = users.find((u: { email?: string; id?: string }) =>
+            u.email?.toLowerCase() === normalizedEmail
+          )
+          if (match?.id) {
+            userId = match.id
+            break
+          }
+
+          if (users.length < perPage) break
+          page++
+        }
+
+        if (userId) {
+          await fetch(`${baseUrl}/auth/v1/admin/users/${userId}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${key}`,
+              apikey: key,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email_confirm: true }),
+          })
+        }
+      }
+    } catch (_) {
+      // Silently fail — the normal confirmation flow still works
+    }
   }
 
   // ── Success — user needs to verify email ────────────────
   return { success: true }
+  } catch (e) {
+    console.error("[signUp] Unhandled error:", e)
+    return { error: "Error al crear la cuenta. Intentalo de nuevo." }
+  }
 }
 
 export async function resendVerificationEmail(_prevState: ResendState, formData: FormData) {

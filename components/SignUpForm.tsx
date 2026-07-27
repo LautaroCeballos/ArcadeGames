@@ -1,7 +1,8 @@
 "use client"
 
-import { useActionState, useState } from "react"
-import { signUp, resendVerificationEmail } from "@/lib/actions/auth"
+import { useActionState, useState, useEffect, useRef } from "react"
+import { signUp, resendVerificationEmail, checkEmail } from "@/lib/actions/auth"
+import { checkUsername } from "@/lib/actions/profile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Eye, EyeOff, Mail, CheckCircle } from "lucide-react"
+import { useDebounce } from "@/hooks/use-debounce"
+import { Eye, EyeOff, Mail, CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 // ─── Country list ────────────────────────────────────────────
 
@@ -233,6 +235,9 @@ function PasswordInput({
   required,
   show,
   onToggle,
+  value,
+  onChange,
+  status,
 }: {
   id: string
   name: string
@@ -240,6 +245,9 @@ function PasswordInput({
   required?: boolean
   show: boolean
   onToggle: () => void
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  status?: "idle" | "invalid" | "valid"
 }) {
   return (
     <div className="relative">
@@ -250,8 +258,16 @@ function PasswordInput({
         placeholder={placeholder}
         required={required}
         autoComplete={id === "password" ? "new-password" : "off"}
-        className="pr-10"
+        className="pr-16"
+        value={value}
+        onChange={onChange}
       />
+      {status === "valid" && (
+        <CheckCircle className="pointer-events-none absolute right-10 top-2.5 h-4 w-4 text-green-500" />
+      )}
+      {status === "invalid" && (
+        <XCircle className="pointer-events-none absolute right-10 top-2.5 h-4 w-4 text-red-500" />
+      )}
       <button
         type="button"
         onClick={onToggle}
@@ -275,6 +291,72 @@ export function SignUpForm() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [birthMonth, setBirthMonth] = useState("")
   const [country, setCountry] = useState("")
+
+  // ── Real-time validation ────────────────────────────────
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [passwordConfirm, setPasswordConfirm] = useState("")
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle")
+  const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "taken">("idle")
+  const [passwordStatus, setPasswordStatus] = useState<"idle" | "invalid" | "valid">("idle")
+  const [confirmStatus, setConfirmStatus] = useState<"idle" | "invalid" | "valid">("idle")
+  const debouncedUsername = useDebounce(username.trim(), 500)
+  const debouncedEmail = useDebounce(email.trim(), 500)
+  const debouncedPassword = useDebounce(password, 500)
+  const debouncedConfirm = useDebounce(passwordConfirm, 500)
+  const lastCheckedEmail = useRef("")
+  const lastCheckedUsername = useRef("")
+
+  useEffect(() => {
+    const val = debouncedUsername
+    if (val.length < 3) {
+      setUsernameStatus("idle")
+      lastCheckedUsername.current = ""
+      return
+    }
+    if (val === lastCheckedUsername.current) return // already checked this value
+    lastCheckedUsername.current = val
+
+    let cancelled = false
+    setUsernameStatus("checking")
+    checkUsername(val, "").then((res) => {
+      if (!cancelled) setUsernameStatus(res.available ? "available" : "taken")
+    })
+    return () => { cancelled = true }
+  }, [debouncedUsername])
+
+  useEffect(() => {
+    const val = debouncedEmail
+    if (!val || !val.includes("@")) {
+      setEmailStatus("idle")
+      lastCheckedEmail.current = ""
+      return
+    }
+    if (val === lastCheckedEmail.current) return // already checked this value
+    lastCheckedEmail.current = val
+
+    let cancelled = false
+    setEmailStatus("checking")
+    checkEmail(val).then((res) => {
+      if (!cancelled) setEmailStatus(res.available ? "available" : "taken")
+    })
+    return () => { cancelled = true }
+  }, [debouncedEmail])
+
+  useEffect(() => {
+    const val = debouncedPassword
+    if (!val) { setPasswordStatus("idle"); return }
+    const ok = val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /[0-9]/.test(val)
+    setPasswordStatus(ok ? "valid" : "invalid")
+  }, [debouncedPassword])
+
+  useEffect(() => {
+    const val = debouncedConfirm
+    if (!val) { setConfirmStatus("idle"); return }
+    if (!password) { setConfirmStatus("invalid"); return }
+    setConfirmStatus(val === password ? "valid" : "invalid")
+  }, [debouncedConfirm, password])
 
   // → Success screen after signup
   if (state?.success) {
@@ -328,75 +410,107 @@ export function SignUpForm() {
 
   // → Registration form
   return (
-    <form action={formAction} className="space-y-5">
-      {/* ── Username ──────────────────────────────────────── */}
-      <div className="space-y-2">
-        <Label htmlFor="username">Nombre de usuario</Label>
-        <Input
-          id="username"
-          name="username"
-          placeholder="ej: gamer_pro23"
-          required
-          minLength={3}
-          maxLength={30}
-          pattern="^[a-zA-Z0-9_]{3,30}$"
-          title="Entre 3 y 30 caracteres, solo letras, números y guión bajo"
-          autoComplete="username"
-        />
-        <p className="text-xs text-muted-foreground">
-          Entre 3 y 30 caracteres. Letras, números y guión bajo.
-        </p>
+    <form action={formAction} className="space-y-4">
+      {/* ── Row 1: Username + Email ────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="username">Nombre de usuario</Label>
+          <div className="relative">
+            <Input
+              id="username"
+              name="username"
+              placeholder="ej: gamer_pro23"
+              required
+              minLength={3}
+              maxLength={30}
+              pattern="^[a-zA-Z0-9_]{3,30}$"
+              title={usernameStatus === "available" ? "✓ Nombre disponible" : usernameStatus === "taken" ? "✗ Nombre en uso" : "Entre 3 y 30 caracteres. Letras, números y guión bajo."}
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            {usernameStatus === "checking" && (
+              <Loader2 className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            {usernameStatus === "available" && (
+              <CheckCircle className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-green-500" />
+            )}
+            {usernameStatus === "taken" && (
+              <XCircle className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-red-500" />
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="tu@email.com"
+              required
+              autoComplete="email"
+              title={emailStatus === "available" ? "✓ Email disponible" : emailStatus === "taken" ? "✗ Email ya registrado" : ""}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {emailStatus === "checking" && (
+              <Loader2 className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            {emailStatus === "available" && (
+              <CheckCircle className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-green-500" />
+            )}
+            {emailStatus === "taken" && (
+              <XCircle className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-red-500" />
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* ── Email ─────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="tu@email.com"
-          required
-          autoComplete="email"
-        />
+      {/* ── Row 2: Password + Confirm ──────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="password">Contraseña</Label>
+          <PasswordInput
+            id="password"
+            name="password"
+            placeholder="Mínimo 8 caracteres"
+            required
+            show={showPassword}
+            onToggle={() => setShowPassword(!showPassword)}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            status={passwordStatus}
+          />
+          <ul className="text-xs text-muted-foreground space-y-0.5 list-inside list-disc">
+            <li>Mínimo 8 caracteres</li>
+            <li>Al menos una mayúscula</li>
+            <li>Al menos una minúscula</li>
+            <li>Al menos un número</li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password_confirm">Confirmar contraseña</Label>
+          <PasswordInput
+            id="password_confirm"
+            name="password_confirm"
+            placeholder="Repetí la contraseña"
+            required
+            show={showConfirm}
+            onToggle={() => setShowConfirm(!showConfirm)}
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            status={confirmStatus}
+          />
+        </div>
       </div>
 
-      {/* ── Contraseña ────────────────────────────────────── */}
-      <div className="space-y-2">
-        <Label htmlFor="password">Contraseña</Label>
-        <PasswordInput
-          id="password"
-          name="password"
-          placeholder="Mínimo 8 caracteres"
-          required
-          show={showPassword}
-          onToggle={() => setShowPassword(!showPassword)}
-        />
-        <ul className="text-xs text-muted-foreground space-y-0.5 list-inside list-disc">
-          <li>Mínimo 8 caracteres</li>
-          <li>Al menos una mayúscula</li>
-          <li>Al menos una minúscula</li>
-          <li>Al menos un número</li>
-        </ul>
-      </div>
-
-      {/* ── Confirmar contraseña ──────────────────────────── */}
-      <div className="space-y-2">
-        <Label htmlFor="password_confirm">Confirmar contraseña</Label>
-        <PasswordInput
-          id="password_confirm"
-          name="password_confirm"
-          placeholder="Repetí la contraseña"
-          required
-          show={showConfirm}
-          onToggle={() => setShowConfirm(!showConfirm)}
-        />
-      </div>
-
-      {/* ── Mes y año de nacimiento ───────────────────────── */}
-      <fieldset>
-        <legend className="text-sm font-medium mb-2">Fecha de nacimiento</legend>
-        <div className="grid grid-cols-2 gap-3">
+      {/* ── Row 3: Birth + Country ──────────────────────────── */}
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Fecha de nacimiento y país</legend>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="birth_month">Mes</Label>
             <Select value={birthMonth} onValueChange={setBirthMonth}>
@@ -424,31 +538,33 @@ export function SignUpForm() {
               max={new Date().getFullYear()}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="country">País</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger id="country">
+                <SelectValue placeholder="Seleccioná tu país" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[260px]">
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="country" value={country} />
+          </div>
         </div>
       </fieldset>
 
-      {/* ── País ──────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <Label htmlFor="country">País</Label>
-        <Select value={country} onValueChange={setCountry}>
-          <SelectTrigger id="country">
-            <SelectValue placeholder="Seleccioná tu país" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[260px]">
-            {COUNTRIES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <input type="hidden" name="country" value={country} />
-      </div>
-
       {/* ── Error general ─────────────────────────────────── */}
-      {state?.error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {state.error}
+      {state && !state.success && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+          <p className="text-sm text-destructive">
+            {typeof state.error === "string" && state.error
+              ? state.error
+              : "Error al crear la cuenta. Intentalo de nuevo."}
+          </p>
         </div>
       )}
 
