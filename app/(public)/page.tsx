@@ -8,7 +8,7 @@ import { GameGridSkeleton } from "@/components/GameGrid"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getActiveBannerSlides } from "@/lib/actions/banner"
 import { getPlayerLeaderboard } from "@/lib/actions/ranking"
-import { getFeaturedGames, getRecentGames, getGameList, getTags } from "@/lib/queries/games"
+import { getFeaturedGames, getRecentGames, getGameList, getAllTags } from "@/lib/queries/games"
 import { GameCard } from "@/components/GameCard"
 
 /* ── Hero Slider wrapper ─────────────────────────────────── */
@@ -42,10 +42,22 @@ async function FeaturedSectionWrapper() {
 
 async function CategoryRecentWrapper() {
   const [tags, recentGames] = await Promise.all([
-    getTags(),
+    getAllTags(),
     getRecentGames(5),
   ])
-  return <CategoryRecentSection tags={tags} recentGames={recentGames} />
+
+  // Ensure platform tags come first, sorted by name
+  const platformPriority = ["MakeCode Arcade", "Scratch"]
+  const sorted = [...tags].sort((a, b) => {
+    const ia = platformPriority.indexOf(a.name)
+    const ib = platformPriority.indexOf(b.name)
+    if (ia !== -1 && ib !== -1) return ia - ib
+    if (ia !== -1) return -1
+    if (ib !== -1) return 1
+    return a.name.localeCompare(b.name)
+  })
+
+  return <CategoryRecentSection tags={sorted} recentGames={recentGames} />
 }
 
 /* ── Ranking section ─────────────────────────────────────── */

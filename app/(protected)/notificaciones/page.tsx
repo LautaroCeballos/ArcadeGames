@@ -33,7 +33,7 @@ function getNotificationIcon(type: string) {
     case "new_follower":
       return <UserPlus className="h-5 w-5 text-purple-400 shrink-0" />
     default:
-      return <Bell className="h-5 w-5 text-arcade-beige shrink-0" />
+      return <Bell className="h-5 w-5 text-foreground shrink-0" />
   }
 }
 
@@ -159,8 +159,8 @@ export default function NotificacionesPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-arcade-dark">Notificaciones</h1>
-          <p className="text-sm text-arcade-dark/50">
+          <h1 className="text-xl font-bold text-foreground">Notificaciones</h1>
+          <p className="text-sm text-foreground/50">
             {total > 0
               ? `${total} en total${unreadCount > 0 ? ` · ${unreadCount} sin leer` : ""}`
               : "Cargando..."}
@@ -182,10 +182,10 @@ export default function NotificacionesPage() {
       {/* List */}
       {loading && notifications.length === 0 ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-arcade-dark/30" />
+          <Loader2 className="h-6 w-6 animate-spin text-foreground/30" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-arcade-dark/40">
+        <div className="flex flex-col items-center justify-center py-20 text-foreground/40">
           <Bell className="mb-3 h-10 w-10" />
           <p className="text-sm">No hay notificaciones</p>
         </div>
@@ -196,8 +196,8 @@ export default function NotificacionesPage() {
               key={n.id}
               type="button"
               className={cn(
-                "flex w-full items-start gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-arcade-red/5",
-                !n.read && "bg-arcade-red/5"
+                "flex w-full items-start gap-4 rounded-lg px-4 py-3 text-left transition-colors hover:bg-accent/10",
+                !n.read && "bg-primary/5"
               )}
               onClick={() => handleClick(n)}
             >
@@ -205,16 +205,16 @@ export default function NotificacionesPage() {
               <div className="flex-1 min-w-0">
                 <p
                   className={cn(
-                    "text-sm text-arcade-dark",
+                    "text-sm text-foreground",
                     !n.read && "font-semibold"
                   )}
                 >
                   {n.title}
                 </p>
-                <p className="mt-0.5 text-sm text-arcade-dark/60 truncate">
+                <p className="mt-0.5 text-sm text-foreground/60 truncate">
                   {n.message}
                 </p>
-                <p className="mt-1 text-xs text-arcade-dark/40">
+                <p className="mt-1 text-xs text-foreground/40">
                   {timeAgo(n.created_at)}
                 </p>
               </div>
