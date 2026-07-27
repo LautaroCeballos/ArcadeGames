@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Trophy, Star } from "lucide-react"
 import type { PlayerRankingEntry } from "@/lib/definitions"
 
@@ -6,9 +7,9 @@ interface PodiumCardProps {
 }
 
 const podiumColors = [
-  { bg: "bg-amber-50", border: "border-amber-300", text: "text-amber-500", rank: "1" },
-  { bg: "bg-gray-50", border: "border-gray-300", text: "text-gray-400", rank: "2" },
-  { bg: "bg-orange-50", border: "border-orange-300", text: "text-orange-500", rank: "3" },
+  { bg: "bg-amber-50 dark:bg-amber-900", border: "border-amber-300 dark:border-amber-600", text: "text-amber-500 dark:text-amber-400", rank: "1" },
+  { bg: "bg-gray-50 dark:bg-gray-800", border: "border-gray-300 dark:border-gray-600", text: "text-gray-400 dark:text-gray-300", rank: "2" },
+  { bg: "bg-orange-50 dark:bg-orange-900", border: "border-orange-300 dark:border-orange-600", text: "text-orange-500 dark:text-orange-400", rank: "3" },
 ]
 
 const trophyColors = ["text-amber-400", "text-gray-400", "text-orange-600"]
@@ -28,7 +29,7 @@ export function PodiumCard({ topPlayers }: PodiumCardProps) {
   ]
 
   return (
-    <div className="grid grid-cols-3 items-end gap-3 sm:gap-4">
+    <div className="flex justify-center items-end gap-0">
       {ordered.map((player, i) => {
         if (!player) {
           return (
@@ -37,41 +38,87 @@ export function PodiumCard({ topPlayers }: PodiumCardProps) {
         }
 
         const isCenter = i === 1
-        const colors = isCenter ? podiumColors[0] : i === 0 ? podiumColors[1] : podiumColors[2]
-        const trophyColor = isCenter ? trophyColors[0] : i === 0 ? trophyColors[1] : trophyColors[2]
+        const isLeft = i === 0
+        const colors = isCenter ? podiumColors[0] : isLeft ? podiumColors[1] : podiumColors[2]
+        const trophyColor = isCenter ? trophyColors[0] : isLeft ? trophyColors[1] : trophyColors[2]
+
+        // Podium step: spacer above pushes 2nd/3rd down
+        const spacerHeight = isCenter ? "h-0" : isLeft ? "h-8 sm:h-10" : "h-14 sm:h-20"
+
+        // Overlap: negative margins so cards overlap slightly; center on top
+        const overlapMargin = isCenter
+          ? "mx-[-10px] sm:mx-[-16px]"
+          : isLeft
+            ? "mr-[-10px] sm:mr-[-16px]"
+            : "ml-[-10px] sm:ml-[-16px]"
+
+        const zIndex = isCenter ? "z-10" : "z-[1]"
+
+        // Size progression: 1st biggest, 2nd medium, 3rd smallest
+        const cardPadding = isCenter
+          ? "px-4 py-5 sm:px-5 sm:py-6"
+          : isLeft
+            ? "px-3 py-4 sm:px-4 sm:py-5"
+            : "px-3 py-3 sm:px-4 sm:py-4"
+
+        const trophySize = isCenter
+          ? "size-7 sm:size-9"
+          : isLeft
+            ? "size-6 sm:size-8"
+            : "size-5 sm:size-7"
+
+        const nameSize = isCenter
+          ? "text-sm sm:text-base"
+          : "text-xs sm:text-sm"
+
+        const starIconSize = isCenter
+          ? "size-3.5 sm:size-4"
+          : "size-3 sm:size-3.5"
+
+        const starNumberSize = isCenter
+          ? "text-sm sm:text-base"
+          : "text-xs sm:text-sm"
 
         return (
           <div
             key={player.username}
-            className={`relative flex flex-col items-center rounded-[10px] border-2 ${colors.border} ${colors.bg} px-3 py-4 text-center shadow-sm transition-shadow hover:shadow-md sm:px-4 ${
-              isCenter ? "scale-105 sm:scale-110" : ""
-            }`}
+            className={`relative flex flex-1 flex-col ${overlapMargin} ${zIndex}`}
           >
-            {/* Rank badge */}
+            {/* Spacer for podium step effect */}
+            <div className={spacerHeight} />
+
             <div
-              className={`absolute -top-3 left-1/2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full text-xs font-bold text-white shadow sm:size-8 sm:text-sm ${
-                isCenter ? "bg-arcade-red" : "bg-muted-foreground/60"
-              }`}
+              className={`relative flex flex-col items-center rounded-[10px] border-2 ${colors.border} ${colors.bg} text-center shadow-sm transition-shadow hover:shadow-md ${cardPadding}`}
             >
-              {colors.rank}
-            </div>
+              {/* Rank badge */}
+              <div
+                className={`absolute -top-3 left-1/2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full text-xs font-bold text-white shadow sm:size-8 sm:text-sm ${
+                  isCenter ? "bg-amber-400" : isLeft ? "bg-gray-400" : "bg-orange-500"
+                }`}
+              >
+                {colors.rank}
+              </div>
 
-            {/* Trophy */}
-            <div className="mt-2 flex size-12 items-center justify-center sm:size-14">
-              <Trophy className={`size-7 sm:size-9 ${trophyColor}`} fill="currentColor" />
-            </div>
+              {/* Trophy */}
+              <div className="mt-2 flex items-center justify-center sm:mt-3">
+                <Trophy className={`${trophySize} ${trophyColor}`} fill="currentColor" />
+              </div>
 
-            {/* Username */}
-            <p className="mt-2 text-sm font-semibold text-arcade-dark truncate max-w-full sm:text-base">
-              {player.username}
-            </p>
+              {/* Username */}
+              <Link
+                href={`/perfil/${player.username}`}
+                className={`mt-2 truncate font-semibold text-foreground hover:text-primary transition-colors max-w-full ${nameSize}`}
+              >
+                {player.username}
+              </Link>
 
-            {/* Stars */}
-            <div className="mt-1 flex items-center gap-1.5">
-              <Star className="size-3.5 fill-yellow-400 text-yellow-400 sm:size-4" />
-              <span className="text-sm font-bold text-arcade-dark sm:text-base">
-                {player.totalStars}
-              </span>
+              {/* Stars */}
+              <div className="mt-1 flex items-center gap-1.5">
+                <Star className={`${starIconSize} fill-yellow-400 text-yellow-400`} />
+                <span className={`font-bold text-foreground ${starNumberSize}`}>
+                  {player.totalStars}
+                </span>
+              </div>
             </div>
           </div>
         )

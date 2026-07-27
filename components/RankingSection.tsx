@@ -27,7 +27,7 @@ function RankingList({ players }: { players: PlayerRankingEntry[] }) {
             </span>
 
             {/* Avatar */}
-            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-arcade-dark/10 text-sm font-bold text-arcade-dark sm:size-10">
+            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-bold text-foreground sm:size-10">
               {player.avatarUrl ? (
                 <img
                   src={player.avatarUrl}
@@ -78,7 +78,7 @@ export function RankingSection({ players }: RankingSectionProps) {
   if (players.length === 0) {
     return (
       <section className="space-y-4">
-        <h2 className="text-[25px] font-semibold text-arcade-dark">
+        <h2 className="text-[25px] font-semibold text-foreground">
           Top de Jugadores
         </h2>
         <div className="flex flex-col items-center gap-2 rounded-[10px] border bg-card py-12 text-center text-muted-foreground shadow-sm">
@@ -92,7 +92,7 @@ export function RankingSection({ players }: RankingSectionProps) {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-[25px] font-semibold text-arcade-dark">
+      <h2 className="text-[25px] font-semibold text-foreground">
         Top de Jugadores
       </h2>
 
