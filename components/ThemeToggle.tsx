@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+const THEME_EVENT = "themechange"
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false)
@@ -13,6 +15,18 @@ export function ThemeToggle() {
     setDark(document.documentElement.classList.contains("dark"))
   }, [])
 
+  // Sync state across multiple instances (mobile + desktop)
+  const handleThemeEvent = useCallback((e: Event) => {
+    if (e instanceof CustomEvent && typeof e.detail?.dark === "boolean") {
+      setDark(e.detail.dark)
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener(THEME_EVENT, handleThemeEvent)
+    return () => document.removeEventListener(THEME_EVENT, handleThemeEvent)
+  }, [handleThemeEvent])
+
   function toggle() {
     const next = !dark
     setDark(next)
@@ -20,6 +34,8 @@ export function ThemeToggle() {
     try {
       localStorage.setItem("theme", next ? "dark" : "light")
     } catch (_) {}
+    // Notify other ThemeToggle instances
+    document.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: { dark: next } }))
   }
 
   if (!mounted) {
