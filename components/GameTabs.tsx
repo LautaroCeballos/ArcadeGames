@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Monitor, Smartphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ArcadeEmbed } from "@/components/ArcadeEmbed"
 import { ScratchEmbed } from "@/components/ScratchEmbed"
@@ -41,13 +42,13 @@ interface GameTabsProps {
 
 export function GameTabs({ gameId, title, platform = 'makecode', embedUrl }: GameTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("juego")
+  const [showFullConsole, setShowFullConsole] = useState(true)
 
   const isMakeCode = platform === 'makecode'
   const tabs = isMakeCode ? MAKECODE_TABS : SCRATCH_TABS
 
   const getSrc = (tab: TabId): string => {
     if (!isMakeCode) {
-      // For Scratch, use the embedUrl directly
       return embedUrl ?? `https://scratch.mit.edu/projects/${gameId.replace("scratch_", "")}/embed`
     }
     switch (tab) {
@@ -66,6 +67,7 @@ export function GameTabs({ gameId, title, platform = 'makecode', embedUrl }: Gam
           url={getSrc(activeTab)}
           title={title}
           sandbox={MAKECODE_TABS.find((t) => t.id === activeTab)?.sandbox}
+          showFullConsole={showFullConsole}
         />
       )
     }
@@ -102,6 +104,15 @@ export function GameTabs({ gameId, title, platform = 'makecode', embedUrl }: Gam
             )}
           </button>
         ))}
+        {/* Toggle console view button */}
+        <button
+          type="button"
+          onClick={() => setShowFullConsole((prev) => !prev)}
+          className="ml-auto px-3 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
+          title={showFullConsole ? "Ver solo pantalla" : "Ver consola completa"}
+        >
+          {showFullConsole ? <Monitor className="size-4" /> : <Smartphone className="size-4" />}
+        </button>
       </div>
     </div>
   )

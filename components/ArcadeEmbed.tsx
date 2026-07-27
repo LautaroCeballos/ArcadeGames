@@ -7,14 +7,18 @@ interface ArcadeEmbedProps {
   url: string
   title: string
   sandbox?: string
+  showFullConsole?: boolean
 }
 
-export function ArcadeEmbed({ url, title, sandbox }: ArcadeEmbedProps) {
+export function ArcadeEmbed({ url, title, sandbox, showFullConsole = true }: ArcadeEmbedProps) {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
 
   return (
-    <div className="relative w-full aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+    <div className={cn(
+      "relative w-full bg-muted rounded-lg overflow-hidden",
+      showFullConsole ? "aspect-[3/4] sm:aspect-[4/3]" : "aspect-[4/3]"
+    )}>
       {!loaded && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
