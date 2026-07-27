@@ -364,15 +364,15 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
             <>
               <Link
                 href="/subir"
-                className="relative inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl sm:px-4 sm:text-sm"
+                className="relative inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl md:px-4 md:text-sm"
                 style={{
                   boxShadow: "0 4px 16px rgba(80, 70, 180, 0.3), 0 1px 3px rgba(0,0,0,0.08)",
                 }}
               >
                 <span className="absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-                <Upload className="relative h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="relative hidden sm:inline">Publicar Proyecto</span>
-                <span className="relative sm:hidden">Publicar</span>
+                <Upload className="relative h-4 w-4 shrink-0" />
+                <span className="relative whitespace-nowrap hidden md:inline">Publicar Proyecto</span>
+                <span className="relative whitespace-nowrap md:hidden">Publicar</span>
               </Link>
 
               {/* Theme toggle */}
