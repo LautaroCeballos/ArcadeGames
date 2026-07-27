@@ -156,7 +156,7 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
           className={cn(
             "absolute inset-0 h-full w-full object-cover animate-ken-burns",
           )}
-          style={isActive ? { animationDuration: `${dur}s`, animationPlayState: "running" as const } : { animationPlayState: "paused" as const }}
+          style={{ animationDuration: `${dur}s` }}
         />
       ) : (
         <div className="absolute inset-0 opacity-10">
