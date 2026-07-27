@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useDominantColors } from "@/hooks/use-dominant-colors"
@@ -13,6 +13,7 @@ interface Slide {
   ctaText: string
   ctaLink: string
   template?: string
+  duration?: number
   clickable?: boolean
   openInNewTab?: boolean
 }
@@ -54,16 +55,34 @@ interface HeroSliderProps {
 export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const animatingRef = useRef(false)
+
+  /* Navigate to a specific slide — blocks during fade animation */
+  const goTo = useCallback((index: number) => {
+    if (animatingRef.current) return
+    animatingRef.current = true
+    setCurrent(index)
+  }, [])
 
   const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % slides.length)
-  }, [slides.length])
+    goTo((current + 1) % slides.length)
+  }, [current, slides.length, goTo])
 
+  /* Release animation lock after fade transition completes */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      animatingRef.current = false
+    }, 550)
+    return () => clearTimeout(timer)
+  }, [current])
+
+  /* Auto-play: slide duration + 0.5s fade transition between slides */
   useEffect(() => {
     if (isPaused) return
-    const timer = setInterval(next, 5000)
-    return () => clearInterval(timer)
-  }, [isPaused, next])
+    const dur = slides[current]?.duration ?? 5
+    const timer = setTimeout(next, (dur + 0.5) * 1000)
+    return () => clearTimeout(timer)
+  }, [isPaused, current, next, slides])
 
   if (slides.length === 0) return null
 
@@ -77,21 +96,25 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
       onMouseLeave={() => setIsPaused(false)}
     >
       <div className="grid grid-cols-1 grid-rows-1">
-        {slides.map((s, i) => (
-          <div
-            key={s.id}
-            className={cn(
-              "col-span-full row-span-full transition-all duration-500 ease-in-out",
-              i === current ? "opacity-100" : "opacity-0 pointer-events-none",
-            )}
-          >
-            {s.template === "full-image" ? (
-              <FullImageSlide slide={s} />
-            ) : (
-              <BarSlide slide={s} />
-            )}
-          </div>
-        ))}
+        {slides.map((s, i) => {
+          const isActive = i === current
+          return (
+            <div
+              key={s.id}
+              className={cn(
+                "col-span-full row-span-full transition-opacity duration-500 ease-in-out",
+                isActive ? "opacity-100" : "opacity-0 pointer-events-none",
+              )}
+              aria-hidden={!isActive}
+            >
+              {s.template === "full-image" ? (
+                <FullImageSlide slide={s} isActive={isActive} />
+              ) : (
+                <BarSlide slide={s} isActive={isActive} />
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {slides.length > 1 && (
@@ -109,7 +132,7 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
                   ? "bg-arcade-beige"
                   : "bg-arcade-beige/40 hover:bg-arcade-beige/60",
               )}
-              onClick={() => setCurrent(i)}
+              onClick={() => goTo(i)}
             />
           ))}
         </div>
@@ -118,17 +141,23 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
   )
 }
 
-function FullImageSlide({ slide }: { slide: Slide }) {
+function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
   const isClickable = slide.clickable !== false
   const newTab = slide.openInNewTab !== false
+  const dur = slide.duration ?? 5
 
   const image = (
-    <div className="relative flex aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
+    <div className="relative flex h-[420px] w-full md:h-auto md:aspect-[3/1] bg-gradient-to-br from-arcade-dark to-arcade-red/80">
       {slide.imageUrl ? (
         <img
           src={slide.imageUrl}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          key={`fi-${slide.id}-${isActive ? "a" : "i"}`}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover",
+            isActive && "animate-ken-burns",
+          )}
+          style={isActive ? { animationDuration: `${dur}s` } : undefined}
         />
       ) : (
         <div className="absolute inset-0 opacity-10">
@@ -156,8 +185,10 @@ function FullImageSlide({ slide }: { slide: Slide }) {
   )
 }
 
-function BarSlide({ slide }: { slide: Slide }) {
+function BarSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
   const isLeft = slide.template === "bar-left"
+  const openInNewTab = slide.openInNewTab !== false
+  const dur = slide.duration ?? 5
   const dominantColors = useDominantColors(slide.imageUrl)
   const bgStyle = dominantColors
     ? { background: `linear-gradient(135deg, ${dominantColors[0]}, ${dominantColors[1]})` }
@@ -166,36 +197,41 @@ function BarSlide({ slide }: { slide: Slide }) {
   const hasContent = !!(slide.title || slide.description || slide.ctaText)
   const imageWidth = hasContent ? "md:w-[75%]" : "md:w-full"
 
+  /* Props for CTA links — respect openInNewTab from DB */
+  const linkProps = {
+    href: slide.ctaLink,
+    target: openInNewTab ? "_blank" as const : undefined,
+    rel: openInNewTab ? "noopener noreferrer" as const : undefined,
+  }
+
   return (
     <div className={cn(
-      "flex flex-col md:aspect-[3/1] md:flex-row",
+      "flex h-[420px] flex-col md:h-auto md:aspect-[3/1] md:flex-row",
     )}>
-      {/* Content panel — only when there's something to show */}
+      {/* Content panel — hidden on mobile, visible on desktop */}
       {hasContent && (
         <div
           style={bgStyle}
           className={cn(
-            "flex flex-col items-center justify-center gap-3 p-6 text-center md:w-[25%] md:p-8 lg:gap-4",
+            "hidden md:flex flex-col items-center justify-center gap-3 p-8 text-center md:w-[25%] lg:gap-4 transition-all duration-700",
             !dominantColors && "bg-gradient-to-br from-arcade-dark to-arcade-red/80",
             isLeft ? "md:order-2" : "md:order-1",
           )}
         >
           {slide.title && (
-            <h2 className="text-xl font-bold text-white sm:text-2xl md:text-3xl">
+            <h2 className="text-xl font-bold text-white md:text-3xl">
               {slide.title}
             </h2>
           )}
           {slide.description && (
-            <p className="text-sm text-white/80 sm:text-base">
+            <p className="line-clamp-3 text-sm text-white/80 md:text-base">
               {slide.description}
             </p>
           )}
           {slide.ctaText && (
             <Link
-              href={slide.ctaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative inline-flex items-center justify-center rounded-[10px] bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl sm:px-6 sm:py-2.5 sm:text-base"
+              {...linkProps}
+              className="relative inline-flex shrink-0 items-center justify-center rounded-[10px] bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl md:text-base"
             >
               <span className="absolute inset-0 rounded-[10px] bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
               <span className="relative">{slide.ctaText}</span>
@@ -204,21 +240,33 @@ function BarSlide({ slide }: { slide: Slide }) {
         </div>
       )}
 
-      {/* Image */}
+      {/* Image — full height on mobile (link overlay), fixed width % on desktop */}
       <div className={cn(
-        "relative aspect-video w-full md:aspect-auto",
+        "relative w-full flex-1 overflow-hidden md:flex-none md:aspect-auto",
         imageWidth,
         isLeft ? "md:order-1" : hasContent ? "md:order-2" : "md:order-1",
         !hasContent && "flex items-center justify-center bg-gradient-to-br from-arcade-dark to-arcade-red/80",
       )}>
+        {/* Mobile: invisible link covering the whole image (only when slide has content) */}
+        {hasContent && (
+          <Link
+            {...linkProps}
+            className="absolute inset-0 z-10 md:hidden"
+            aria-label={slide.title || slide.ctaText}
+          />
+        )}
         {slide.imageUrl ? (
           <img
             src={slide.imageUrl}
             alt=""
-            className={hasContent
-              ? "absolute inset-0 h-full w-full object-cover"
-              : "max-h-full max-w-full object-contain"
-            }
+            key={`bs-${slide.id}-${isActive ? "a" : "i"}`}
+            className={cn(
+              hasContent
+                ? "absolute inset-0 h-full w-full object-cover"
+                : "max-h-full max-w-full object-contain",
+              hasContent && isActive && "animate-ken-burns",
+            )}
+            style={hasContent && isActive ? { animationDuration: `${dur}s` } : undefined}
           />
         ) : (
           <div className="absolute inset-0 opacity-10">
