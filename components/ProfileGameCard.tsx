@@ -133,7 +133,7 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
             <MoreVertical className="size-3" />
           </Button>
           {menuOpen && (
-            <div className="absolute left-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border bg-card shadow-lg">
+            <div               className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border bg-card shadow-lg">
               <Link
                 href={`/juego/${game.id}`}
                 onClick={() => setMenuOpen(false)}

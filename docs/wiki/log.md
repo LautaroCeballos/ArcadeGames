@@ -20,6 +20,10 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] fix | profile-kebab-dropdown-alineacion
+- **ProfileGameCard**: dropdown del menú kebab corregido — ahora se dibuja hacia la izquierda (`right-0`) para no salirse del viewport en mobile
+- **Archivos modificados**: `components/ProfileGameCard.tsx`
+
 ## [2026-07-27] update | banner-dialog-mobile-profile-kebab
 - **Banner Admin**: diálogo de edición rediseñado para mobile — vista previa eliminada, columna 2 visible con selector de plantilla/enlace/duración, diálogo scrolleable con body scroll lock, botón X para cerrar, menú kebab para acciones de slides en mobile. Estilos unificados de template/enlace/duración con el form. Iconos en título del diálogo
 - **Páginas actualizadas**: [[features/banner]], [[frontend/components]]
