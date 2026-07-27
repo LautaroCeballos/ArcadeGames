@@ -163,6 +163,18 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
     setSearchOpen(false)
   }, [pathname])
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [menuOpen])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const q = searchValue.trim()
@@ -586,66 +598,77 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — floating overlay */}
       {menuOpen && (
-        <div className="border-t border-border bg-background px-4 pb-4 sm:hidden">
-          {/* Mobile search */}
-          <form onSubmit={handleSearch} className="relative mt-3 mb-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Buscar juegos, usuarios..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              className="w-full rounded-lg bg-muted pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-foreground/50 outline-none focus:bg-muted focus:ring-1 focus:ring-ring/40 transition-colors"
-            />
-          </form>
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 top-16 z-40 bg-black/50 sm:hidden animate-fade-in"
+            onClick={() => setMenuOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Menu panel */}
+          <div className="absolute left-0 right-0 top-full z-50 border-t border-border bg-background shadow-xl sm:hidden animate-slide-down">
+            <div className="px-4 pb-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+              {/* Mobile search */}
+              <form onSubmit={handleSearch} className="relative mt-3 mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Buscar juegos, usuarios..."
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="w-full rounded-lg bg-muted pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-foreground/50 outline-none focus:bg-muted focus:ring-1 focus:ring-ring/40 transition-colors"
+                />
+              </form>
 
-          <nav className="flex flex-col gap-1 pt-1" role="navigation">
-            <MobileNavLink href="/" label="Inicio" />
+              <nav className="flex flex-col gap-1 pt-1" role="navigation">
+                <MobileNavLink href="/" label="Inicio" />
 
-            {user ? (
-              <>
-                <MobileNavLink href="/subir" label="Publicar Proyecto" icon={<Upload className="h-4 w-4" />} />
-                <MobileNavLink href="/notificaciones" label="Notificaciones" icon={<Bell className="h-4 w-4" />} badge={liveUnreadCount} />
-                {username && (
-                  <MobileNavLink href={`/perfil/${username}`} label="Perfil" icon={<User className="h-4 w-4" />} />
+                {user ? (
+                  <>
+                    <MobileNavLink href="/subir" label="Publicar Proyecto" icon={<Upload className="h-4 w-4" />} />
+                    <MobileNavLink href="/notificaciones" label="Notificaciones" icon={<Bell className="h-4 w-4" />} badge={liveUnreadCount} />
+                    {username && (
+                      <MobileNavLink href={`/perfil/${username}`} label="Perfil" icon={<User className="h-4 w-4" />} />
+                    )}
+                    {(role === 'moderator' || role === 'admin') && (
+                      <MobileNavLink href="/moderar" label="Moderar" icon={<Shield className="h-4 w-4" />} />
+                    )}
+                    {role === 'admin' && (
+                      <MobileNavLink href="/admin/banner" label="Banner" icon={<ImagePlus className="h-4 w-4" />} />
+                    )}
+                    {role === 'admin' && (
+                      <MobileNavLink href="/admin/usuarios" label="Admin" icon={<Shield className="h-4 w-4" />} />
+                    )}
+                    <MobileNavLink href="/cuenta" label="Cuenta" icon={<Settings className="h-4 w-4" />} />
+                    <div className="mt-2 border-t border-border pt-2">
+                      <ThemeToggle />
+                    </div>
+                    <form action={signOut} className="mt-1">
+                      <button
+                        type="submit"
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors hover:bg-accent/80"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Cerrar sesión
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+                      <span className="text-sm text-foreground">Tema</span>
+                      <ThemeToggle />
+                    </div>
+                    <MobileNavLink href="/login" label="Iniciar sesión" />
+                    <MobileNavLink href="/signup" label="Registrarse" />
+                  </>
                 )}
-                {(role === 'moderator' || role === 'admin') && (
-                  <MobileNavLink href="/moderar" label="Moderar" icon={<Shield className="h-4 w-4" />} />
-                )}
-                {role === 'admin' && (
-                  <MobileNavLink href="/admin/banner" label="Banner" icon={<ImagePlus className="h-4 w-4" />} />
-                )}
-                {role === 'admin' && (
-                  <MobileNavLink href="/admin/usuarios" label="Admin" icon={<Shield className="h-4 w-4" />} />
-                )}
-                <MobileNavLink href="/cuenta" label="Cuenta" icon={<Settings className="h-4 w-4" />} />
-                <div className="mt-2 border-t border-border pt-2">
-                  <ThemeToggle />
-                </div>
-                <form action={signOut} className="mt-1">
-                  <button
-                    type="submit"
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors hover:bg-accent/80"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Cerrar sesión
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-                  <span className="text-sm text-foreground">Tema</span>
-                  <ThemeToggle />
-                </div>
-                <MobileNavLink href="/login" label="Iniciar sesión" />
-                <MobileNavLink href="/signup" label="Registrarse" />
-              </>
-            )}
-          </nav>
-        </div>
+              </nav>
+            </div>
+          </div>
+        </>
       )}
     </header>
   )

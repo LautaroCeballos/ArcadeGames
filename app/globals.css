@@ -91,6 +91,10 @@
   --radius: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* ── Custom animations ── */
+  --animate-slide-down: slide-down 200ms ease-out;
+  --animate-fade-in: fade-in 150ms ease-out;
 }
 
 @keyframes ken-burns-0 {
@@ -100,6 +104,22 @@
 @keyframes ken-burns-1 {
   0%   { object-position: 0% 50%; }
   100% { object-position: 100% 50%; }
+}
+
+/* ── Mobile menu animations ── */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @layer utilities {
