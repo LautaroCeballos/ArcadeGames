@@ -84,7 +84,7 @@ sources:
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | Navbar | `components/Navbar.tsx` | Server | Fetches `user` + `username` + `avatar_url` + `role` + `unreadCount` + `recentNotifications`, renderiza `NavbarClient` |
-| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, **menú hamburguesa flotante** (absolute overlay con backdrop `bg-black/50` + slide-down animation + body scroll lock), search input con live dropdown (debounce 500ms), avatar con dropdown unificado, bell icon con badge + dropdown de notificaciones, ThemeToggle visible en ambos estados. Usa `useRealtimeNotifications` |
+| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, **menú hamburguesa flotante** (solo logueado; no logueado muestra "Iniciar sesión" + "Registrarse" en header), ThemeToggle siempre visible (mobile + desktop sincronizados vía evento custom), search input con live dropdown, avatar con dropdown unificado, bell icon con badge + dropdown de notificaciones. Usa `useRealtimeNotifications` |
 | AuthButton | `components/AuthButton.tsx` | Client | Form action `signOut` |
 | Footer | `components/Footer.tsx` | Server | Links estáticos en 2 columnas (makecode, subir, categorías, login, sobre, términos) |
 
