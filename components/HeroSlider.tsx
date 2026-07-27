@@ -150,10 +150,7 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
 
   useEffect(() => {
     if (isActive && imgRef.current) {
-      const img = imgRef.current
-      // Cancel any existing animation and start fresh
-      img.getAnimations().forEach((a) => a.cancel())
-      img.animate(
+      imgRef.current.animate(
         [
           { objectPosition: "0% 50%" },
           { objectPosition: "100% 50%" },
