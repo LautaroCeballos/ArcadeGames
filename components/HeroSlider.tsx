@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useDominantColors } from "@/hooks/use-dominant-colors"
@@ -146,11 +146,14 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
   const newTab = slide.openInNewTab !== false
   const dur = slide.duration ?? 5
   const imgRef = useRef<HTMLImageElement>(null)
-  const [restart, setRestart] = useState(0)
 
-  useEffect(() => {
-    if (isActive && imgRef.current) {
-      imgRef.current.animate(
+  useLayoutEffect(() => {
+    if (!isActive) return
+    const img = imgRef.current
+    if (!img) return
+
+    const start = () => {
+      img.animate(
         [
           { objectPosition: "0% 50%" },
           { objectPosition: "100% 50%" },
@@ -161,6 +164,13 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
           fill: "forwards",
         }
       )
+    }
+
+    if (img.complete) {
+      start()
+    } else {
+      img.addEventListener("load", start, { once: true })
+      return () => img.removeEventListener("load", start)
     }
   }, [isActive, dur])
 
