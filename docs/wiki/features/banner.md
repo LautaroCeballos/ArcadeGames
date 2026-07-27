@@ -1,7 +1,7 @@
 ---
 title: "Sistema de Banner del Home"
 tags: [feature, admin, frontend]
-last_updated: "2026-07-25"
+last_updated: "2026-07-27"
 sources:
   - supabase/migrations/00017_banner_slides.sql
   - supabase/migrations/00021_banner_slide_templates.sql
@@ -14,6 +14,8 @@ sources:
   - app/(protected)/admin/banner/banner-admin-client.tsx
   - components/NavbarClient.tsx
   - docs/raw/plans/2026-07-24-banner-templates.md
+  - docs/raw/plans/2026-07-27-hero-slider-mobile-height-fix.md
+  - docs/raw/plans/2026-07-27-bar-mobile-full-image-click.md
 ---
 
 # Sistema de Banner del Home
@@ -37,11 +39,11 @@ desde un panel de administración. Cada slide usa una **plantilla** que define s
 | **`bar-left`** | Split 25/75: imagen a la izquierda (75%), texto a la derecha (25%) | Igual que bar-right pero imagen a la izquierda y texto a la derecha. |
 | **`full-image`** | Imagen 100%, sin texto visible | Todo el slide es un link. Gradiente sutil abajo para los dots del carrusel. |
 
-### Características visuales del split (`components/HeroSlider.tsx:136`)
-- **Desktop**: `flex-row` con `md:aspect-[3/1]` en el contenedor padre. Columna de texto 25% (`md:w-[25%]`), imagen 75% (`md:w-[75%]`). Ambas columnas tienen la misma altura determinada por el aspect ratio.
-- **Mobile**: `flex-col` sin aspect ratio fijo. Columna de texto ocupa su altura natural (auto), imagen debajo con `aspect-video` (16:9).
+### Características visuales del split (`components/HeroSlider.tsx:159`)
+- **Desktop**: `flex-row` con `md:aspect-[3/1]` en el contenedor padre. Columna de texto 25% (`md:w-[25%]`), imagen 75% (`md:w-[75%]`). Ambas columnas tienen la misma altura determinada por el aspect ratio. El botón CTA en el panel de texto respeta `open_in_new_tab` de la DB.
+- **Mobile**: `flex-col` con altura fija `h-[420px]`. El panel de texto está oculto (`hidden md:flex`). La imagen ocupa el 100% de la altura (`flex-1`) con un `<Link>` overlay invisible (`absolute inset-0 z-10 md:hidden`) que cubre toda el área y navega al CTA link. El link usa `open_in_new_tab` para decidir si abre en nueva pestaña.
 - **Colores dominantes**: el fondo del texto extrae 2 colores de la imagen vía k-means (`hooks/use-dominant-colors.ts`). Se oscurecen forzosamente (luminosidad ≤ 35%) para garantizar legibilidad del texto blanco. Fallback: `bg-gradient-to-br from-arcade-dark to-arcade-red/80`.
-- **Contenido**: título `text-xl` → `md:text-3xl`, descripción `text-sm` → `sm:text-base`, botón `bg-arcade-red rounded-[10px]`. Todo centrado con `text-center` + `items-center justify-center`.
+- **Contenido** (solo visible en desktop): título `text-xl md:text-3xl`, descripción `text-sm md:text-base` con `line-clamp-3`, botón `bg-primary rounded-[10px]` con `shrink-0`.
 - **Imagen**: `object-cover` dentro de un contenedor `absolute inset-0`.
 
 ## Tabla `banner_slides`
@@ -99,6 +101,8 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 - Upload de imagen vía `uploadBannerImage`
 - Ordenamiento con botones arriba/abajo
 - Badge indicador de plantilla en la lista de slides
+- Checkbox **"Abrir CTA en nueva pestaña"** visible para templates `bar-right` y `bar-left`
+- Para `full-image`: checkbox "La imagen es un enlace cliqueable" + "Abrir en una nueva pestaña" (condicional)
 - Estados: loading, empty (sin slides), error, submitting
 - Sin color pickers, sin opciones de panel, sin alineaciones configurables
 
@@ -107,12 +111,13 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 - Acepta `slides?: Slide[]` (opcional, usa defaults si no se provee)
 - Estado: `current` (índice activo), `isPaused` (hover)
 - Auto-play cada 5s via `setInterval` (`components/HeroSlider.tsx:60-64`). Pausa en hover (`onMouseEnter`/`onMouseLeave`).
-- **Transición suave**: todos los slides se renderizan siempre apilados con CSS Grid (`grid grid-cols-1 grid-rows-1`). Cada slide ocupa la misma celda (`col-span-full row-span-full`). El slide activo tiene `opacity-100`, los inactivos `opacity-0 pointer-events-none`. La transición se hace con `transition-all duration-500 ease-in-out` (`components/HeroSlider.tsx:79-95`).
-- Dots de navegación (`absolute bottom-4`) con `role="tablist"` y `aria-selected` (`components/HeroSlider.tsx:97-117`).
+- **Transición suave**: todos los slides se renderizan siempre apilados con CSS Grid (`grid grid-cols-1 grid-rows-1`). Cada slide ocupa la misma celda (`col-span-full row-span-full`). El slide activo tiene `opacity-100`, los inactivos `opacity-0 pointer-events-none`. La transición se hace con `transition-opacity duration-500 ease-in-out`.
+- Dots de navegación (`absolute bottom-4`) con `role="tablist"` y `aria-selected`.
 - Fallback a 3 slides default hardcodeados (`template: "bar-right"`).
-- `Slide` interface simplificada: solo `template` en lugar de overlayColor/textColor/buttonColor/showPanel/panelAlign/panelValign/buttonMode
-  - **`bar-right`/`bar-left`**: split 25/75 — columna de contenido + columna de imagen con colores dominantes. Desktop lado a lado con alturas iguales. Mobile apilados (auto + aspect-video).
-  - **`full-image`**: Link wrapping toda la imagen, gradiente sutil inferior para dots
+- **Ken Burns unificado**: todos los slides usan el mismo sistema de animación con tick + keyframes duales (`ken-burns-0` / `ken-burns-1`). El contador `tick` incrementa al activarse, alternando el nombre de la animación vía inline style para forzar restart sin remover el estilo. Al desactivarse, queda congelado en `forwards` sin snap. Key estable del `<img>` (`fi-{id}` / `bs-{id}`) para evitar remount de React.
+- `Slide` interface: incluye `clickable`, `openInNewTab`, `duration` y `hideContent` (solo `bar-left`/`bar-right` con contenido ocultable).
+  - **`bar-right`/`bar-left`**: split 25/75 — columna de contenido + columna de imagen con colores dominantes. Desktop lado a lado con alturas iguales. Mobile apilados: panel de texto oculto (`hidden md:flex`), imagen full-width. Con `hideContent=true`: imagen a 100% de ancho centrada con `object-contain` sobre fondo degradado.
+  - **`full-image`**: soporta `clickable` (toggle de link) y `openInNewTab`. Imagen con Ken Burns animado al activarse.
 
 ### `HeroSliderWrapper` (en `app/(public)/page.tsx`)
 - Server Component que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`
@@ -140,8 +145,8 @@ El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 La altura varía según plantilla y viewport:
 
 - **BarSlide (desktop)**: `md:aspect-[3/1]` en el contenedor padre. La altura es relativa al ancho (3:1). Ejemplo: a 1280px → ~411px.
-- **BarSlide (mobile)**: Sin aspect fijo. Altura total = altura del contenido (auto) + altura de la imagen (`aspect-video` = 16:9). El contenido se adapta al texto sin forzar alturas iguales.
-- **FullImageSlide**: `aspect-video` (16:9) tanto desktop como mobile.
+- **BarSlide (mobile)**: Altura fija de `420px` (`h-[420px]`) para garantizar consistencia entre todos los slides. **El panel de texto se oculta completamente** (`hidden md:flex`) y la imagen ocupa el 100% de la altura (`flex-1`) actuando como un enlace cliqueable al link del CTA. En desktop el panel de texto reaparece con el layout split 25/75.
+- **FullImageSlide**: `h-[420px] w-full` en mobile, `md:h-auto md:aspect-[3/1]` en desktop. El mismo crop que BarSlide en mobile.
 
 ## Fallback
 

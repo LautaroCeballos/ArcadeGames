@@ -3,6 +3,8 @@ title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
 last_updated: "2026-07-27"
 sources:
+  - components/HeroSlider.tsx
+  - app/(protected)/admin/banner/banner-admin-client.tsx
   - components/NavbarClient.tsx
   - components/ThumbnailPicker.tsx
   - lib/actions/thumbnails.ts
@@ -11,9 +13,29 @@ sources:
   - components/RecentProjectsSection.tsx
   - components/RankingSection.tsx
   - app/(public)/page.tsx
+  - docs/raw/plans/2026-07-27-hero-slider-mobile-height-fix.md
+  - docs/raw/plans/2026-07-27-bar-mobile-full-image-click.md
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-27] feat | bar-slide-mobile-clickable-image-openInNewTab-all-templates
+- **BarSlide mobile**: el panel de texto ahora se oculta en mobile (`hidden md:flex`). La imagen ocupa el 100% del slide con un `<Link>` overlay invisible que navega al CTA link. El link respeta `open_in_new_tab` de la DB.
+- **BarSlide desktop**: sin cambios (panel 25% + imagen 75%), pero el botón CTA ahora respeta `open_in_new_tab` en vez de hardcodear `target="_blank"`.
+- **Admin panel**: checkbox "Abrir CTA en nueva pestaña" ahora visible para todos los templates (bar-right, bar-left, full-image). Para bar templates es un solo checkbox; para full-image solo aparece si "La imagen es un enlace cliqueable" está activo.
+- Validación chrome-devtools: mobile 375px ✅ (contenido oculto, link overlay activo), desktop 1280px ✅ (panel visible, link overlay oculto), admin panel ✅ (checkbox visible para bar y full-image).
+- Plan: `docs/raw/plans/2026-07-27-bar-mobile-full-image-click.md`
+- Archivos modificados: `components/HeroSlider.tsx`, `app/(protected)/admin/banner/banner-admin-client.tsx`
+- Páginas actualizadas: [[features/banner]], [[log]]
+
+## [2026-07-27] fix | hero-slider-mobile-height-consistency
+- **Problema**: Slides del HeroSlider con contenido de texto (título + descripción + CTA) eran ~130-170px más altos que los slides sin contenido en mobile (< 768px), causando saltos bruscos del layout durante las transiciones del carrusel.
+- **Fix**: `BarSlide` ahora usa altura fija `h-[420px]` en mobile con distribución flex (contenido `flex-[2]` 40%, imagen `flex-[3]` 60%). En desktop se resetea con `md:h-auto` para preservar el `md:aspect-[3/1]` existente.
+- **Ajustes visuales**: Texto reducido en mobile (`text-lg`/`text-xs` en vez de `text-xl`/`text-sm`), botón más compacto (`px-4 py-1.5`), `line-clamp-2` en descripción para evitar overflow. CTA usa `shrink-0` para no colapsar.
+- **Validación chrome-devtools**: 375px mobile ✅, 767px ✅, 769px desktop ✅, 1280px desktop ✅. Altura consistente 420px en todos los slides, 0 layout shift en transiciones, 0 errores de consola.
+- Plan: `docs/raw/plans/2026-07-27-hero-slider-mobile-height-fix.md`
+- Archivos modificados: `components/HeroSlider.tsx`
+- Páginas actualizadas: [[features/banner]], [[log]]
 
 ## [2026-07-27] update | iconos-titulos-home-theme-toggle-thumbnail-toast
 
@@ -31,6 +53,15 @@ sources:
 - **Requiere**: `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`.
 - **Plantillas de email**: nuevo doc `docs/raw/email-templates.md` con HTML mejorado (gradiente azul-violeta, diseño responsive).
 - Páginas actualizadas: [[auth/flow]], [[log]]
+
+## [2026-07-27] fix | hero-ken-burns-tick-dual-keyframe
+
+- **Ken Burns unificado**: todos los slides (full-image + bar-slide) usan el mismo sistema de animación con tick + keyframes duales (`ken-burns-0` / `ken-burns-1`). El contador `tick` incrementa al activarse, alternando el nombre de la animación vía inline style para forzar restart sin remover el estilo.
+- **Sin snap al desactivar**: el estilo `animation` nunca se quita. Al desactivarse el slide, la animación queda congelada en `forwards`. Al reactivarse, el tick cambia → la animación reinicia desde cero sin salto visible.
+- **Fix de `isActive` en key de React**: removido `isActive` del `key` del `<img>` (`fi-{id}` / `bs-{id}` fijos). Antes React desmontaba/remontaba la imagen al cambiar el key → snap.
+- **Fix de `Number(dur)`**: `slide.duration` podía ser no numérico y romper el template literal del estilo → `Number(slide.duration) || 5`.
+- **CSS limpiado**: eliminadas `@utility animate-ken-burns` y `@keyframes ken-burns` (single). Solo quedan `ken-burns-0` y `ken-burns-1`.
+- Páginas actualizadas: [[features/banner]], [[log]]
 
 ## [2026-07-27] update | submit-form-platform-icons-links-cursor-pointer
 
