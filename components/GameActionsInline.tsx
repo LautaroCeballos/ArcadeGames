@@ -18,8 +18,8 @@ export function ToggleVisibilityButton({ gameId, hidden }: GameActionsInlineProp
 
   return (
     <form action={formAction}>
-      <Button type="submit" variant="ghost" size="icon" className="size-8" disabled={pending}>
-        {pending ? <Loader2 className="size-3.5 animate-spin" /> : hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+      <Button type="submit" variant="ghost" size="icon" className="size-6 sm:size-8" disabled={pending}>
+        {pending ? <Loader2 className="size-3 sm:size-3.5 animate-spin" /> : hidden ? <Eye className="size-3 sm:size-3.5" /> : <EyeOff className="size-3 sm:size-3.5" />}
       </Button>
     </form>
   )
@@ -33,8 +33,8 @@ export function DeleteGameButton({ gameId }: { gameId: string }) {
 
   return (
     <form action={formAction}>
-      <Button type="submit" variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" disabled={pending}>
-        {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+      <Button type="submit" variant="ghost" size="icon" className="size-6 sm:size-8 text-destructive hover:text-destructive" disabled={pending}>
+        {pending ? <Loader2 className="size-3 sm:size-3.5 animate-spin" /> : <Trash2 className="size-3 sm:size-3.5" />}
       </Button>
     </form>
   )

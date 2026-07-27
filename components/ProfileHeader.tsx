@@ -13,7 +13,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profile, isOwnProfile, isFollowing }: ProfileHeaderProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+      <div className="flex flex-row items-start gap-4">
         <Avatar className="h-20 w-20 sm:h-24 sm:w-24 ring-2 ring-arcade-green/30">
           <AvatarImage src={profile.avatar_url ?? undefined} alt={profile.username ?? ""} />
           <AvatarFallback className="text-2xl sm:text-3xl bg-muted text-muted-foreground">

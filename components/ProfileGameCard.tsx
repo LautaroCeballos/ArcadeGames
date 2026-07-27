@@ -90,9 +90,9 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
         </div>
 
         {/* Col 1, row 2: action buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Button asChild variant="ghost" size="icon" className="size-8">
-            <Link href={`/juego/${game.id}`}><Play className="size-3.5" /></Link>
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+          <Button asChild variant="ghost" size="icon" className="size-6 sm:size-8">
+            <Link href={`/juego/${game.id}`}><Play className="size-3 sm:size-3.5" /></Link>
           </Button>
           {isOwner && (
             <>
@@ -100,16 +100,16 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-8 text-arcade-green hover:text-arcade-green hover:bg-arcade-green/10"
+                  className="size-6 sm:size-8 text-arcade-green hover:text-arcade-green hover:bg-arcade-green/10"
                   onClick={handlePublish}
                   disabled={publishing}
                   title="Publicar juego"
                 >
-                  {publishing ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+                  {publishing ? <Loader2 className="size-3 sm:size-3.5 animate-spin" /> : <Send className="size-3 sm:size-3.5" />}
                 </Button>
               )}
-              <Button asChild variant="ghost" size="icon" className="size-8">
-                <Link href={`/editar/${game.id}`}><Pencil className="size-3.5" /></Link>
+              <Button asChild variant="ghost" size="icon" className="size-6 sm:size-8">
+                <Link href={`/editar/${game.id}`}><Pencil className="size-3 sm:size-3.5" /></Link>
               </Button>
               <ToggleVisibilityButton gameId={game.id} hidden={game.hidden} />
               <DeleteGameButton gameId={game.id} />

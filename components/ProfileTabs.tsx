@@ -57,7 +57,7 @@ export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false, favo
       {activeTab === "juegos" && (
         <div className="pt-4 space-y-3">
           {isOwner && (
-            <div className="flex gap-1 border-b pb-2 overflow-x-auto">
+            <div className="flex flex-wrap gap-1.5">
               {(Object.keys(gameFilterLabels) as GameFilter[]).map((key) => {
                 // Ocultar el filtro "Favoritos" si no tiene juegos favoritos
                 if (key === "favoritos" && (!favoritedGames || favoritedGames.length === 0)) return null
@@ -65,14 +65,14 @@ export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false, favo
                   <button
                     key={key}
                     onClick={() => setGameFilter(key)}
-                    className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       gameFilter === key
-                        ? "bg-arcade-red/10 text-arcade-red border-b-2 border-arcade-red"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
                     }`}
                   >
                     {gameFilterLabels[key]}
-                    <span className="ml-1 text-muted-foreground">({gamesByStatus[key]})</span>
+                    <span className="ml-1 opacity-70">({gamesByStatus[key]})</span>
                   </button>
                 )
               })}
