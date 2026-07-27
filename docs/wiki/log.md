@@ -20,6 +20,12 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] update | banner-list-info-labels-mobile-tweaks
+- **Banner Admin**: información de slides reorganizada con etiquetas (Botón/Link/Plantilla/Enlace/Duración) en vez de badges de colores. Thumbnails con crop 1:1 en mobile (`size-24`). Botón "Nuevo Slide" adaptado (`text-xs px-3 py-1.5` mobile). Tamaños de título reducidos en mobile (`text-xl` → `sm:text-2xl`)
+- **Home**: títulos de secciones (Juegos Destacados, Categorías, Novedades, Top Jugadores, Todos los juegos) reducidos a `text-xl sm:text-[25px]`
+- **Páginas actualizadas**: [[features/banner]], [[frontend/components]]
+- **Archivos modificados**: `banner-admin-client.tsx`, `FeaturedSection.tsx`, `CategoryExplorer.tsx`, `RecentProjectsSection.tsx`, `RankingSection.tsx`, `app/(public)/page.tsx`
+
 ## [2026-07-27] fix | profile-kebab-dropdown-alineacion
 - **ProfileGameCard**: dropdown del menú kebab corregido — ahora se dibuja hacia la izquierda (`right-0`) para no salirse del viewport en mobile
 - **Archivos modificados**: `components/ProfileGameCard.tsx`
