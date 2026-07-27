@@ -5,6 +5,7 @@ last_updated: "2026-07-27"
 sources:
   - components/HeroSlider.tsx
   - app/(protected)/admin/banner/banner-admin-client.tsx
+  - components/ProfileGameCard.tsx
   - components/NavbarClient.tsx
   - components/ThumbnailPicker.tsx
   - lib/actions/thumbnails.ts
@@ -18,6 +19,11 @@ sources:
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-27] update | banner-dialog-mobile-profile-kebab
+- **Banner Admin**: diálogo de edición rediseñado para mobile — vista previa eliminada, columna 2 visible con selector de plantilla/enlace/duración, diálogo scrolleable con body scroll lock, botón X para cerrar, menú kebab para acciones de slides en mobile. Estilos unificados de template/enlace/duración con el form. Iconos en título del diálogo
+- **Páginas actualizadas**: [[features/banner]], [[frontend/components]]
+- **Archivos modificados**: `banner-admin-client.tsx`, `ProfileGameCard.tsx`
 
 ## [2026-07-27] update | mobile-auth-header-categories-initial-count
 - **Header mobile sin sesión**: hamburguesa oculta, botones "Iniciar sesión" y "Registrarse" visibles directamente en el header junto al ThemeToggle. El menú mobile ahora solo se muestra para usuarios logueados

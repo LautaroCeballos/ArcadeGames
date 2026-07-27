@@ -5,6 +5,8 @@ last_updated: "2026-07-27"
 sources:
   - supabase/migrations/00017_banner_slides.sql
   - supabase/migrations/00021_banner_slide_templates.sql
+  - supabase/migrations/00025_banner_clickable_options.sql
+  - supabase/migrations/00026_banner_slide_duration.sql
   - lib/actions/banner.ts
   - lib/definitions.ts
   - components/HeroSlider.tsx
@@ -16,6 +18,7 @@ sources:
   - docs/raw/plans/2026-07-24-banner-templates.md
   - docs/raw/plans/2026-07-27-hero-slider-mobile-height-fix.md
   - docs/raw/plans/2026-07-27-bar-mobile-full-image-click.md
+  - docs/raw/plans/2026-07-27-banner-dialog-mobile-column-2.md
 ---
 
 # Sistema de Banner del Home
@@ -58,6 +61,9 @@ desde un panel de administración. Cada slide usa una **plantilla** que define s
 | `cta_link` | `text` | Link del botón (obligatorio, default `/`) |
 | `sort_order` | `int` | Orden de aparición (default 0) |
 | `template` | `text` | Plantilla: `bar-right`, `bar-left` o `full-image` (default `bar-right`). Migración `00021` |
+| `clickable` | `bool` | Si la imagen del slide actúa como enlace (`full-image`). Migración `00025` |
+| `open_in_new_tab` | `bool` | Si el CTA abre en nueva pestaña (todos los templates). Migración `00025` |
+| `duration` | `int` | Duración del slide en segundos (2-30, default 5). Migración `00026` |
 | `active` | `bool` | Si está visible en el home (default true) |
 | `created_at` | `timestamptz` | Fecha de creación |
 | `updated_at` | `timestamptz` | Fecha de última modificación |
@@ -95,16 +101,16 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 
 ### `BannerAdminClient` (`app/(protected)/admin/banner/banner-admin-client.tsx`)
 - Client Component con listado de slides + modal de creación/edición
-- Diálogo de dos columnas: formulario a la izquierda, vista previa + selector de plantilla a la derecha
-- **Selector de plantilla**: 3 cards visuales con miniaturas de cada layout (barra derecha, barra izquierda, imagen completa)
-- La preview renderiza el slide según la plantilla elegida con los datos ingresados
+- **Diálogo de dos columnas**: formulario a la izquierda, configuración (plantilla, enlace, duración) a la derecha
+- **Selector de plantilla**: 3 cards visuales con miniaturas de cada layout (barra derecha, barra izquierda, imagen completa) con estilo unificado tipo form (`border bg-background`)
+- **Enlace**: checkboxes con estilo card (`border bg-background px-3 py-2.5`). Para `full-image`: "La imagen es un enlace cliqueable" + "Abrir en una nueva pestaña" (condicional). Para `bar-right`/`bar-left`: "Abrir CTA en nueva pestaña"
+- **Duración**: input number (2-30s, default 5), vinculado al form con `form="slide-form"`
 - Upload de imagen vía `uploadBannerImage`
 - Ordenamiento con botones arriba/abajo
-- Badge indicador de plantilla en la lista de slides
-- Checkbox **"Abrir CTA en nueva pestaña"** visible para templates `bar-right` y `bar-left`
-- Para `full-image`: checkbox "La imagen es un enlace cliqueable" + "Abrir en una nueva pestaña" (condicional)
+- **Mobile**: diálogo scrolleable (`max-h-[90vh] overflow-y-auto`), columna 2 visible debajo de columna 1 sin barra separadora. Botones de acción (Editar/Eliminar) ocultos y reemplazados por menú kebab (⋮) con dropdown. Body scroll bloqueado al abrir diálogo (`overflow: hidden`). Botón X en esquina superior derecha para cerrar
+- **Desktop**: layout side-by-side intacto, columna 1 con scroll propio, iconos de acción individuales (lápiz/papelera)
 - Estados: loading, empty (sin slides), error, submitting
-- Sin color pickers, sin opciones de panel, sin alineaciones configurables
+- Título con icono: `Pencil` para editar, `ImagePlus` para nuevo
 
 ### `HeroSlider` (`components/HeroSlider.tsx`)
 - Client Component con carrusel de slides
@@ -134,11 +140,15 @@ Archivo `lib/actions/banner.ts`. Todas las operaciones de escritura verifican ro
 El panel admin sigue el mismo estilo que `admin-users-client.tsx`:
 - Cabecera con título + botón "Nuevo Slide"
 - Cards de slides con preview de imagen, info, botones de acción + badge de plantilla
-- Modal de creación/edición con diseño de dos columnas: formulario a la izquierda, vista previa + selector de plantilla a la derecha
-- En mobile la preview se oculta y el formulario ocupa todo el ancho
-- La vista previa se actualiza en tiempo real al cambiar texto o plantilla
-- **Selector de plantilla**: 3 cards con miniatura visual del layout, nombre y descripción corta
-- Sin color pickers, sin opciones de panel, sin alineaciones — la plantilla lo define todo
+- Modal de creación/edición con diseño de dos columnas: formulario a la izquierda, configuración (plantilla, enlace, duración) a la derecha
+- En mobile el diálogo es scrolleable con ambas columnas apiladas verticalmente
+- **Selector de plantilla**: 3 cards con miniatura visual del layout, nombre y descripción corta. Estilo unificado con inputs del form (`border bg-background`, seleccionado `border-arcade-red bg-arcade-red/5 shadow-sm`)
+- **Opciones de enlace**: checkboxes con estilo card, sección con label "Enlace"
+- **Duración**: input de 2-30s debajo de Enlaces
+- **Botones**: Cancelar/Guardar al final de la columna derecha, submit vinculado con `form="slide-form"`
+- **Acciones en lista**: iconos individuales en desktop, menú kebab (⋮) en mobile
+- Botón X en esquina superior derecha del diálogo para cerrar
+- Body scroll bloqueado al abrir el diálogo
 
 ## Altura del slider
 
