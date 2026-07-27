@@ -1,7 +1,7 @@
 ---
 title: "ArcadePlay — Inventario de Componentes Frontend"
 tags: [frontend, architecture]
-last_updated: "2026-07-26"
+last_updated: "2026-07-27"
 sources:
   - docs/raw/plans/2026-07-13-figma-adaptation.md
   - docs/raw/plans/2026-07-20-submit-form-dual-platform.md
@@ -75,7 +75,7 @@ sources:
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | Navbar | `components/Navbar.tsx` | Server | Fetches `user` + `username` + `avatar_url` + `role` + `unreadCount` + `recentNotifications`, renderiza `NavbarClient` |
-| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, menú hamburguesa, **search input con live dropdown** (debounce 500ms, resultados en tiempo real), avatar con dropdown unificado (perfil, cuenta, moderar, admin, cerrar sesión), bell icon con badge + dropdown de notificaciones. Usa `useRealtimeNotifications` |
+| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, menú hamburguesa, **search input con live dropdown** (debounce 500ms, resultados en tiempo real), avatar con dropdown unificado (perfil, cuenta, moderar, admin, cerrar sesión), bell icon con badge + dropdown de notificaciones, **ThemeToggle visible en ambos estados** (logueado y no logueado, tanto desktop como mobile). Usa `useRealtimeNotifications` |
 | AuthButton | `components/AuthButton.tsx` | Client | Form action `signOut` |
 | Footer | `components/Footer.tsx` | Server | Links estáticos en 2 columnas (makecode, subir, categorías, login, sobre, términos) |
 
@@ -88,9 +88,9 @@ sources:
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | HeroSlider | `components/HeroSlider.tsx` | Client | `slides: Slide[]` — auto-play 5s con fade `transition-all duration-500`. Todos los slides apilados con CSS Grid. Fallback a 3 defaults. `Slide` interface simplificada: solo `template` (`bar-right`, `bar-left`, `full-image`). BarSlide: split 25/75 con colores dominantes extractados vía `useDominantColors()`. Fondo con gradiente de 2 colores oscuros extraídos de la imagen (k-means, canvas 32×32). Desktop `md:aspect-[3/1]` flex-row. Mobile flex-col con altura auto para contenido + aspect-video para imagen. |
-| FeaturedSection | `components/FeaturedSection.tsx` | Server | `games: FeaturedGameData[]` — grid de 4 juegos destacados. `FeaturedCard` inline: imagen en `aspect-video` con dos burbujas: `PlatformBadge`(logo SVG) en top-left + tag de categoría coloreado en top-right. Panel de info debajo con fondo `bg-[rgba(52,54,53,0.96)]`. Fila 1: título truncado + estrellas amarillas. Fila 2: `Por {author}` + visitas. Header con "Ver todos →" a `/buscar?sort=rated`. |
-| CategoryExplorer | `components/CategoryExplorer.tsx` | Client | `tags: Tag[], showAll: boolean, onShowAll: () => void` — grid de categorías clickeables. Incluye MakeCode Arcade y Scratch al inicio con sus logos SVG oficiales (`MakeCodeLogo` / `ScratchLogo` desde `PlatformBadge`). Las categorías restantes usan íconos Lucide (`getTagIcon()` en `lib/tag-icons.ts`). El círculo del icono se pinta con `getTagColor()` (fondo 10% opacidad + icono color sólido). Plataformas igual: atenuadas para mezclarse. Muestra 8 categorías + botón "Ver más" (9 items visibles). Al expandir: todas las categorías + botón "Mostrar menos" al final. Ambos botones estilizados como CategoryCards (misma altura, padding, icon circle). Scroll suave al expandir. Navega a `/buscar?tag=<slug>`. Orden: MakeCode Arcade → Scratch → resto alfabético. |
-| RecentProjectsSection | `components/RecentProjectsSection.tsx` | Client | `games: RecentGameData[], showAll?: boolean` — proyectos recientes en cards mini con thumbnail 112px + info column centrada verticalmente. Fila 1: título + estrellas amarillas (`fill-yellow-400`) a la derecha. Fila 2: `por {author}` + platform icon + visitas a la derecha. Sin expandir: 3 juegos. Con `showAll=true`: hasta 5 juegos. Encerrado en `border bg-card` con `divide-y`. Header con "Ver todos →" a `/buscar?sort=recent`. |
+| FeaturedSection | `components/FeaturedSection.tsx` | Server | `games: FeaturedGameData[]` — grid de 4 juegos destacados. Título con icono `Flame` (🔥) en `text-arcade-red`. `FeaturedCard` inline: imagen en `aspect-video` con dos burbujas: `PlatformBadge`(logo SVG) en top-left + tag de categoría coloreado en top-right. Panel de info debajo con fondo `bg-[rgba(52,54,53,0.96)]`. Fila 1: título truncado + estrellas amarillas. Fila 2: `Por {author}` + visitas. Header con "Ver todos →" a `/buscar?sort=rated`. |
+| CategoryExplorer | `components/CategoryExplorer.tsx` | Client | `tags: Tag[], showAll: boolean, onShowAll: () => void` — grid de categorías clickeables. Título con icono `Grid3X3` (⊞) en `text-arcade-red`. Incluye MakeCode Arcade y Scratch al inicio con sus logos SVG oficiales (`MakeCodeLogo` / `ScratchLogo` desde `PlatformBadge`). Las categorías restantes usan íconos Lucide (`getTagIcon()` en `lib/tag-icons.ts`). El círculo del icono se pinta con `getTagColor()` (fondo 10% opacidad + icono color sólido). Plataformas igual: atenuadas para mezclarse. Muestra 8 categorías + botón "Ver más" (9 items visibles). Al expandir: todas las categorías + botón "Mostrar menos" al final. Ambos botones estilizados como CategoryCards (misma altura, padding, icon circle). Scroll suave al expandir. Navega a `/buscar?tag=<slug>`. Orden: MakeCode Arcade → Scratch → resto alfabético. |
+| RecentProjectsSection | `components/RecentProjectsSection.tsx` | Client | `games: RecentGameData[], showAll?: boolean` — proyectos recientes en cards mini con thumbnail 112px + info column centrada verticalmente. Título con icono `Sparkles` (✨) en `text-arcade-red`. Fila 1: título + estrellas amarillas (`fill-yellow-400`) a la derecha. Fila 2: `por {author}` + platform icon + visitas a la derecha. Sin expandir: 3 juegos. Con `showAll=true`: hasta 5 juegos. Encerrado en `border bg-card` con `divide-y`. Header con "Ver todos →" a `/buscar?sort=recent`. |
 | CategoryRecentSection | `components/CategoryRecentSection.tsx` | Client | `tags: Tag[], recentGames: RecentGameData[]` — wrapper del grid 2-columnas que mantiene estado `showAll` compartido entre `CategoryExplorer` y `RecentProjectsSection`. Al hacer clic en "Ver más" / "Mostrar menos" en Categorías, también expande/colapsa Novedades (toggle). Incluye `CategoryRecentSectionSkeleton` combinado. |
 | HeroSliderWrapper | `app/(public)/page.tsx` | Server | Wrapper que fetchea `getActiveBannerSlides()` y mapea al formato `Slide`. Si no hay slides en DB, pasa `undefined` para que HeroSlider use defaults |
 | CuratedSection | `components/CuratedSection.tsx` | Server | `{ title, games[] }` — overflow-x scroll con snap |
@@ -103,11 +103,11 @@ sources:
 | ScratchEmbed | `components/ScratchEmbed.tsx` | Client | `url, title` — iframe con `allowtransparency`, aspect ratio 6:5, loading/error state. Sin sandbox (no necesario para Scratch) |
 | GameTabs | `components/GameTabs.tsx` | Client | `gameId, title, platform, embedUrl?` — tabs adaptativos. MakeCode: Juego + Editor. Scratch: solo Juego (embed directo) |
 | TrackView | `components/TrackView.tsx` | Client | `{ gameId: string }` — componente invisible que incrementa contador de visitas del juego al montarse. Usa `useRef` guard para evitar doble disparo en Strict Mode. Renderiza `null`. |
-| RankingSection | `components/RankingSection.tsx` | Server | `{ players: PlayerRankingEntry[] }` — ranking real conectado a DB. Podio (top 3) + lista (#4-#50). Diseño limpio con border bg-card shadow-sm. Empty state cuando no hay ratings |
+| RankingSection | `components/RankingSection.tsx` | Server | `{ players: PlayerRankingEntry[] }` — ranking real conectado a DB. Título con icono `Trophy` (🏆) en `text-arcade-red`. Podio (top 3) + lista (#4-#50). Diseño limpio con border bg-card shadow-sm. Empty state cuando no hay ratings |
 | PodiumCard | `components/PodiumCard.tsx` | Server | `{ topPlayers: PlayerRankingEntry[] }` — top 3 en layout tipo podio escalonado: 2° | 1° (featured) | 3°. Flexbox con superposición ligera vía márgenes negativos (`-mx-10px sm:-mx-16px`). 1° lugar con `z-10` por encima de los otros. Efecto escalón: spacer sobre 2° (`h-8 sm:h-10`) y 3° (`h-14 sm:h-20`). Progresión de tamaño: 1° más grande (padding, trofeo, texto), 2° mediano, 3° más chico. Badges con colores sólidos: 1° `bg-amber-400` (dorado), 2° `bg-gray-400` (plateado), 3° `bg-orange-500` (cobre) — matching borders. Nombre de usuario linkea a `/perfil/{username}` con hover `text-arcade-red`. |
 | TagPicker | `components/TagPicker.tsx` | Client | `tags[], selectedIds, onChange, lockedIds?, max?` — visual multi-select de tags. Burbujas coloridas seleccionables, locked tags con candado, check icon en seleccionados. Rotación de 8 colores |
 | SubmitGameForm | `components/SubmitGameForm.tsx` | Client | `tags[]` — Step 1: selector visual de plataforma (MakeCode/Scratch). Step 2: formulario 2 columnas (inputs izquierda, preview derecha sticky). TagPicker integrado (platform tag locked). ThumbnailPicker siempre visible. Server action `createGame` con `tag_ids`. Dos botones submit: "Publicar" (`action=publish`) y "Guardar borrador" (`action=draft`) |
-| ThumbnailPicker | `components/ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?` — 2 fuentes: auto MakeCode (vía API), subida manual. Para Scratch solo subida manual |
+| ThumbnailPicker | `components/ThumbnailPicker.tsx` | Client | `shortId, embedUrl, onThumbnailChange, platform?, currentThumbnailUrl?` — 2 fuentes: auto MakeCode (vía API), subida manual. Para Scratch solo subida manual. Límite de subida: **5 MB**. Errores visibles al usuario vía `toast` (destructive) en vez de `console.error`. Soporta pre-carga de thumbnail existente para modo edición |
 | DashboardCard | `components/DashboardCard.tsx` | Client | `{ game: GameWithDetails }` — card horizontal con thumbnail, status badge, stats (vistas, rating, fecha), acciones (jugar, editar, ocultar, eliminar). Colores según estado: verde=publicado, ámbar=pendiente, gris=oculto, rojo=rechazado, gris claro=borrador. Si `game.status === "draft"`, muestra botón "Publicar" que llama a `publishGame` |
 | EditGameForm | `components/EditGameForm.tsx` | Client | `{ game, tags[] }` — formulario pre-cargado con preview (ArcadeEmbed o ScratchEmbed según platform), ThumbnailPicker, TagPicker con tags actuales precargadas. Server action `updateGame` con tags |
 
@@ -127,7 +127,7 @@ sources:
 | `createGame` | `lib/actions/games.ts` | Crea juego (MakeCode o Scratch según URL). Acepta `thumbnail_url`, `tag_ids[]`, guarda `platform`, inserta `game_tags` |
 | `toggleVisibility` | `lib/actions/games.ts` | Oculta/muestra juego |
 | `deleteGame` | `lib/actions/games.ts` | Elimina juego |
-| `uploadThumbnail` | `lib/actions/thumbnails.ts` | Sube imagen a Supabase Storage → URL pública |
+| `uploadThumbnail` | `lib/actions/thumbnails.ts` | Sube imagen a Supabase Storage → URL pública. Límite: 5 MB, formatos: PNG/JPEG/WebP. Valida autenticación, tipo MIME y tamaño |
 | `updateGame` | `lib/actions/games.ts` | Edita título, descripción, categoría y miniatura de un juego (solo dueño) |
 | `incrementGameView` | `lib/actions/views.ts` | Incrementa contador de visitas de un juego (read + write). Llamado desde `TrackView` al montar la página del juego |
 
@@ -170,7 +170,7 @@ sources:
 | Label | `components/ui/label.tsx` | Labels de formulario |
 | Toast/Toaster | `components/ui/toast.tsx` | Notificaciones |
 | Rating | `components/Rating.tsx` | Botón unificado `(⭐) N` con toggle de estrella única + contador |
-| ThemeToggle | `components/ThemeToggle.tsx` | Toggle Sol/Luna para cambiar modo claro/oscuro. Usa `useState` + `useEffect` para hidratación segura, `localStorage` para persistencia. Ubicado en NavbarClient (desktop entre Upload y Notifications; mobile antes de Cerrar sesión). |
+| ThemeToggle | `components/ThemeToggle.tsx` | Toggle Sol/Luna para cambiar modo claro/oscuro. Usa `useState` + `useEffect` para hidratación segura, `localStorage` para persistencia. Ubicado en NavbarClient: **siempre visible** (logueado y no logueado, tanto desktop como mobile). |
 
 ## Hooks
 
@@ -185,7 +185,7 @@ sources:
 
 | Ruta | Archivo | Modos | Descripción |
 |------|---------|-------|-------------|
-| `/` | `app/(public)/page.tsx` | Home | HeroSlider + FeaturedSection + CategoryRecentSection (CategoryExplorer + RecentProjects limitado) + RankingSection + **Todos los juegos** (preview de 8 juegos + botón "Ver Más →" a `/buscar?sort=recent`). **Sin** TagFilter, SortSelect, SearchBar ni paginación. Sin search params. |
+| `/` | `app/(public)/page.tsx` | Home | HeroSlider + FeaturedSection (🔥) + CategoryRecentSection (⊞ Categorías | ✨ Novedades) + RankingSection (🏆) + **Todos los juegos** (🎮 preview de 8 juegos + botón "Ver Más →" a `/buscar?sort=recent`). Cada título de sección lleva un icono lucide-react en `text-arcade-red`. **Sin** TagFilter, SortSelect, SearchBar ni paginación. Sin search params. |
 | `/buscar` | `app/(public)/buscar/page.tsx` | Browse / Búsqueda textual | **Browse** — `?sort=rated` (Mejor valorados), `?sort=recent` (Novedades), `?sort=popular` (Más jugados) o `?tag=<slug>` (filtro por categoría). `isBrowse = !q` (cualquier combinación de sort/tag/page sin q activa browse mode). Incluye SortSelect + TagFilter + paginación numérica (12 juegos/pág). Los slugs de tags se resuelven a UUIDs internamente vía `resolveTagSlug()` en `lib/queries/games.ts`. **Búsqueda textual** — con `?q=`, busca juegos/usuarios/tags. Sin params: browse mode activo (no empty state). |
 
 ## Server Actions

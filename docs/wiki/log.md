@@ -1,44 +1,27 @@
 ---
 title: "ArcadePlay — Registro de Cambios del Wiki"
 tags: [log]
-last_updated: "2026-07-26"
+last_updated: "2026-07-27"
 sources:
-  - components/PlatformBadge.tsx
-  - components/CategoryExplorer.tsx
-  - components/CategoryRecentSection.tsx
-  - lib/tag-colors.ts
-  - app/(public)/page.tsx
-  - lib/actions/ranking.ts
-  - docs/raw/plans/2026-07-25-fix-ranking-system.md
-  - supabase/migrations/00023_favorites.sql
-  - supabase/migrations/00024_favorites_notification_type.sql
-  - lib/actions/favorites.ts
-  - components/FavoriteButton.tsx
-  - supabase/migrations/00015_enable_realtime_notifications.sql
-  - hooks/use-realtime-notifications.ts
   - components/NavbarClient.tsx
-  - docs/wiki/features/notifications.md
-  - lib/actions/auth.ts
-  - lib/actions/profile.ts
-  - lib/actions/social.ts
-  - lib/actions/search.ts
-  - components/SignUpForm.tsx
-  - components/LoginForm.tsx
-  - components/AccountForm.tsx
-  - components/FollowButton.tsx
-  - supabase/migrations/00007_profiles_birth_country.sql
-  - supabase/migrations/00008_profiles_email_display_name.sql
-  - supabase/migrations/00009_avatars_storage.sql
-  - docs/raw/plans/2026-07-23-header-redesign-search.md
-  - docs/raw/plans/2026-07-23-live-search-dropdown.md
-  - app/(public)/buscar/page.tsx
-  - app/(protected)/notificaciones/page.tsx
-  - hooks/use-realtime-follow-counts.ts
-  - lib/tag-utils.ts
-  - docs/raw/plans/2026-07-26-normalizar-tags-buscar.md
+  - components/ThumbnailPicker.tsx
+  - lib/actions/thumbnails.ts
+  - components/FeaturedSection.tsx
+  - components/CategoryExplorer.tsx
+  - components/RecentProjectsSection.tsx
+  - components/RankingSection.tsx
+  - app/(public)/page.tsx
 ---
 
 # ArcadePlay — Registro de Cambios del Wiki
+
+## [2026-07-27] update | iconos-titulos-home-theme-toggle-thumbnail-toast
+
+- **Iconos en títulos del home**: agregados iconos lucide-react a las 5 secciones principales — `Flame` (Juegos Destacados), `Grid3X3` (Explorar por Categoría), `Sparkles` (Novedades), `Trophy` (Top de Jugadores), `Gamepad2` (Todos los juegos). Todos con `text-arcade-red`, `mr-2 inline-block h-6 w-6`.
+- **ThemeToggle para no logueados**: el botón de tema claro/oscuro ahora se muestra **siempre** en el header, tanto en desktop como mobile, incluso cuando el usuario no ha iniciado sesión. Antes solo aparecía en el estado logueado.
+- **ThumbnailPicker**: el límite de subida aumentó de 2 MB → **5 MB**. Los errores ahora se muestran al usuario vía `toast` (variant destructive) en vez de `console.error` silencioso. Nuevo prop `currentThumbnailUrl` para pre-carga en modo edición.
+- Archivos modificados: `components/NavbarClient.tsx`, `components/FeaturedSection.tsx`, `components/CategoryExplorer.tsx`, `components/RecentProjectsSection.tsx`, `components/RankingSection.tsx`, `app/(public)/page.tsx`, `components/ThumbnailPicker.tsx`, `lib/actions/thumbnails.ts`
+- Páginas actualizadas: [[frontend/components]], [[log]]
 
 ## [2026-07-27] implement | auto-confirm-trusted-domain
 

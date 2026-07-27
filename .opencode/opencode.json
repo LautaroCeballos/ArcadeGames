@@ -1,6 +1,26 @@
 {
     "$schema": "https://opencode.ai/config.json",
     "lsp": true,
+    "provider":{
+        "omniroute":{
+            "npm": "@ai-sdk/openai-compatible",
+            "name": "OmniRoute",
+            "options": {
+                "baseURL": "http://localhost:20128/v1",
+                "apiKey": "sk-5f4f6d5b3065996c-04ca6e-3a66f903"
+            },
+            "models": {
+                "agy/claude-opus-4-6-thinking": {
+                    "name": "Claude Opus 4.6 Thinking (OMNIRoute)"
+                },
+                "gemini/gemini-3.5-flash": {
+                    "name": "Gemini 3.5 Flash (OMNIRoute)"
+                }
+              
+            }
+        }
+    }
+    ,
     "mcp": {
         "context7": {
             "type": "remote",

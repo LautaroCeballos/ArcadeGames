@@ -553,6 +553,7 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
             </>
           ) : (
             <>
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="sm"
@@ -634,6 +635,10 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
               </>
             ) : (
               <>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+                  <span className="text-sm text-foreground">Tema</span>
+                  <ThemeToggle />
+                </div>
                 <MobileNavLink href="/login" label="Iniciar sesión" />
                 <MobileNavLink href="/signup" label="Registrarse" />
               </>

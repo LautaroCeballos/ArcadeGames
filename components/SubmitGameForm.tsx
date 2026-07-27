@@ -3,11 +3,9 @@
 import { useActionState, useState, useMemo, useId, useCallback } from "react"
 import { createGame } from "@/lib/actions/games"
 import { extractGameId, buildEmbedUrl, isValidMakeCodeUrl, extractScratchId, buildScratchEmbedUrl, isValidScratchUrl } from "@/lib/game-utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ArcadeEmbed } from "@/components/ArcadeEmbed"
 import { ScratchEmbed } from "@/components/ScratchEmbed"
+import { MakeCodeLogo, ScratchLogo } from "@/components/PlatformBadge"
 import { ThumbnailPicker } from "@/components/ThumbnailPicker"
 import { TagPicker } from "@/components/TagPicker"
 import { Gamepad2, Puzzle, ArrowLeft, Sparkles } from "lucide-react"
@@ -37,10 +35,10 @@ function PlatformSelector({
         <button
           type="button"
           onClick={() => onSelect('makecode')}
-          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-arcade-red hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-arcade-red focus-visible:ring-offset-2"
+          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F76820] hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F76820] focus-visible:ring-offset-2"
         >
-          <div className="flex size-16 items-center justify-center rounded-full bg-arcade-red/10 text-arcade-red transition-colors group-hover:bg-arcade-red group-hover:text-white">
-            <Gamepad2 className="size-8" aria-hidden="true" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-[#F76820]/10 text-[#F76820] transition-colors group-hover:bg-[#F76820] group-hover:text-white">
+            <MakeCodeLogo className="size-8" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-arcade-dark">MakeCode Arcade</h2>
@@ -48,7 +46,7 @@ function PlatformSelector({
               Juegos retro estilo Game Boy, creados con bloques o JavaScript
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-arcade-red opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F76820] opacity-0 transition-opacity group-hover:opacity-100">
             <Sparkles className="size-3.5" />
             Elegir MakeCode
           </span>
@@ -58,10 +56,10 @@ function PlatformSelector({
         <button
           type="button"
           onClick={() => onSelect('scratch')}
-          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-arcade-green hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-arcade-green focus-visible:ring-offset-2"
+          className="group relative flex flex-col items-center gap-4 rounded-xl border-2 border-border bg-card p-8 text-center transition-all duration-200 hover:border-[#F9A83A] hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9A83A] focus-visible:ring-offset-2"
         >
-          <div className="flex size-16 items-center justify-center rounded-full bg-arcade-green/10 text-arcade-green transition-colors group-hover:bg-arcade-green group-hover:text-white">
-            <Puzzle className="size-8" aria-hidden="true" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-[#F9A83A]/10 text-[#F9A83A] transition-colors group-hover:bg-[#F9A83A] group-hover:text-white">
+            <ScratchLogo className="size-8" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-arcade-dark">Scratch</h2>
@@ -69,7 +67,7 @@ function PlatformSelector({
               Proyectos animados y juegos interactivos hechos con bloques
             </p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-arcade-green opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#F9A83A] opacity-0 transition-opacity group-hover:opacity-100">
             <Sparkles className="size-3.5" />
             Elegir Scratch
           </span>
