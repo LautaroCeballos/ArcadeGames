@@ -144,7 +144,7 @@ export function HeroSlider({ slides = defaultSlides }: HeroSliderProps) {
 function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean }) {
   const isClickable = slide.clickable !== false
   const newTab = slide.openInNewTab !== false
-  const dur = slide.duration ?? 5
+  const dur = Number(slide.duration) || 5
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
