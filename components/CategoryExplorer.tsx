@@ -92,7 +92,7 @@ interface CategoryExplorerProps {
   onShowAll: () => void
 }
 
-const INITIAL_COUNT = 8
+const INITIAL_COUNT = 7
 
 export function CategoryExplorer({ tags, showAll, onShowAll }: CategoryExplorerProps) {
   const sectionRef = useRef<HTMLElement>(null)

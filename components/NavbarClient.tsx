@@ -586,18 +586,38 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
           )}
         </div>
 
-        {/* Mobile: theme toggle + hamburger */}
+        {/* Mobile: controls */}
         <div className="flex sm:hidden items-center gap-1">
           <ThemeToggle />
-          <button
-            type="button"
-            className="p-2 text-foreground"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {user ? (
+            <button
+              type="button"
+              className="p-2 text-foreground"
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-foreground hover:bg-accent/80"
+                asChild
+              >
+                <Link href="/login">Iniciar sesión</Link>
+              </Button>
+              <Button
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                asChild
+              >
+                <Link href="/signup">Registrarse</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -657,8 +677,7 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
                   </>
                 ) : (
                   <>
-                    <MobileNavLink href="/login" label="Iniciar sesión" />
-                    <MobileNavLink href="/signup" label="Registrarse" />
+                    <MobileNavLink href="/" label="Inicio" />
                   </>
                 )}
               </nav>
