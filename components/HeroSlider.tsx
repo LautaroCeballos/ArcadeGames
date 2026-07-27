@@ -149,15 +149,21 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
   const [restart, setRestart] = useState(0)
 
   useEffect(() => {
-    if (isActive) {
-      // Force animation restart: remove → reflow → re-add
+    if (isActive && imgRef.current) {
       const img = imgRef.current
-      if (img) {
-        img.style.animation = "none"
-        void img.offsetHeight // force reflow
-        img.style.animation = ""
-        img.style.animationDuration = `${dur}s`
-      }
+      // Cancel any existing animation and start fresh
+      img.getAnimations().forEach((a) => a.cancel())
+      img.animate(
+        [
+          { objectPosition: "0% 50%" },
+          { objectPosition: "100% 50%" },
+        ],
+        {
+          duration: dur * 1000,
+          easing: "ease-in-out",
+          fill: "forwards",
+        }
+      )
     }
   }, [isActive, dur])
 
@@ -169,10 +175,7 @@ function FullImageSlide({ slide, isActive }: { slide: Slide; isActive?: boolean 
           src={slide.imageUrl}
           alt=""
           key={`fi-${slide.id}`}
-          className={cn(
-            "absolute inset-0 h-full w-full object-cover animate-ken-burns",
-          )}
-          style={{ animationDuration: `${dur}s` }}
+          className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
         <div className="absolute inset-0 opacity-10">
