@@ -1,70 +1,65 @@
 "use client"
 
-import { useActionState } from "react"
-import { Heart, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { Heart } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { toggleFavorite } from "@/lib/actions/favorites"
-import { Button } from "@/components/ui/button"
+import { toast } from "@/hooks/use-toast"
 
 interface FavoriteButtonProps {
   gameId: string
   isFavorited: boolean
   isAuthenticated: boolean
+  favoriteCount: number
 }
 
-export function FavoriteButton({ gameId, isFavorited, isAuthenticated }: FavoriteButtonProps) {
-  const [state, formAction, pending] = useActionState(
-    async (_prev: { error?: string; favorited?: boolean } | null) => {
-      return toggleFavorite(gameId)
-    },
-    { favorited: isFavorited }
-  )
+export function FavoriteButton({ gameId, isFavorited, isAuthenticated, favoriteCount }: FavoriteButtonProps) {
+  const [favorited, setFavorited] = useState(isFavorited)
+  const [count, setCount] = useState(favoriteCount)
+  const [loading, setLoading] = useState(false)
 
-  const currentFavorited = state?.favorited ?? isFavorited
+  async function handleToggle() {
+    if (loading || !isAuthenticated) return
 
-  if (!isAuthenticated) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className="gap-1.5 opacity-50 cursor-not-allowed"
-        title="Inicia sesión para marcar favoritos"
-      >
-        <Heart className="size-4" />
-        <span className="text-xs">Favoritos</span>
-      </Button>
-    )
+    const wasFavorited = favorited
+    setFavorited(!favorited)
+    setCount(wasFavorited ? count - 1 : count + 1)
+    setLoading(true)
+
+    const result = await toggleFavorite(gameId)
+
+    if (result.error) {
+      setFavorited(wasFavorited)
+      setCount(wasFavorited ? count + 1 : count - 1)
+      toast({ title: "Error", description: result.error, variant: "destructive" })
+    }
+
+    setLoading(false)
   }
 
   return (
-    <form action={formAction}>
-      <Button
-        type="submit"
-        variant={currentFavorited ? "default" : "outline"}
-        size="sm"
-        disabled={pending}
-        className={`gap-1.5 transition-all ${
-          currentFavorited
-            ? "bg-red-500 hover:bg-red-600 text-white border-red-500"
-            : "text-muted-foreground hover:text-red-500 hover:border-red-300"
-        }`}
-      >
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Heart
-            className={`size-4 transition-all ${
-              currentFavorited ? "fill-current" : ""
-            }`}
-          />
-        )}
-        <span className="text-xs">
-          {currentFavorited ? "Favorito" : "Favoritos"}
-        </span>
-      </Button>
-      {state?.error && (
-        <p className="mt-1 text-xs text-destructive">{state.error}</p>
+    <button
+      type="button"
+      onClick={handleToggle}
+      disabled={loading || !isAuthenticated}
+      aria-label={favorited ? "Quitar de favoritos" : "Agregar a favoritos"}
+      aria-pressed={favorited}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+        favorited
+          ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+          : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        loading && "pointer-events-none opacity-60",
+        !isAuthenticated && "cursor-not-allowed opacity-50",
       )}
-    </form>
+    >
+      <Heart
+        className={cn(
+          "size-4",
+          favorited && "fill-red-500 text-red-500",
+        )}
+      />
+      {count}
+    </button>
   )
 }
