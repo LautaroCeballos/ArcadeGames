@@ -20,6 +20,10 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] feat | home-cta-registro
+- **Home**: CTA de registro debajo del ranking ("Crea. Publica. Inspira.") con borde y botón con degradado `bg-primary`, puntos decorativos, icono `Crown`. Oculto para usuarios autenticados. Contraste mejorado en modo claro
+- **Archivos modificados**: `app/(public)/page.tsx`
+
 ## [2026-07-27] update | search-results-redesign-ranking-follow-fix
 - **Búsqueda**: resultados apilados verticalmente (Usuarios → Categorías → Juegos). Juegos con grid responsive (`sm:grid-cols-3 md:grid-cols-4`). Iconos en títulos (`Users`, `Grid3X3`, `Gamepad2`). Categorías con borde coloreado (`getTagColor`). Juegos ahora incluyen tags para mostrar categoría en GameCard
 - **Ranking**: ahora muestra ⭐ estrellas, 🎮 juegos y 👥 seguidores con iconos coloreados. `followersCount` agregado a `PlayerRankingEntry` y `getPlayerLeaderboard`

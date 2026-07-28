@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { Gamepad2 } from "lucide-react"
+import { Gamepad2, Crown, Users } from "lucide-react"
+import { createClient } from "@/lib/supabase/server"
 import { HeroSlider } from "@/components/HeroSlider"
 import { FeaturedSection, FeaturedSectionSkeleton } from "@/components/FeaturedSection"
 import { CategoryRecentSection, CategoryRecentSectionSkeleton } from "@/components/CategoryRecentSection"
@@ -119,6 +120,9 @@ interface HomeProps {
 }
 
 export default async function HomePage(_props: HomeProps) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="mx-auto max-w-7xl space-y-12 px-4 py-6">
       {/* 1. Hero Slider */}
@@ -140,6 +144,48 @@ export default async function HomePage(_props: HomeProps) {
       <Suspense fallback={<RankingSectionSkeleton />}>
         <RankingSectionWrapper />
       </Suspense>
+
+      {/* CTA — Registro (solo visitantes) */}
+      {!user && (
+      <section className="relative overflow-hidden rounded-xl bg-primary p-[2px]">
+        {/* Decorative dots */}
+        <span className="pointer-events-none absolute left-[3%] top-[12%] h-1.5 w-1.5 rounded-full bg-[#a64dff]/50" />
+        <span className="pointer-events-none absolute left-[8%] top-[70%] h-1 w-1 rounded-full bg-[#4b7bff]/45" />
+        <span className="pointer-events-none absolute left-[18%] top-[25%] h-2 w-2 rounded-full bg-[#6b4dff]/40" />
+        <span className="pointer-events-none absolute left-[25%] bottom-[15%] h-1 w-1 rounded-full bg-[#4b7bff]/50" />
+        <span className="pointer-events-none absolute right-[5%] top-[20%] h-1.5 w-1.5 rounded-full bg-[#4b7bff]/45" />
+        <span className="pointer-events-none absolute right-[12%] bottom-[25%] h-1 w-1 rounded-full bg-[#a64dff]/50" />
+        <span className="pointer-events-none absolute right-[20%] top-[65%] h-2 w-2 rounded-full bg-[#6b4dff]/40" />
+        <span className="pointer-events-none absolute right-[28%] top-[8%] h-1 w-1 rounded-full bg-[#a64dff]/45" />
+        <span className="pointer-events-none absolute left-[40%] top-[5%] hidden h-1.5 w-1.5 rounded-full bg-[#4b7bff]/50 sm:block" />
+        <span className="pointer-events-none absolute left-[50%] bottom-[20%] hidden h-1 w-1 rounded-full bg-[#a64dff]/45 sm:block" />
+        <span className="pointer-events-none absolute right-[35%] top-[40%] hidden h-1.5 w-1.5 rounded-full bg-[#6b4dff]/40 sm:block" />
+        <span className="pointer-events-none absolute left-[60%] top-[75%] hidden h-1 w-1 rounded-full bg-[#4b7bff]/50 sm:block" />
+        <span className="pointer-events-none absolute right-[15%] top-[55%] hidden h-1.5 w-1.5 rounded-full bg-[#a64dff]/45 sm:block" />
+        <div className="flex flex-col items-center gap-3 rounded-[11px] bg-background px-12 py-4 sm:flex-row sm:justify-between sm:px-16 sm:py-4">
+          <div className="flex items-center gap-3 text-center sm:gap-4 sm:text-left">
+            <Crown className="hidden h-9 w-9 shrink-0 text-yellow-400 sm:block" />
+            <div>
+              <h2 className="text-lg font-bold sm:text-xl">
+              <span className="text-[#4b7bff]">Crea.</span>{" "}
+              <span className="text-[#6b4dff]">Publica.</span>{" "}
+              <span className="text-[#a64dff]">Inspira.</span>
+            </h2>
+              <p className="mt-1 text-sm text-foreground/70 sm:text-base">
+                Únete a miles de creadores y muestra tus ideas al mundo.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/signup"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:text-lg"
+          >
+            <Users className="h-5 w-5" />
+            Únete a ArcadePlay
+          </Link>
+        </div>
+      </section>
+      )}
 
       {/* 5. All games listing (preview + Ver Más) */}
       <section className="scroll-mt-20 space-y-4" id="todos-los-juegos">
