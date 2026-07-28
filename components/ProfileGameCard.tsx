@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Play, Pencil, Star, Send, Loader2, MoreVertical, Eye, EyeOff, Trash2 } from "lucide-react"
+import { Play, Pencil, Star, Send, Loader2, MoreVertical, Eye, EyeOff, Trash2, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ToggleVisibilityButton, DeleteGameButton } from "@/components/GameActionsInline"
@@ -121,71 +121,81 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
           )}
         </div>
 
-        {/* Col 1, row 2: action buttons — mobile kebab menu */}
-        <div className="relative sm:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Acciones"
-          >
-            <MoreVertical className="size-3" />
-          </Button>
-          {menuOpen && (
-            <div               className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border bg-card shadow-lg">
-              <Link
-                href={`/juego/${game.id}`}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+        {/* Col 1, row 2: action buttons — mobile */}
+        <div className="sm:hidden">
+          {!isOwner && !isModOrAdmin ? (
+            /* Only Play — show directly */
+            <Button asChild variant="ghost" size="icon" className="size-6">
+              <Link href={`/juego/${game.id}`}><Play className="size-3" /></Link>
+            </Button>
+          ) : (
+            /* Multiple actions — kebab menu */
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Acciones"
               >
-                <Play className="size-3.5" />
-                Jugar
-              </Link>
-              {isOwner && (
-                <>
-                  {game.status === "draft" && (
-                    <button
-                      onClick={() => { handlePublish(); setMenuOpen(false) }}
-                      disabled={publishing}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-arcade-green transition-colors hover:bg-muted"
-                    >
-                      {publishing ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-                      Publicar
-                    </button>
-                  )}
+                <MoreVertical className="size-3" />
+              </Button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border bg-card shadow-lg">
                   <Link
-                    href={`/editar/${game.id}`}
+                    href={`/juego/${game.id}`}
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
                   >
-                    <Pencil className="size-3.5" />
-                    Editar
+                    <Play className="size-3.5" />
+                    Jugar
                   </Link>
-                  <button
-                    onClick={async () => {
-                      await toggleVisibility(game.id)
-                      setMenuOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
-                  >
-                    {game.hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                    {game.hidden ? "Mostrar" : "Ocultar"}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      await deleteGame(game.id)
-                      setMenuOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Eliminar
-                  </button>
-                </>
-              )}
-              {!isOwner && isModOrAdmin && (
-                <ModeratorGameActions game={game} />
+                  {isOwner && (
+                    <>
+                      {game.status === "draft" && (
+                        <button
+                          onClick={() => { handlePublish(); setMenuOpen(false) }}
+                          disabled={publishing}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-arcade-green transition-colors hover:bg-muted"
+                        >
+                          {publishing ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+                          Publicar
+                        </button>
+                      )}
+                      <Link
+                        href={`/editar/${game.id}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                      >
+                        <Pencil className="size-3.5" />
+                        Editar
+                      </Link>
+                      <button
+                        onClick={async () => {
+                          await toggleVisibility(game.id)
+                          setMenuOpen(false)
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                      >
+                        {game.hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                        {game.hidden ? "Mostrar" : "Ocultar"}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await deleteGame(game.id)
+                          setMenuOpen(false)
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Eliminar
+                      </button>
+                    </>
+                  )}
+                  {!isOwner && isModOrAdmin && (
+                    <ModeratorGameActions game={game} />
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -213,6 +223,12 @@ export function ProfileGameCard({ game, isOwner, isModOrAdmin = false, showAutho
               <span className="flex items-center gap-0.5">
                 <Star className="size-3 fill-amber-400 text-amber-400" />
                 {game.stars_count}
+              </span>
+            )}
+            {(game.favorites_count ?? 0) > 0 && (
+              <span className="flex items-center gap-0.5">
+                <Heart className="size-3 fill-red-400 text-red-400" />
+                {game.favorites_count}
               </span>
             )}
             <span>{formatRelativeDate(game.created_at)}</span>

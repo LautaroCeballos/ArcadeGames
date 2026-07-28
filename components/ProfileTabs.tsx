@@ -99,7 +99,7 @@ export function ProfileTabs({ games, badges, isOwner, isModOrAdmin = false, favo
               </div>
             ) : (
               filteredGames.map((game) => (
-                <ProfileGameCard key={game.id} game={game} isOwner={isOwner} isModOrAdmin={isModOrAdmin} />
+                <ProfileGameCard key={game.id} game={game} isOwner={isOwner} isModOrAdmin={isModOrAdmin} hideBadge={!isOwner} />
               ))
             )}
           </div>
