@@ -85,13 +85,28 @@ export async function getPlayerLeaderboard(limit = 50): Promise<PlayerRankingEnt
     .filter(([_, u]) => u.totalStars > 0)
     .sort((a, b) => b[1].totalStars - a[1].totalStars)
     .slice(0, limit)
-    .map(([_, u]) => ({
+
+  // 5. Get followers count for leaderboard users
+  const leaderIds = leaderboard.map(([id]) => id)
+  const { data: follows } = await supabase
+    .from("follows")
+    .select("following_id")
+    .in("following_id", leaderIds)
+
+  const followersMap = new Map<string, number>()
+  for (const f of follows ?? []) {
+    followersMap.set(f.following_id, (followersMap.get(f.following_id) ?? 0) + 1)
+  }
+
+  const result = leaderboard
+    .map(([userId, u]) => ({
       username: u.username,
       avatarUrl: u.avatarUrl,
       totalStars: u.totalStars,
       gamesCount: u.gamesCount,
       rankedGames: u.rankedGames.size,
+      followersCount: followersMap.get(userId) ?? 0,
     }))
 
-  return leaderboard
+  return result
 }

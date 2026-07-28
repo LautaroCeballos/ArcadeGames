@@ -1,4 +1,4 @@
-import { Star, Gamepad2, Trophy } from "lucide-react"
+import { Star, Trophy, Gamepad2, Users } from "lucide-react"
 import { PodiumCard } from "@/components/PodiumCard"
 import type { PlayerRankingEntry } from "@/lib/definitions"
 
@@ -46,10 +46,6 @@ function RankingList({ players }: { players: PlayerRankingEntry[] }) {
                   {player.username}
                 </p>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Gamepad2 className="size-3" />
-                    {player.gamesCount} {player.gamesCount === 1 ? "juego" : "juegos"}
-                  </span>
                   {player.rankedGames > 0 && (
                     <span>
                       {player.rankedGames} con estrellas
@@ -58,10 +54,18 @@ function RankingList({ players }: { players: PlayerRankingEntry[] }) {
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-bold text-foreground sm:text-base">
-                  {player.totalStars}
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-bold text-foreground sm:text-base">{player.totalStars}</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Gamepad2 className="size-3.5 text-green-500" strokeWidth={2.5} />
+                  <span className="text-xs font-bold text-foreground sm:text-sm">{player.gamesCount}</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Users className="size-3.5 text-blue-500" strokeWidth={2.5} />
+                  <span className="text-xs font-bold text-foreground sm:text-sm">{player.followersCount}</span>
                 </span>
               </div>
             </div>

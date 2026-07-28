@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Trophy, Star } from "lucide-react"
+import { Trophy, Star, Gamepad2, Users } from "lucide-react"
 import type { PlayerRankingEntry } from "@/lib/definitions"
 
 interface PodiumCardProps {
@@ -112,11 +112,19 @@ export function PodiumCard({ topPlayers }: PodiumCardProps) {
                 {player.username}
               </Link>
 
-              {/* Stars */}
-              <div className="mt-1 flex items-center gap-1.5">
-                <Star className={`${starIconSize} fill-yellow-400 text-yellow-400`} />
-                <span className={`font-bold text-foreground ${starNumberSize}`}>
-                  {player.totalStars}
+              {/* Stats row */}
+              <div className="mt-1 flex items-center justify-center gap-2">
+                <span className="flex items-center gap-0.5">
+                  <Star className={`${starIconSize} fill-yellow-400 text-yellow-400`} />
+                  <span className={`font-bold text-foreground ${starNumberSize}`}>{player.totalStars}</span>
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Gamepad2 className={`${starIconSize} text-green-500`} strokeWidth={2.5} />
+                  <span className={`font-bold text-foreground ${starNumberSize}`}>{player.gamesCount}</span>
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Users className={`${starIconSize} text-blue-500`} strokeWidth={2.5} />
+                  <span className={`font-bold text-foreground ${starNumberSize}`}>{player.followersCount}</span>
                 </span>
               </div>
             </div>

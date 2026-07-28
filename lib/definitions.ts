@@ -199,6 +199,7 @@ export interface PlayerRankingEntry {
   totalStars: number
   gamesCount: number
   rankedGames: number
+  followersCount: number
 }
 
 /** Minimal data for featured game cards (4-card grid on home) */
