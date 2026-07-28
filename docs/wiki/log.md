@@ -20,6 +20,13 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] update | search-results-redesign-ranking-follow-fix
+- **Búsqueda**: resultados apilados verticalmente (Usuarios → Categorías → Juegos). Juegos con grid responsive (`sm:grid-cols-3 md:grid-cols-4`). Iconos en títulos (`Users`, `Grid3X3`, `Gamepad2`). Categorías con borde coloreado (`getTagColor`). Juegos ahora incluyen tags para mostrar categoría en GameCard
+- **Ranking**: ahora muestra ⭐ estrellas, 🎮 juegos y 👥 seguidores con iconos coloreados. `followersCount` agregado a `PlayerRankingEntry` y `getPlayerLeaderboard`
+- **FollowButton**: redirige a `/login` si no está autenticado (`isAuthenticated` prop)
+- **Perfil**: corazones/favoritos visibles en game cards. Pastillas de estado ocultas en perfiles ajenos. Play directo si solo hay acción de Jugar
+- **Archivos modificados**: `buscar/page.tsx`, `search.ts`, `ranking.ts`, `definitions.ts`, `RankingSection.tsx`, `PodiumCard.tsx`, `FollowButton.tsx`, `ProfileHeader.tsx`, `ProfileGameCard.tsx`, `ProfileTabs.tsx`, `perfil/page.tsx`, `FollowList.tsx`
+
 ## [2026-07-27] fix | banner-duration-save-input-scroll-admin-table
 - **Banner Admin**: corregido bug donde `duration` no se guardaba (faltaba en `FormData`). Input de duración mejorado: `type="text"` con `durationText` state para permitir borrar y reescribir sin forzar a 5
 - **Admin Usuarios**: tabla con scroll horizontal (`overflow-x-auto`, `min-w-[560px]`). Título reducido en mobile (`text-xl sm:text-2xl`)
