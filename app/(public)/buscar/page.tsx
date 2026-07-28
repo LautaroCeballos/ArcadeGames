@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { Users, Grid3X3, Gamepad2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
+import { Users, Grid3X3, Gamepad2, Flame, Crown, Sparkles, Search } from "lucide-react"
 import { searchAll } from "@/lib/actions/search"
 import { getGameList, getTags, resolveTagSlug } from "@/lib/queries/games"
 import { slugifyTagName } from "@/lib/tag-utils"
@@ -22,9 +21,15 @@ interface SearchPageProps {
 /* ── Browse mode (full game listing) ──────────────────────── */
 
 const SORT_TITLES: Record<string, string> = {
-  rated: "Mejor valorados",
-  popular: "Más jugados",
+  rated: "Juegos Destacados",
+  popular: "Populares",
   recent: "Novedades",
+}
+
+const SORT_ICONS: Record<string, React.ReactNode> = {
+  rated: <Flame className="h-6 w-6 text-arcade-red" />,
+  popular: <Crown className="h-6 w-6 text-arcade-red" />,
+  recent: <Sparkles className="h-6 w-6 text-arcade-red" />,
 }
 
 async function BrowseGameList({
@@ -136,11 +141,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   /* ── Browse mode ────────────────────────────────────────── */
   if (isBrowse) {
     const title = SORT_TITLES[sort ?? ""] ?? "Explorar juegos"
+    const titleIcon = SORT_ICONS[sort ?? ""] ?? <Search className="h-6 w-6 text-arcade-red" />
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-arcade-dark">{title}</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold text-arcade-dark">
+            {titleIcon}
+            {title}
+          </h1>
           <div className="flex items-center gap-3 shrink-0">
             <Suspense fallback={null}>
               <SortSelect />

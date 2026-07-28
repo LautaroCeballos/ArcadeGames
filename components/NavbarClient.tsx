@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Search, Upload, Bell, Menu, X, CheckCircle, XCircle, Gamepad2, Star, UserPlus, LogOut, User, Settings, Shield, ChevronDown, Loader2, ImagePlus } from "lucide-react"
+import { Search, Upload, Bell, Menu, X, CheckCircle, XCircle, Gamepad2, Star, UserPlus, LogOut, User, Settings, Shield, ChevronDown, Loader2, ImagePlus, Flame, Sparkles, Crown } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import { signOut } from "@/lib/actions/auth"
@@ -589,35 +589,15 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
         {/* Mobile: controls */}
         <div className="flex sm:hidden items-center gap-1">
           <ThemeToggle />
-          {user ? (
-            <button
-              type="button"
-              className="p-2 text-foreground"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-foreground hover:bg-accent/80"
-                asChild
-              >
-                <Link href="/login">Iniciar sesión</Link>
-              </Button>
-              <Button
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                asChild
-              >
-                <Link href="/signup">Registrarse</Link>
-              </Button>
-            </>
-          )}
+          <button
+            type="button"
+            className="p-2 text-foreground"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
 
@@ -646,25 +626,42 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
               </form>
 
               <nav className="flex flex-col gap-1 pt-1" role="navigation">
-                <MobileNavLink href="/" label="Inicio" />
+                <MobileNavLink href="/" label="Inicio" icon={<Gamepad2 className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
 
                 {user ? (
                   <>
-                    <MobileNavLink href="/subir" label="Publicar Proyecto" icon={<Upload className="h-4 w-4" />} />
-                    <MobileNavLink href="/notificaciones" label="Notificaciones" icon={<Bell className="h-4 w-4" />} badge={liveUnreadCount} />
-                    {username && (
-                      <MobileNavLink href={`/perfil/${username}`} label="Perfil" icon={<User className="h-4 w-4" />} />
-                    )}
+                    <MobileNavLink href="/notificaciones" label="Notificaciones" icon={<Bell className="h-4 w-4" />} badge={liveUnreadCount} onClick={() => setMenuOpen(false)} />
+
                     {(role === 'moderator' || role === 'admin') && (
-                      <MobileNavLink href="/moderar" label="Moderar" icon={<Shield className="h-4 w-4" />} />
+                      <MobileNavLink href="/moderar" label="Moderar" icon={<Shield className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
                     )}
                     {role === 'admin' && (
-                      <MobileNavLink href="/admin/banner" label="Banner" icon={<ImagePlus className="h-4 w-4" />} />
+                      <MobileNavLink href="/admin/banner" label="Banner" icon={<ImagePlus className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
                     )}
                     {role === 'admin' && (
-                      <MobileNavLink href="/admin/usuarios" label="Admin" icon={<Shield className="h-4 w-4" />} />
+                      <MobileNavLink href="/admin/usuarios" label="Admin" icon={<Shield className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
                     )}
-                    <MobileNavLink href="/cuenta" label="Cuenta" icon={<Settings className="h-4 w-4" />} />
+
+                    {username && (
+                      <MobileNavLink href={`/perfil/${username}`} label="Perfil" icon={<User className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+                    )}
+                    <MobileNavLink href="/cuenta" label="Cuenta" icon={<Settings className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+
+                    {/* Game shortcuts — al final para logueados */}
+                    <div className="my-1 border-t border-border" />
+                    <MobileNavLink href="/buscar?sort=rated" label="Juegos Destacados" icon={<Flame className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+                    <MobileNavLink href="/buscar?sort=recent" label="Novedades" icon={<Sparkles className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+                    <MobileNavLink href="/buscar?sort=popular" label="Populares" icon={<Crown className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+
+                    <Link
+                      href="/subir"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Publicar Proyecto
+                    </Link>
+
                     <form action={signOut} className="mt-2 border-t border-border pt-2">
                       <button
                         type="submit"
@@ -677,7 +674,28 @@ export function NavbarClient({ user, username, avatarUrl, role, unreadCount = 0,
                   </>
                 ) : (
                   <>
-                    <MobileNavLink href="/" label="Inicio" />
+                    {/* Game shortcuts — al inicio para no logueados */}
+                    <MobileNavLink href="/buscar?sort=rated" label="Juegos Destacados" icon={<Flame className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+                    <MobileNavLink href="/buscar?sort=recent" label="Novedades" icon={<Sparkles className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+                    <MobileNavLink href="/buscar?sort=popular" label="Populares" icon={<Crown className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+
+                    <div className="mt-2 border-t border-border pt-2" />
+                    <div className="flex gap-2">
+                      <Link
+                        href="/login"
+                        className="flex-1 rounded-lg px-3 py-2 text-center text-sm text-foreground transition-colors hover:bg-accent/80"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Iniciar sesión
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="flex-1 rounded-lg px-3 py-2 text-center text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Registrarse
+                      </Link>
+                    </div>
                   </>
                 )}
               </nav>
@@ -702,10 +720,11 @@ function UserMenuItem({ href, icon, label, onClick }: { href: string; icon: Reac
   )
 }
 
-function MobileNavLink({ href, label, icon, badge }: { href: string; label: string; icon?: React.ReactNode; badge?: number }) {
+function MobileNavLink({ href, label, icon, badge, onClick }: { href: string; label: string; icon?: React.ReactNode; badge?: number; onClick?: () => void }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent/80"
     >
       {icon}

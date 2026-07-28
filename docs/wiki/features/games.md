@@ -173,6 +173,25 @@ Formulario pre-cargado con los datos actuales del juego:
 - Usuarios anónimos pueden jugar (embed) pero no votar
 - No se puede marcar como favorito un juego propio (bloqueado en UI y server action)
 
+## Patrón de cliente Supabase en games.ts
+
+Los server actions en `lib/actions/games.ts` usan helpers internos para evitar repetir
+el patrón `createClient()` + `auth.getUser()` + verificación de rol en cada función:
+
+| Helper | Archivo:línea | Qué hace |
+|--------|--------------|----------|
+| `getClient()` | `lib/actions/games.ts:642` | Crea cliente Supabase + obtiene usuario autenticado. Retorna `{ supabase, user }` |
+| `getModClient()` | `lib/actions/games.ts:651` | Ejecuta `assertModerator()` + retorna cliente listo |
+| `getAdminClient()` | `lib/actions/games.ts:657` | Ejecuta `assertAdmin()` + retorna cliente listo |
+
+`React.cache()` en `lib/supabase/server.ts:5` deduplica todas las llamadas a `createClient()`
+dentro de una misma request, por lo que llamar a estos helpers múltiples veces (ej. en
+`assertModerator` → `getUserRole` → `createClient()` y luego `getModClient` → `createClient()`) 
+no crea instancias redundantes.
+
+> [!note] Este refactor se aplicó el 2026-07-27 sobre 20 funciones en `games.ts`, eliminando
+> ~40 líneas repetitivas de `createClient()` + `auth.getUser()` + check de rol.
+
 ## Búsqueda
 
 Implementada con ILIKE sobre `title` + filtro por tags:

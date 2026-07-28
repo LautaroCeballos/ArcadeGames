@@ -84,7 +84,7 @@ sources:
 | Componente | Archivo | Tipo | Props clave |
 |-----------|---------|------|-------------|
 | Navbar | `components/Navbar.tsx` | Server | Fetches `user` + `username` + `avatar_url` + `role` + `unreadCount` + `recentNotifications`, renderiza `NavbarClient` |
-| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, **menú hamburguesa flotante** (solo logueado; no logueado muestra "Iniciar sesión" + "Registrarse" en header), ThemeToggle siempre visible (mobile + desktop sincronizados vía evento custom), search input con live dropdown, avatar con dropdown unificado, bell icon con badge + dropdown de notificaciones. Usa `useRealtimeNotifications` |
+| NavbarClient | `components/NavbarClient.tsx` | Client | `{ user, username, avatarUrl, role, unreadCount, recentNotifications, currentUserId }` — scroll shadow, **menú hamburguesa flotante** (siempre visible, logueado y no logueado). Sin sesión: buscador + Inicio + atajos (Juegos Destacados, Novedades, Populares) + login/registro. Con sesión: Publicar Proyecto (bg-primary), Inicio, Notificaciones, Moderar/Banner/Admin, Perfil, Cuenta, atajos de juegos, Cerrar sesión. ThemeToggle siempre visible. Search input con live dropdown. Usa `useRealtimeNotifications` |
 | AuthButton | `components/AuthButton.tsx` | Client | Form action `signOut` |
 | Footer | `components/Footer.tsx` | Server | Links estáticos en 2 columnas (makecode, subir, categorías, login, sobre, términos) |
 
@@ -130,6 +130,8 @@ sources:
 | TagFilter | `components/CategoryFilter.tsx` | Client | `tags: Tag[]` — botones de filtro por categoría (`?tag=<slug>`). El botón activo se pinta con el color de la categoría (`getTagColor().badge` como fondo + texto blanco). Botón "Todas" que navega a `/buscar?sort=recent`. Usa `keepBrowseMode()`. Resetea `?page=` al cambiar de tag. |
 
 ### Server Actions (games / thumbnails)
+
+Los server actions de `lib/actions/games.ts` usan helpers internos `getClient()`, `getModClient()` y `getAdminClient()` para obtener el cliente Supabase con el nivel de autenticación requerido. Ver [[features/games#Patrón de cliente Supabase en games.ts]] para detalles.
 
 | Acción | Archivo | Propósito |
 |--------|---------|-----------|

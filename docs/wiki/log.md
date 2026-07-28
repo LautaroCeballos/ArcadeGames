@@ -20,6 +20,19 @@ sources:
 
 # ArcadePlay — Registro de Cambios del Wiki
 
+## [2026-07-27] update | mobile-menu-redesign-buscar-icons
+- **NavbarClient mobile**: hamburguesa ahora visible para todos los usuarios (logueados y no). Sin sesión: menú con buscador, Inicio, atajos (Juegos Destacados 🔥, Novedades ✨, Populares 👑), y botones login/registro al final. Con sesión: menú reorganizado con Publicar Proyecto (bg-primary) al final, atajos de juegos abajo. Todos los links cierran el menú al hacer clic.
+- **`/buscar`**: títulos con iconos — 🔥 Juegos Destacados (`?sort=rated`), 👑 Populares (`?sort=popular`), ✨ Novedades (`?sort=recent`), 🔍 Explorar juegos (default). "Mejor valorados" → "Juegos Destacados", "Más jugados" → "Populares".
+- **`CategoryFilter`**: tags activos ahora usan solo contorno coloreado (`border-2`, sin fondo sólido ni degradado). Botón "Todas" también usa outline cuando activo.
+- Archivos modificados: `components/NavbarClient.tsx`, `app/(public)/buscar/page.tsx`, `components/CategoryFilter.tsx`
+- Páginas actualizadas: [[frontend/components]], [[log]]
+
+## [2026-07-27] refactor | supabase-client-helpers-games
+- **`lib/actions/games.ts`**: extraídos 3 helpers internos — `getClient()` (cliente + usuario autenticado), `getModClient()` (assertModerator + cliente), `getAdminClient()` (assertAdmin + cliente). 20 funciones actualizadas para usar los helpers, eliminando ~40 líneas repetitivas de `createClient()` + `auth.getUser()` + check de rol.
+- **`app/(public)/buscar/page.tsx`**: eliminado dead import de `createClient` (importado pero nunca llamado).
+- **Diagnóstico**: auditoría de ~90 call sites a `createClient()` en 34 archivos. `React.cache()` en `lib/supabase/server.ts` ya deduplica por request — el patrón es óptimo y seguro. La anon key se usa correctamente en todos los clientes; service_role solo via `fetch()` crudo para Admin API calls puntuales.
+- Páginas actualizadas: [[features/games]], [[frontend/components]]
+
 ## [2026-07-27] feat | home-cta-registro
 - **Home**: CTA de registro debajo del ranking ("Crea. Publica. Inspira.") con borde y botón con degradado `bg-primary`, puntos decorativos, icono `Crown`. Oculto para usuarios autenticados. Contraste mejorado en modo claro
 - **Archivos modificados**: `app/(public)/page.tsx`

@@ -13,9 +13,7 @@ function getPlatformTagName(platform: string): string {
 }
 
 export async function createGame(_prevState: { error: string }, formData: FormData) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) {
     return { error: "Debes iniciar sesión para publicar juegos" }
   }
@@ -133,9 +131,7 @@ export async function createGame(_prevState: { error: string }, formData: FormDa
 }
 
 export async function toggleVisibility(gameId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) return { error: "No autorizado" }
 
   const { data: game } = await supabase
@@ -159,9 +155,7 @@ export async function toggleVisibility(gameId: string) {
 }
 
 export async function updateGame(_prevState: { error?: string; success?: boolean } | null, formData: FormData) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) return { error: "Debes iniciar sesión" }
 
   const gameId = formData.get("id") as string
@@ -239,9 +233,7 @@ export async function updateGame(_prevState: { error?: string; success?: boolean
 }
 
 export async function deleteGame(gameId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) return { error: "No autorizado" }
 
   const { error } = await supabase
@@ -428,9 +420,7 @@ export async function getUserGames(username: string) {
 }
 
 export async function getMyGames() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) return []
 
   const { data: games } = await supabase
@@ -648,11 +638,31 @@ async function assertAdmin(): Promise<void> {
   }
 }
 
+// ─── Client helpers ────────────────────────────────────────────────────────────
+
+/** Crea cliente Supabase + obtiene usuario autenticado. Usa React.cache() internally. */
+async function getClient() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return { supabase, user }
+}
+
+/** Verifica rol de moderador y devuelve cliente listo para usar. */
+async function getModClient() {
+  await assertModerator()
+  return await createClient()
+}
+
+/** Verifica rol de admin y devuelve cliente listo para usar. */
+async function getAdminClient() {
+  await assertAdmin()
+  return await createClient()
+}
+
 // ─── Moderation actions ───────────────────────────────────────────────────────
 
 export async function getPendingGames(page = 0, limit = 20) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { data: games, count } = await supabase
     .from("games")
@@ -694,8 +704,7 @@ export async function getModeratedGames(options: {
   page?: number
   limit?: number
 } = {}) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
   const { status, page = 0, limit = 20 } = options
 
   let query = supabase
@@ -740,8 +749,7 @@ export async function getModeratedGames(options: {
 }
 
 export async function approveGame(gameId: string) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { error } = await supabase
     .from("games")
@@ -801,8 +809,7 @@ export async function approveGame(gameId: string) {
 }
 
 export async function rejectGame(gameId: string, reason?: string) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { error } = await supabase
     .from("games")
@@ -836,8 +843,7 @@ export async function rejectGame(gameId: string, reason?: string) {
 }
 
 export async function revertToPending(gameId: string) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { error } = await supabase
     .from("games")
@@ -852,8 +858,7 @@ export async function revertToPending(gameId: string) {
 }
 
 export async function modToggleVisibility(gameId: string) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { data: game } = await supabase
     .from("games")
@@ -876,8 +881,7 @@ export async function modToggleVisibility(gameId: string) {
 }
 
 export async function modDeleteGame(gameId: string) {
-  await assertModerator()
-  const supabase = await createClient()
+  const supabase = await getModClient()
 
   const { error } = await supabase
     .from("games")
@@ -895,9 +899,7 @@ export async function modDeleteGame(gameId: string) {
 // ─── Publish draft ────────────────────────────────────────────────────────────
 
 export async function publishGame(gameId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getClient()
   if (!user) return { error: "Debes iniciar sesión" }
 
   const { data: game } = await supabase
@@ -931,8 +933,7 @@ export async function getUsers(options: {
   page?: number
   limit?: number
 } = {}) {
-  await assertAdmin()
-  const supabase = await createClient()
+  const supabase = await getAdminClient()
   const { search, page = 0, limit = 20 } = options
 
   let query = supabase
@@ -950,8 +951,7 @@ export async function getUsers(options: {
 }
 
 export async function setUserRole(userId: string, role: 'user' | 'moderator' | 'admin') {
-  await assertAdmin()
-  const supabase = await createClient()
+  const supabase = await getAdminClient()
 
   const { error } = await supabase
     .from("profiles")

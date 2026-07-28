@@ -41,10 +41,10 @@ export function TagFilter({ tags }: TagFilterProps) {
       <button
         type="button"
         className={cn(
-          "px-3 py-1 text-sm rounded-full border transition-colors",
+          "px-3 py-1 text-sm rounded-full transition-colors",
           !activeSlug
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-background hover:bg-accent"
+            ? "border-2 font-medium border-primary text-primary"
+            : "border bg-background hover:bg-accent"
         )}
         onClick={() => {
           const params = new URLSearchParams(searchParams.toString())
@@ -65,10 +65,10 @@ export function TagFilter({ tags }: TagFilterProps) {
             key={tag.id}
             type="button"
             className={cn(
-              "px-3 py-1 text-sm rounded-full border transition-colors",
-              isActive ? "text-white" : "bg-background hover:bg-accent"
+              "px-3 py-1 text-sm rounded-full transition-colors",
+              isActive ? "border-2 font-medium" : "border bg-background hover:bg-accent"
             )}
-            style={isActive ? { backgroundColor: tc.badge, borderColor: tc.badge } : {}}
+            style={isActive ? { borderColor: tc.badge, color: tc.badge } : {}}
             onClick={() => handleClick(tag)}
           >
             {tag.name}
