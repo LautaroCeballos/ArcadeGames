@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { Suspense } from "react"
+import { Users, Grid3X3, Gamepad2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { searchAll } from "@/lib/actions/search"
 import { getGameList, getTags, resolveTagSlug } from "@/lib/queries/games"
 import { slugifyTagName } from "@/lib/tag-utils"
+import { getTagColor } from "@/lib/tag-colors"
 import { GameCard } from "@/components/GameCard"
 import { SortSelect } from "@/components/SortSelect"
 import { TagFilter } from "@/components/CategoryFilter"
@@ -112,10 +114,12 @@ function UserCard({
 }
 
 function TagCard({ tag }: { tag: Tag }) {
+  const color = getTagColor(tag.name)
   return (
     <Link
       href={`/buscar?tag=${slugifyTagName(tag.name)}`}
-      className="inline-block rounded-full border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+      className="inline-block rounded-full border-2 bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+      style={{ borderColor: color.badgeBorder }}
     >
       {tag.name}
     </Link>
@@ -195,44 +199,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <p className="mt-1 text-sm">Probá con otros términos de búsqueda</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Games section */}
-          {games.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-arcade-dark">
-                Juegos
-                <span className="text-sm font-normal text-muted-foreground">
-                  ({games.length})
-                </span>
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {(games as unknown as GameWithDetails[])
-                  .slice(0, 6)
-                  .map((game) => (
-                    <GameCard key={game.id} game={game} />
-                  ))}
-              </div>
-              {games.length > 6 && (
-                <Link
-                  href={`/?q=${encodeURIComponent(query)}`}
-                  className="block text-sm text-arcade-red hover:underline"
-                >
-                  Ver todos los juegos &rarr;
-                </Link>
-              )}
-            </section>
-          )}
-
+        <div className="space-y-8">
           {/* Users section */}
           {users.length > 0 && (
             <section className="space-y-3">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-arcade-dark">
+                <Users className="h-5 w-5 text-arcade-red" />
                 Usuarios
                 <span className="text-sm font-normal text-muted-foreground">
                   ({users.length})
                 </span>
               </h2>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
                 {users.map((user) => (
                   <UserCard key={user.id} user={user} />
                 ))}
@@ -244,6 +222,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           {tags.length > 0 && (
             <section className="space-y-3">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-arcade-dark">
+                <Grid3X3 className="h-5 w-5 text-arcade-red" />
                 Categorías
                 <span className="text-sm font-normal text-muted-foreground">
                   ({tags.length})
@@ -252,6 +231,24 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <TagCard key={tag.id} tag={tag} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Games section */}
+          {games.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-arcade-dark">
+                <Gamepad2 className="h-5 w-5 text-arcade-red" />
+                Juegos
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({games.length})
+                </span>
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {(games as unknown as GameWithDetails[]).map((game) => (
+                  <GameCard key={game.id} game={game} />
                 ))}
               </div>
             </section>
