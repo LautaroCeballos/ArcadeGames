@@ -37,6 +37,7 @@ export function FollowList({ users, followingMap, emptyMessage, currentUserId }:
             <FollowButton
               targetUserId={user.id}
               isFollowing={followingMap.has(user.id)}
+              isAuthenticated={!!currentUserId}
             />
           )}
         </div>

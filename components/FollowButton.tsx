@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
+import { useRouter } from "next/navigation"
 import { UserPlus, UserCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { followUser, unfollowUser } from "@/lib/actions/social"
@@ -8,6 +9,7 @@ import { followUser, unfollowUser } from "@/lib/actions/social"
 interface FollowButtonProps {
   targetUserId: string
   isFollowing: boolean
+  isAuthenticated?: boolean
 }
 
 type FollowState = {
@@ -15,7 +17,9 @@ type FollowState = {
   error: string | null
 }
 
-export function FollowButton({ targetUserId, isFollowing: initialFollowing }: FollowButtonProps) {
+export function FollowButton({ targetUserId, isFollowing: initialFollowing, isAuthenticated = true }: FollowButtonProps) {
+  const router = useRouter()
+
   async function toggleFollow(prevState: FollowState, _formData: FormData): Promise<FollowState> {
     if (prevState.isFollowing) {
       const result = await unfollowUser(targetUserId)
@@ -32,6 +36,21 @@ export function FollowButton({ targetUserId, isFollowing: initialFollowing }: Fo
     isFollowing: initialFollowing,
     error: null,
   })
+
+  if (!isAuthenticated) {
+    return (
+      <Button
+        type="button"
+        variant="default"
+        size="sm"
+        className="gap-1.5"
+        onClick={() => router.push("/login")}
+      >
+        <UserPlus className="size-4" />
+        Seguir
+      </Button>
+    )
+  }
 
   return (
     <form action={formAction}>

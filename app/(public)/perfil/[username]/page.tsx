@@ -112,12 +112,30 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     }) as unknown as GameWithDetails[]
   }
 
+  // Attach favorites count
+  if (games.length > 0) {
+    const { data: favs } = await supabase
+      .from("favorites")
+      .select("game_id")
+      .in("game_id", games.map((g) => g.id))
+
+    const favMap = new Map<string, number>()
+    for (const f of favs ?? []) {
+      favMap.set(f.game_id, (favMap.get(f.game_id) ?? 0) + 1)
+    }
+
+    games = games.map((g) => ({
+      ...g,
+      favorites_count: favMap.get(g.id) ?? 0,
+    })) as unknown as GameWithDetails[]
+  }
+
   // Load favorited games only for the profile owner
   const favoritedGames = isOwner ? await getUserFavorites(username) : []
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
-      <ProfileHeader profile={profile} isOwnProfile={isOwner} isFollowing={following} />
+      <ProfileHeader profile={profile} isOwnProfile={isOwner} isFollowing={following} isAuthenticated={!!user} />
       <ProfileTabs
         games={games}
         badges={profile.badges}

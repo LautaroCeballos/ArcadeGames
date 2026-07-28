@@ -8,9 +8,10 @@ interface ProfileHeaderProps {
   profile: ProfileWithStats
   isOwnProfile: boolean
   isFollowing: boolean
+  isAuthenticated?: boolean
 }
 
-export function ProfileHeader({ profile, isOwnProfile, isFollowing }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isOwnProfile, isFollowing, isAuthenticated }: ProfileHeaderProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-row items-start gap-4">
@@ -42,7 +43,7 @@ export function ProfileHeader({ profile, isOwnProfile, isFollowing }: ProfileHea
 
           {!isOwnProfile && (
             <div className="pt-1">
-              <FollowButton targetUserId={profile.id} isFollowing={isFollowing} />
+              <FollowButton targetUserId={profile.id} isFollowing={isFollowing} isAuthenticated={isAuthenticated} />
             </div>
           )}
         </div>
